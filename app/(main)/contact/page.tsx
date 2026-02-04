@@ -135,15 +135,24 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* Map Placeholder */}
+      {/* Map */}
       <div className="mt-12">
         <Card>
           <CardHeader>
             <CardTitle>Tìm đường đến cửa hàng</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Bản đồ sẽ được hiển thị tại đây</p>
+            <div className="aspect-[16/9] rounded-lg overflow-hidden">
+              <iframe
+                src="https://maps.google.com/maps?q=123%20Nguy%E1%BB%85n%20Hu%E1%BB%87,%20Qu%E1%BA%ADn%201,%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Bản đồ cửa hàng TechNova Store"
+              />
             </div>
           </CardContent>
         </Card>

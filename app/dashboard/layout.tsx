@@ -34,132 +34,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const supabase = createBrowserClient()
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
 
-        console.log("Dashboard auth check:", { authUser, authError })
-
         if (!isMounted) return
 
-        if (authError) {
-          console.error("Auth error:", authError)
-          // Don't redirect immediately on auth error, let auth state listener handle it
-          setLoading(false)
+        if (authError || !authUser) {
+          console.log("No authenticated user, redirecting to login")
+          router.push("/auth/login")
           return
         }
 
-        if (!authUser) {
-          console.log("No user found, redirecting to login")
-          if (isMounted) {
-            router.push("/auth/login")
-          }
-          return
-        }
-
-        console.log("User authenticated:", authUser.email)
+        // User is authenticated, set basic info
         setEmail(authUser.email || null)
 
+        // Try to get profile, but don't block loading on this
         const { data: profile, error } = await supabase.from("user_profiles").select("*").eq("id", authUser.id).single()
 
-        if (!isMounted) return
-
-        if (profile && !error) {
-          console.log("Profile found:", profile)
-          setUser(profile)
-        } else {
-          console.log("Creating/updating profile for user:", authUser.id)
-          // Create or update profile
-          const profileData = {
-            id: authUser.id,
-            full_name: authUser.user_metadata?.full_name || "",
-            phone: "",
-            address: "",
-            city: "",
-            postal_code: "",
-            country: "Việt Nam",
-            updated_at: new Date().toISOString(),
-          }
-
-          const { data: upsertedProfile, error: upsertError } = await supabase
-            .from("user_profiles")
-            .upsert(profileData, { onConflict: 'id' })
-            .select()
-            .single()
-
-          if (!isMounted) return
-
-          if (upsertedProfile && !upsertError) {
-            console.log("Profile created/updated:", upsertedProfile)
-            setUser(upsertedProfile)
+        if (isMounted) {
+          if (profile && !error) {
+            setUser(profile)
           } else {
-            console.error("Profile upsert error:", upsertError)
+            // Profile doesn't exist or error, set to null but don't create here
+            setUser(null)
           }
         }
       } catch (error) {
         console.error("Auth check failed:", error)
-        // Don't redirect on error, let auth state listener handle authentication
-        setLoading(false)
+        if (isMounted) {
+          router.push("/auth/login")
+        }
         return
-      }
-
-      if (isMounted) {
-        setLoading(false)
+      } finally {
+        // Always set loading to false
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     checkAuth()
 
-    // Listen for auth changes
+    // Simple auth state listener for redirects only
     const supabase = createBrowserClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, session?.user?.email)
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        // User is authenticated, update state
-        console.log("User authenticated in state change:", session.user.email)
-        setEmail(session.user.email || null)
-
-        const { data: profile, error } = await supabase.from("user_profiles").select("*").eq("id", session.user.id).single()
-
-        if (!isMounted) return
-
-        if (profile && !error) {
-          console.log("Profile found in state change:", profile)
-          setUser(profile)
-        } else {
-          console.log("Profile not found in state change, creating for user:", session.user.id)
-          // Create or update profile
-          const profileData = {
-            id: session.user.id,
-            full_name: session.user.user_metadata?.full_name || "",
-            phone: "",
-            address: "",
-            city: "",
-            postal_code: "",
-            country: "Việt Nam",
-            updated_at: new Date().toISOString(),
-          }
-
-          const { data: upsertedProfile, error: upsertError } = await supabase
-            .from("user_profiles")
-            .upsert(profileData)
-            .select()
-            .single()
-
-          if (!isMounted) return
-
-          if (upsertedProfile && !upsertError) {
-            console.log("Profile created in state change:", upsertedProfile)
-            setUser(upsertedProfile)
-          } else {
-            console.error("Profile upsert error in state change:", upsertError)
-            // Continue without profile
-            setUser(null)
-          }
-        }
-        setLoading(false)
-      } else if (event === 'SIGNED_OUT' || !session?.user) {
-        // User is not authenticated, redirect to login
-        console.log("User not authenticated in state change, redirecting to login")
+      if (event === 'SIGNED_OUT' || !session?.user) {
         router.push("/auth/login")
       }
     })

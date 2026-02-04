@@ -37,7 +37,7 @@ type CheckoutForm = z.infer<typeof checkoutSchema>
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, getSubtotal, clearCart } = useCartStore()
+  const { cartItems: items, getSubtotal, clearCart } = useCartStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<CheckoutForm>({

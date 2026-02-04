@@ -5,6 +5,14 @@ interface ProductSpecsProps {
 }
 
 export function ProductSpecs({ specifications }: ProductSpecsProps) {
+  if (!specifications || typeof specifications !== 'object') {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Thông tin kỹ thuật chưa được cập nhật
+      </div>
+    )
+  }
+
   // Group specs by category for better organization
   const specCategories: Record<string, Record<string, any>> = {}
 

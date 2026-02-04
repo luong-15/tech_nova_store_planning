@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "set NODE_TLS_REJECT_UNAUTHORIZED=0 && next dev",
+    "dev": "next dev",
     "lint": "eslint .",
     "start": "next start"
   },
@@ -71,6 +71,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.39.2",
+    "pg": "^8.17.1",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",

@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Search, User, Menu, X, LogOut } from "lucide-react"
+import { ShoppingCart, Search, User, Menu, X, LogOut, GitCompare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { useCartStore } from "@/lib/store/cart-store"
+import { useComparisonStore } from "@/lib/store/comparison-store"
 import { CartDrawer } from "@/components/cart/cart-drawer"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -21,19 +22,41 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 function CartButton() {
-  const { getTotalItems, openCart } = useCartStore()
-  const [totalItems, setTotalItems] = useState(0)
+  const totalItems = useCartStore((state) => state.getTotalItems())
+  const openCart = useCartStore((state) => state.openCart)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    setTotalItems(getTotalItems())
-  }, [getTotalItems])
+    setIsClient(true)
+  }, [])
 
   return (
     <Button variant="ghost" size="icon" className="relative" onClick={openCart}>
       <ShoppingCart className="h-5 w-5" />
-      {totalItems > 0 && (
+      {isClient && totalItems > 0 && (
         <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
           {totalItems}
+        </span>
+      )}
+    </Button>
+  )
+}
+
+function ComparisonButton() {
+  const productCount = useComparisonStore((state) => state.getProductCount())
+  const openComparison = useComparisonStore((state) => state.openComparison)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  return (
+    <Button variant="ghost" size="icon" className="relative" onClick={openComparison}>
+      <GitCompare className="h-5 w-5" />
+      {isClient && productCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+          {productCount}
         </span>
       )}
     </Button>
@@ -261,6 +284,7 @@ export function Header() {
                   </Link>
                 </Button>
               )}
+              <ComparisonButton />
               <CartButton />
 
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>

@@ -1,7 +1,24 @@
+"use client"
+
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { Facebook, Twitter, Instagram, Youtube } from "lucide-react"
 
 export function Footer() {
+  const [currentUrl, setCurrentUrl] = useState('')
+  const siteTitle = "TechNova Store - Sản phẩm công nghệ chính hãng"
+
+  useEffect(() => {
+    setCurrentUrl(window.location.href)
+  }, [])
+
+  const shareUrls = {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(siteTitle)}`,
+    instagram: `https://www.instagram.com/?url=${encodeURIComponent(currentUrl)}`,
+    youtube: `https://www.youtube.com/share?url=${encodeURIComponent(currentUrl)}`
+  }
+
   return (
     <footer className="border-t border-border bg-muted/50">
       <div className="container mx-auto px-4 py-12">
@@ -78,30 +95,42 @@ export function Footer() {
               <li>Địa chỉ: 123 Nguyễn Huệ, Q1, TP.HCM</li>
             </ul>
             <div className="mt-4 flex gap-2">
-              <Link
-                href="#"
+              <a
+                href={shareUrls.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-colors hover:bg-accent"
+                title="Chia sẻ trên Facebook"
               >
                 <Facebook className="h-4 w-4" />
-              </Link>
-              <Link
-                href="#"
+              </a>
+              <a
+                href={shareUrls.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-colors hover:bg-accent"
+                title="Chia sẻ trên Twitter"
               >
                 <Twitter className="h-4 w-4" />
-              </Link>
-              <Link
-                href="#"
+              </a>
+              <a
+                href={shareUrls.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-colors hover:bg-accent"
+                title="Theo dõi trên Instagram"
               >
                 <Instagram className="h-4 w-4" />
-              </Link>
-              <Link
-                href="#"
+              </a>
+              <a
+                href={shareUrls.youtube}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-colors hover:bg-accent"
+                title="Đăng ký kênh YouTube"
               >
                 <Youtube className="h-4 w-4" />
-              </Link>
+              </a>
             </div>
           </div>
         </div>

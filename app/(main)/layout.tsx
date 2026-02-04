@@ -1,6 +1,7 @@
 import type React from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { ComparisonDrawer } from "@/components/comparison-drawer"
 
 export default function MainLayout({
   children,
@@ -12,6 +13,7 @@ export default function MainLayout({
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
+      <ComparisonDrawer />
     </div>
   )
 }

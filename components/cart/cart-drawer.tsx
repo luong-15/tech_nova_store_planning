@@ -11,7 +11,7 @@ import Image from "next/image"
 import Link from "next/link"
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore()
+  const { cartItems: items, isOpen, closeCart, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore()
 
   const subtotal = getSubtotal()
   const shipping = subtotal > 2000000 ? 0 : 50000

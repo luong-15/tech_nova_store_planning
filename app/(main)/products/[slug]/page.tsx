@@ -1,5 +1,9 @@
-import { createClient } from "@/lib/supabase/server"
-import { notFound } from "next/navigation"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams, notFound } from "next/navigation"
+import { createBrowserClient } from "@/lib/supabase/client"
+import { useCartStore } from "@/lib/store/cart-store"
 import { ProductGallery } from "@/components/product-gallery"
 import { ProductSpecs } from "@/components/product-specs"
 import { ProductReviews } from "@/components/product-reviews"
@@ -7,52 +11,199 @@ import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/currency"
 import { ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw, Star, Clock } from "lucide-react"
+import { toast } from "sonner"
 import Link from "next/link"
 import type { Product, Review, UserProfile } from "@/lib/types"
 
-interface PageProps {
-  params: Promise<{ slug: string }>
-}
+export default function ProductPage() {
+  const params = useParams()
+  const slug = params.slug as string
+  const addToCart = useCartStore((state) => state.addToCart)
 
-export default async function ProductPage({ params }: PageProps) {
-  const { slug } = await params
-  const supabase = await createClient()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [reviews, setReviews] = useState<(Review & { user?: UserProfile | null })[]>([])
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isInWishlist, setIsInWishlist] = useState(false)
 
-  // Fetch product
-  const { data: product, error } = await supabase.from("products").select("*").eq("slug", slug).single()
+  useEffect(() => {
+    const fetchProductData = async () => {
+      const supabase = createBrowserClient()
 
-  if (error || !product) {
-    notFound()
+      // Fetch product
+      const { data: productData, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("slug", slug)
+        .single()
+
+      if (error || !productData) {
+        notFound()
+        return
+      }
+
+      setProduct(productData)
+
+      // Fetch reviews - separate queries to avoid relationship issues
+      const { data: reviewsData } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("product_id", productData.id)
+        .order("created_at", { ascending: false })
+
+      // Fetch user profiles for reviews if reviews exist
+      let reviewsWithUsers: (Review & { user?: UserProfile | null })[] = []
+      if (reviewsData && reviewsData.length > 0) {
+        const userIds = [...new Set(reviewsData.map((r: any) => r.user_id))]
+        const { data: profiles } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .in("id", userIds)
+
+        reviewsWithUsers = reviewsData.map((review: any) => ({
+          ...review,
+          user: profiles?.find((p: any) => p.id === review.user_id) || null,
+        }))
+      }
+
+      setReviews(reviewsWithUsers)
+
+      // Fetch related products
+      const { data: related } = await supabase
+        .from("products")
+        .select("*")
+        .eq("category_id", productData.category_id)
+        .neq("id", productData.id)
+        .limit(4)
+
+      if (related) {
+        setRelatedProducts(related)
+      }
+
+      // Check if product is in wishlist (if user is logged in)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: wishlistItem } = await supabase
+          .from("wishlist")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("product_id", productData.id)
+          .single()
+
+        setIsInWishlist(!!wishlistItem)
+      }
+
+      setLoading(false)
+    }
+
+    fetchProductData()
+  }, [slug])
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product)
+      toast.success(`${product.name} đã được thêm vào giỏ hàng!`)
+    }
   }
 
-  // Fetch reviews - separate queries to avoid relationship issues
-  const { data: reviewsData } = await supabase
-    .from("reviews")
-    .select("*")
-    .eq("product_id", product.id)
-    .order("created_at", { ascending: false })
+  const handleAddToWishlist = async () => {
+    if (!product) return
 
-  // Fetch user profiles for reviews if reviews exist
-  let reviews: (Review & { user?: UserProfile | null })[] = []
-  if (reviewsData && reviewsData.length > 0) {
-    const userIds = [...new Set(reviewsData.map((r) => r.user_id))]
-    const { data: profiles } = await supabase.from("user_profiles").select("*").in("id", userIds)
+    const supabase = createBrowserClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    reviews = reviewsData.map((review) => ({
-      ...review,
-      user: profiles?.find((p) => p.id === review.user_id) || null,
-    }))
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm vào danh sách yêu thích")
+      return
+    }
+
+    try {
+      if (isInWishlist) {
+        // Remove from wishlist
+        const { error } = await supabase
+          .from("wishlist")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", product.id)
+
+        if (error) throw error
+
+        setIsInWishlist(false)
+        toast.success("Đã xóa khỏi danh sách yêu thích")
+      } else {
+        // Add to wishlist
+        const { error } = await supabase
+          .from("wishlist")
+          .insert({
+            user_id: user.id,
+            product_id: product.id,
+          })
+
+        if (error) throw error
+
+        setIsInWishlist(true)
+        toast.success("Đã thêm vào danh sách yêu thích")
+      }
+    } catch (error) {
+      console.error("Wishlist error:", error)
+      toast.error("Có lỗi xảy ra, vui lòng thử lại")
+    }
   }
 
-  // Fetch related products
-  const { data: relatedProducts } = await supabase
-    .from("products")
-    .select("*")
-    .eq("category_id", product.category_id)
-    .neq("id", product.id)
-    .limit(4)
+  const handleShare = async () => {
+    if (!product) return
+
+    const url = window.location.href
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: product.description,
+          url: url,
+        })
+      } catch (error) {
+        // User cancelled share or error occurred
+        console.log("Share cancelled or failed")
+      }
+    } else {
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(url)
+        toast.success("Đã sao chép liên kết sản phẩm")
+      } catch (error) {
+        toast.error("Không thể sao chép liên kết")
+      }
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Skeleton className="aspect-square w-full rounded-xl" />
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-12 w-32" />
+            <Skeleton className="h-24 w-full" />
+            <div className="flex gap-4">
+              <Skeleton className="h-12 flex-1" />
+              <Skeleton className="h-12 w-12" />
+              <Skeleton className="h-12 w-12" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!product) {
+    return notFound()
+  }
 
   const discount = product.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
@@ -141,14 +292,29 @@ export default async function ProductPage({ params }: PageProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-4">
-              <Button size="lg" className="flex-1 gap-2" disabled={!product.stock || product.stock <= 0}>
+              <Button
+                size="lg"
+                className="flex-1 gap-2"
+                disabled={!product.stock || product.stock <= 0}
+                onClick={handleAddToCart}
+              >
                 <ShoppingCart className="h-5 w-5" />
                 Thêm vào giỏ hàng
               </Button>
-              <Button size="lg" variant="outline" className="bg-transparent">
-                <Heart className="h-5 w-5" />
+              <Button
+                size="lg"
+                variant="outline"
+                className={`bg-transparent ${isInWishlist ? 'text-red-500 border-red-500' : ''}`}
+                onClick={handleAddToWishlist}
+              >
+                <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} />
               </Button>
-              <Button size="lg" variant="outline" className="bg-transparent">
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-transparent"
+                onClick={handleShare}
+              >
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
@@ -196,7 +362,7 @@ export default async function ProductPage({ params }: PageProps) {
             </TabsList>
 
             <TabsContent value="specs" className="mt-6">
-              <ProductSpecs specifications={product.specifications as Record<string, string>} />
+              <ProductSpecs specifications={product.specs as Record<string, string>} />
             </TabsContent>
 
             <TabsContent value="description" className="mt-6">

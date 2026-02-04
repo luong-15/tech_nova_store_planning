@@ -10,7 +10,7 @@ import Image from "next/image"
 import Link from "next/link"
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore()
+  const { cartItems: items, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore()
 
   const subtotal = getSubtotal()
   const shipping = subtotal >= 500000 ? 0 : 30000
