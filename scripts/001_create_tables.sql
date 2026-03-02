@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS products (
   stock INTEGER DEFAULT 0,
   is_featured BOOLEAN DEFAULT false,
   is_deal BOOLEAN DEFAULT false,
-  
+  is_active BOOLEAN DEFAULT true,
+
   -- Tech specs (JSON for flexibility)
   specs JSONB,
   
