@@ -3,12 +3,12 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ComparisonDrawer } from "@/components/comparison-drawer"
 import { ChatAssistant } from "@/components/chat-assistant"
-import { createServerClient } from "@/lib/supabase/server"
+import { createReadOnlyServerClient } from "@/lib/supabase/server"
 import type { Product } from "@/lib/types"
 
 async function getProducts(): Promise<Product[]> {
   try {
-    const supabase = await createServerClient()
+    const supabase = createReadOnlyServerClient()
     const { data: products, error } = await supabase
       .from('products')
       .select(`

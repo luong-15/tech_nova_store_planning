@@ -1,5 +1,6 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import https from "https"
 
 const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
@@ -9,6 +10,24 @@ const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
       rejectUnauthorized: false,
     }),
   } as any)
+}
+
+// Server client WITHOUT cookies - for read-only operations (fetching data)
+// This allows routes to be statically rendered
+export function createReadOnlyServerClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        fetch: customFetch,
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  )
 }
 
 export async function createServerClient() {
