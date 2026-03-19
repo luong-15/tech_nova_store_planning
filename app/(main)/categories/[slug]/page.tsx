@@ -43,17 +43,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   // Apply filters
   if (searchParams.price_min) {
-<<<<<<< HEAD
-    query = query.gte("price", parseInt(searchParams.price_min))
-  }
-  if (searchParams.price_max) {
-    query = query.lte("price", parseInt(searchParams.price_max))
-=======
     query = query.gte("price", Number.parseInt(searchParams.price_min))
   }
   if (searchParams.price_max) {
     query = query.lte("price", Number.parseInt(searchParams.price_max))
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
   }
   if (searchParams.brand) {
     query = query.eq("brand", searchParams.brand)
@@ -145,7 +138,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       <div className="grid gap-8 lg:grid-cols-4">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <SidebarFilter categoryId={category.id} />
+          <SidebarFilter />
         </div>
 
         {/* Products Grid */}
@@ -213,10 +206,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     .select("*")
     .eq("slug", params.slug)
     .single()
-<<<<<<< HEAD
-
-=======
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
   if (!category) {
     return {
       title: "Danh mục không tồn tại",

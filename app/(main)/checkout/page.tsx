@@ -81,11 +81,7 @@ export default function CheckoutPage() {
         .insert({
           user_id: null, // Anonymous order for now
           status: "pending",
-<<<<<<< HEAD
-          payment_status: data.payment_method === "cod" ? "pending" : "pending",
-=======
           payment_status: "pending",
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
           payment_method: data.payment_method,
           subtotal,
           shipping_fee: shipping,
@@ -256,11 +252,7 @@ export default function CheckoutPage() {
                         <FormControl>
                           <Textarea
                             placeholder="Nhập địa chỉ chi tiết"
-<<<<<<< HEAD
-                            className="min-h-[80px]"
-=======
                             className="min-h-20"
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
                             {...field}
                           />
                         </FormControl>
@@ -357,11 +349,7 @@ export default function CheckoutPage() {
                         <FormControl>
                           <Textarea
                             placeholder="Ghi chú về đơn hàng (tùy chọn)"
-<<<<<<< HEAD
-                            className="min-h-[80px]"
-=======
                             className="min-h-20"
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
                             {...field}
                           />
                         </FormControl>

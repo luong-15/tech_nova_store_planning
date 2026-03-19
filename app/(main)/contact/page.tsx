@@ -35,27 +35,6 @@ export default function ContactPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-<<<<<<< HEAD
-                <label className="text-sm font-medium">Họ tên *</label>
-                <Input placeholder="Nhập họ tên" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email *</label>
-                <Input type="email" placeholder="Nhập email" />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Số điện thoại</label>
-              <Input placeholder="Nhập số điện thoại" />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Chủ đề</label>
-              <Input placeholder="Nhập chủ đề" />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Nội dung *</label>
-              <Textarea placeholder="Nhập nội dung tin nhắn" rows={5} />
-=======
                 <label className="text-sm font-medium">Họ tên *
                 <Input placeholder="Nhập họ tên" />
                 </label>
@@ -80,7 +59,6 @@ export default function ContactPage() {
               <label className="text-sm font-medium">Nội dung *
               <Textarea placeholder="Nhập nội dung tin nhắn" rows={5} />
               </label>
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
             </div>
             <Button className="w-full">
               <Send className="mr-2 h-4 w-4" />
@@ -169,11 +147,7 @@ export default function ContactPage() {
             <CardTitle>Tìm đường đến cửa hàng</CardTitle>
           </CardHeader>
           <CardContent>
-<<<<<<< HEAD
-            <div className="aspect-[16/9] rounded-lg overflow-hidden">
-=======
             <div className="aspect-video rounded-lg overflow-hidden">
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
               <iframe
                 src="https://maps.google.com/maps?q=123%20Nguy%E1%BB%85n%20Hu%E1%BB%87,%20Qu%E1%BA%ADn%201,%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh&output=embed"
                 width="100%"

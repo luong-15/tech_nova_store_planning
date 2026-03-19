@@ -88,11 +88,7 @@ const features = [
 function AnimatedCounter({ value, label }: { value: string; label: string }) {
   const [count, setCount] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
-<<<<<<< HEAD
-  const numericValue = Number.parseInt(value.replace(/\D/g, ""))
-=======
   const numericValue = Number.parseInt(value.replaceAll(/\D/g, ""))
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -140,11 +136,7 @@ export default function AboutPage() {
     <>
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 md:py-32">
-<<<<<<< HEAD
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
-=======
         <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-transparent" />
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
         <div className="absolute -top-40 right-0 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
 
@@ -153,11 +145,7 @@ export default function AboutPage() {
             <h1 className="text-4xl font-bold leading-tight md:text-6xl">
               Kiến tạo tương lai
               <br />
-<<<<<<< HEAD
-              <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-=======
               <span className="bg-linear-to-r from-primary to-blue-400 bg-clip-text text-transparent">
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
                 Công nghệ số
               </span>
             </h1>
@@ -205,11 +193,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="relative">
-<<<<<<< HEAD
-              <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-primary/20 to-blue-500/20 blur-2xl" />
-=======
               <div className="absolute -inset-4 rounded-3xl bg-linear-to-r from-primary/20 to-blue-500/20 blur-2xl" />
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
               <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/50">
                 <Image
                   src="/modern-tech-office-workspace.jpg"
@@ -334,11 +318,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-<<<<<<< HEAD
-      <section className="border-t border-border/50 bg-gradient-to-r from-primary/10 via-background to-blue-500/10 py-20">
-=======
       <section className="border-t border-border/50 bg-linear-to-r from-primary/10 via-background to-blue-500/10 py-20">
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold md:text-4xl">Sẵn sàng khám phá?</h2>

@@ -50,24 +50,15 @@ const parseInlineMarkdown = (text: string): React.ReactNode => {
         return
       }
 
-<<<<<<< HEAD
-      matches.forEach((match) => {
-=======
       matches.forEach((match, matchIndex) => {
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
         if (match.index !== undefined) {
           if (match.index > lastIndex) {
             newResult.push(part.substring(lastIndex, match.index))
           }
           newResult.push(
             isCode 
-<<<<<<< HEAD
-              ? <code key={Math.random()} className="bg-slate-200 dark:bg-slate-700 px-1 rounded text-xs font-mono">{match[1]}</code>
-              : <span key={Math.random()} className={style}>{match[1]}</span>
-=======
               ? <code key={`code-${matchIndex}`} className="bg-slate-200 dark:bg-slate-700 px-1 rounded text-xs font-mono">{match[1]}</code>
               : <span key={`span-${matchIndex}`} className={style}>{match[1]}</span>
->>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
           )
           lastIndex = match.index + match[0].length
         }
