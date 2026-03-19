@@ -21,7 +21,11 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero Section */}
+<<<<<<< HEAD
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-20 md:py-32">
+=======
+      <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 py-20 md:py-32">
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
         <div className="absolute inset-0 bg-[url('/tech-pattern.jpg')] opacity-10" />
 
         <div className="container relative mx-auto px-4">
@@ -32,7 +36,11 @@ export default async function HomePage() {
             </Badge>
 
             <h1 className="mb-6 text-balance text-4xl font-bold leading-tight text-white md:text-6xl">
+<<<<<<< HEAD
               Khám phá thế giới công nghệ
+=======
+              Khám phá thế giới công nghệ{' '}
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
               <span className="text-blue-400"> TechNova</span>
             </h1>
 
@@ -61,7 +69,11 @@ export default async function HomePage() {
         </div>
 
         {/* Decorative elements */}
+<<<<<<< HEAD
         <div className="absolute -bottom-1 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
+=======
+        <div className="absolute -bottom-1 left-0 right-0 h-20 bg-linear-to-t from-background to-transparent" />
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
       </section>
 
       {/* Categories Section */}
@@ -79,7 +91,11 @@ export default async function HomePage() {
                 href={`/categories/${category.slug}`}
                 className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-xl"
               >
+<<<<<<< HEAD
                 <div className="aspect-[16/9] overflow-hidden bg-muted">
+=======
+                <div className="aspect-video overflow-hidden bg-muted">
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
                   <div
                     className="h-full w-full bg-cover bg-center transition-transform group-hover:scale-105"
                     style={{
@@ -99,7 +115,11 @@ export default async function HomePage() {
 
       {/* Deal Products Section */}
       {dealProducts && dealProducts.length > 0 && (
+<<<<<<< HEAD
         <section className="bg-gradient-to-br from-blue-950/50 to-background py-16">
+=======
+        <section className="bg-linear-to-br from-blue-950/50 to-background py-16">
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
           <div className="container mx-auto px-4">
             <div className="mb-12 flex items-center justify-between">
               <div>

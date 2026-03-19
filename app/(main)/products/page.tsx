@@ -150,13 +150,22 @@ function ProductsPageContent() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex gap-8">
           <div className="hidden w-64 shrink-0 lg:block">
+<<<<<<< HEAD
             <Skeleton className="h-[600px] w-full rounded-xl" />
+=======
+            <Skeleton className="h-150 w-full rounded-xl" />
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
           </div>
           <div className="flex-1">
             <Skeleton className="mb-6 h-12 w-full rounded-lg" />
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+<<<<<<< HEAD
               {[...Array(6)].map((_, i) => (
                 <Skeleton key={i} className="h-[400px] w-full rounded-xl" />
+=======
+              {[...new Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-100 w-full rounded-xl" />
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
               ))}
             </div>
           </div>
@@ -176,7 +185,11 @@ function ProductsPageContent() {
         {/* Mobile Filter Drawer */}
         {showMobileFilter && (
           <div className="fixed inset-0 z-50 lg:hidden">
+<<<<<<< HEAD
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMobileFilter(false)} />
+=======
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" role="button" tabIndex={0  } onClick={() => setShowMobileFilter(false)} onKeyDown={(e) => { if (e.key === 'Enter') setShowMobileFilter(false) }}/>
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
             <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] animate-in slide-in-from-left">
               <div className="flex h-full flex-col bg-background">
                 <div className="flex items-center justify-between border-b p-4">
@@ -242,7 +255,11 @@ function ProductsPageContent() {
             </div>
 
             <Select value={sortBy} onValueChange={setSortBy}>
+<<<<<<< HEAD
               <SelectTrigger className="w-[180px] bg-transparent">
+=======
+              <SelectTrigger className="w-45 bg-transparent">
+>>>>>>> 4480792bdf64cdb62bb1909171128febac403c47
                 <SelectValue placeholder="Sắp xếp theo" />
               </SelectTrigger>
               <SelectContent>

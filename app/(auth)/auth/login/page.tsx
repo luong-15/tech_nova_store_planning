@@ -391,7 +391,7 @@ export default function LoginPage() {
                     {signupPassword && (
                       <div className="space-y-2">
                         <div className="flex gap-1">
-                          {[...Array(5)].map((_, i) => (
+                          {[...new Array(5)].map((_, i) => (
                             <div
                               key={i}
                               className={`h-1.5 flex-1 rounded-full transition-all ${
