@@ -81,7 +81,7 @@ export default function CheckoutPage() {
         .insert({
           user_id: null, // Anonymous order for now
           status: "pending",
-          payment_status: data.payment_method === "cod" ? "pending" : "pending",
+          payment_status: "pending",
           payment_method: data.payment_method,
           subtotal,
           shipping_fee: shipping,
@@ -252,7 +252,7 @@ export default function CheckoutPage() {
                         <FormControl>
                           <Textarea
                             placeholder="Nhập địa chỉ chi tiết"
-                            className="min-h-[80px]"
+                            className="min-h-20"
                             {...field}
                           />
                         </FormControl>
@@ -349,7 +349,7 @@ export default function CheckoutPage() {
                         <FormControl>
                           <Textarea
                             placeholder="Ghi chú về đơn hàng (tùy chọn)"
-                            className="min-h-[80px]"
+                            className="min-h-20"
                             {...field}
                           />
                         </FormControl>

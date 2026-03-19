@@ -64,7 +64,7 @@ export default function ComparePage() {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[800px]">
+        <div className="min-w-200">
           {/* Product Headers */}
           <div className="grid gap-4 mb-6" style={{ gridTemplateColumns: `200px repeat(${products.length}, 1fr)` }}>
             <div className="font-semibold text-muted-foreground">Sản phẩm</div>
@@ -137,7 +137,7 @@ export default function ComparePage() {
                 {specKeys.map((key) => (
                   <div key={key} className="grid gap-4 p-4" style={{ gridTemplateColumns: `200px repeat(${products.length}, 1fr)` }}>
                     <div className="font-medium text-sm">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                      {key.replaceAll(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                     </div>
                     {products.map((product) => (
                       <div key={product.id} className="text-sm">
