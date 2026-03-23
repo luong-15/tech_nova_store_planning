@@ -19,15 +19,13 @@ async function getProducts(): Promise<Product[]> {
       .limit(50)
 
     if (error) {
-      console.error('Error fetching products:', error.message || error)
-      // Return fallback products if database is not set up
+      console.log('Supabase error - using fallback products:', error.message)
       return getFallbackProducts()
     }
 
     return products || []
-  } catch (error) {
-    console.error('Error in getProducts:', error)
-    // Return fallback products if there's any error
+  } catch (error: any) {
+    console.log('Fetch error in getProducts - using fallback products:', error.message || error)
     return getFallbackProducts()
   }
 }

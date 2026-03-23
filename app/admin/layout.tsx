@@ -49,7 +49,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setUser({
             id: "dev-admin",
             full_name: "Admin User",
-            email: "admin@example.com",
             phone: "",
             address: "",
             city: "",
@@ -262,7 +261,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               transition-transform duration-300 ease-in-out
               ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
               lg:relative lg:translate-x-0 lg:w-64 lg:p-0 lg:bg-transparent lg:border-none
-            `.replace(/\s+/g, ' ').trim()}
+            `.replaceAll(/\s+/g, ' ').trim()}
           >
             <div className="sticky top-24 space-y-6">
               <div className="rounded-xl border border-border/50 bg-card/50 p-5 backdrop-blur-sm">
@@ -315,8 +314,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {sidebarOpen && (
             <div
+              role="button"
+              tabIndex={0}
               className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
               onClick={() => setSidebarOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                  e.preventDefault()
+                  setSidebarOpen(false)
+                }
+              }}
+              aria-label="Đóng sidebar"
             />
           )}
 

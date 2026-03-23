@@ -9,6 +9,7 @@ interface CartState {
   // Actions
   addToCart: (product: Product) => void
   removeItem: (productId: string) => void
+  removeFromCart: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
   toggleCart: () => void
@@ -17,6 +18,7 @@ interface CartState {
 
   // Computed
   getTotalItems: () => number
+  getItemCount: () => number
   getSubtotal: () => number
 }
 
@@ -48,6 +50,10 @@ export const useCartStore = create<CartState>()(
         set({ cartItems: get().cartItems.filter((item) => item.product.id !== productId) })
       },
 
+      removeFromCart: (productId) => {
+        set({ cartItems: get().cartItems.filter((item) => item.product.id !== productId) })
+      },
+
       updateQuantity: (productId, quantity) => {
         if (quantity <= 0) {
           get().removeItem(productId)
@@ -64,6 +70,7 @@ export const useCartStore = create<CartState>()(
       closeCart: () => set({ isOpen: false }),
 
       getTotalItems: () => get().cartItems.reduce((sum, item) => sum + item.quantity, 0),
+      getItemCount: () => get().cartItems.length,
 
       getSubtotal: () => get().cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
     }),
