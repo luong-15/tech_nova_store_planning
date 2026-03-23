@@ -100,10 +100,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="container mx-auto px-4 py-8">
           <div className="flex gap-8">
             <div className="hidden w-64 lg:block">
-              <Skeleton className="h-[400px] w-full rounded-xl" />
+              <Skeleton className="h-100 w-full rounded-xl" />
             </div>
             <div className="flex-1">
-              <Skeleton className="h-[600px] w-full rounded-xl" />
+              <Skeleton className="h-150 w-full rounded-xl" />
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Button
             variant="outline"
             size="icon"
-            className="fixed bottom-6 right-6 z-[70] h-12 w-12 rounded-full shadow-lg lg:hidden bg-primary text-primary-foreground hover:bg-primary/90"
+            className="fixed bottom-6 right-6 z-70 h-12 w-12 rounded-full shadow-lg lg:hidden bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -152,11 +152,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <aside
             className={`
-              fixed inset-y-0 left-0 z-[60] w-72 bg-background border-r border-border/50 p-6 
+              fixed inset-y-0 left-0 z-60 w-72 bg-background border-r border-border/50 p-6 
               transition-transform duration-300 ease-in-out
               ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
               lg:relative lg:translate-x-0 lg:w-64 lg:p-0 lg:bg-transparent lg:border-none
-            `.replace(/\s+/g, ' ').trim()}
+            `.replaceAll(/\s+/g, ' ').trim()}
           >
             <div className="sticky top-24 space-y-6">
               <div className="rounded-xl border border-border/50 bg-card/50 p-5 backdrop-blur-sm">

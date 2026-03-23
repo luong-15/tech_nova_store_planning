@@ -3,7 +3,7 @@ import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "50")
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { id, ...productData } = await request.json()
 
     const { data, error } = await supabase
@@ -75,7 +75,7 @@ export async function PUT(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const productData = await request.json()
 
     const { data, error } = await supabase
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 

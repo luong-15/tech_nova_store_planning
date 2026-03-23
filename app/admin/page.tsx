@@ -282,10 +282,10 @@ export default function AdminDashboard() {
 
     const productData = {
       ...productForm,
-      price: parseFloat(productForm.price),
-      original_price: productForm.original_price ? parseFloat(productForm.original_price) : null,
-      discount_price: productForm.discount_price ? parseFloat(productForm.discount_price) : null,
-      stock: parseInt(productForm.stock),
+      price: Number.parseFloat(productForm.price),
+      original_price: productForm.original_price ? Number.parseFloat(productForm.original_price) : null,
+      discount_price: productForm.discount_price ? Number.parseFloat(productForm.discount_price) : null,
+      stock: Number.parseInt(productForm.stock),
       category_id: productForm.category_id || null,
       images: productForm.images ? productForm.images.split(",").map(img => img.trim()) : [],
       specs: productForm.specs ? JSON.parse(productForm.specs) : null,
@@ -293,9 +293,7 @@ export default function AdminDashboard() {
 
     try {
       const method = selectedProduct ? "PUT" : "POST"
-      const url = selectedProduct
-        ? "/api/admin/products"
-        : "/api/admin/products"
+      const url = "/api/admin/products"
 
       const response = await fetch(url, {
         method,
@@ -348,9 +346,7 @@ export default function AdminDashboard() {
 
     try {
       const method = selectedCategory ? "PUT" : "POST"
-      const url = selectedCategory
-        ? "/api/admin/categories"
-        : "/api/admin/categories"
+      const url = "/api/admin/categories"
 
       const response = await fetch(url, {
         method,
@@ -490,7 +486,7 @@ export default function AdminDashboard() {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+          {[...new Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
@@ -580,7 +576,7 @@ export default function AdminDashboard() {
                 <Skeleton className="h-10 w-32" />
               </div>
               <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
+                {[...new Array(5)].map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
@@ -889,23 +885,35 @@ export default function AdminDashboard() {
                                 <div className="flex flex-wrap gap-2">
                                   {product.image_url && (
                                     <div className="text-center">
-                                      <img
-                                        src={product.image_url}
-                                        alt="Ảnh chính"
-                                        className="w-16 h-16 object-cover rounded border cursor-pointer"
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-auto p-0 hover:bg-transparent"
                                         onClick={() => window.open(product.image_url, '_blank')}
-                                      />
+                                      >
+                                        <img
+                                          src={product.image_url}
+                                          alt="Ảnh chính"
+                                          className="w-16 h-16 object-cover rounded border"
+                                        />
+                                      </Button>
                                       <div className="text-xs text-muted-foreground mt-1">Ảnh chính</div>
                                     </div>
                                   )}
                                   {product.images && product.images.map((image, index) => (
                                     <div key={index} className="text-center">
-                                      <img
-                                        src={image}
-                                        alt={`Ảnh phụ ${index + 1}`}
-                                        className="w-16 h-16 object-cover rounded border cursor-pointer"
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-auto p-0 hover:bg-transparent"
                                         onClick={() => window.open(image, '_blank')}
-                                      />
+                                      >
+                                        <img
+                                          src={image}
+                                          alt={`Ảnh phụ ${index + 1}`}
+                                          className="w-16 h-16 object-cover rounded border"
+                                        />
+                                      </Button>
                                       <div className="text-xs text-muted-foreground mt-1">Ảnh phụ {index + 1}</div>
                                     </div>
                                   ))}
@@ -1114,12 +1122,18 @@ export default function AdminDashboard() {
                   <TableCell>
                     {category.image_url ? (
                       <div className="flex items-center gap-2">
-                        <img
-                          src={category.image_url}
-                          alt={category.name}
-                          className="w-12 h-12 object-cover rounded border cursor-pointer"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-0 hover:bg-transparent"
                           onClick={() => window.open(category.image_url, '_blank')}
-                        />
+                        >
+                          <img
+                            src={category.image_url}
+                            alt={category.name}
+                            className="w-12 h-12 object-cover rounded border"
+                          />
+                        </Button>
                       </div>
                     ) : (
                       <Badge variant="secondary" className="text-xs">Không có ảnh</Badge>
@@ -1320,13 +1334,12 @@ export default function AdminDashboard() {
               {users
                 .filter(user =>
                   (user.full_name && user.full_name.toLowerCase().includes(debouncedUsersSearch.toLowerCase())) ||
-                  (user.email && user.email.toLowerCase().includes(debouncedUsersSearch.toLowerCase())) ||
                   (user.phone && user.phone.toLowerCase().includes(debouncedUsersSearch.toLowerCase()))
                 )
                 .map((user) => (
                 <TableRow key={user.id || '-'}>
                   <TableCell>{user.full_name || '-'}</TableCell>
-                  <TableCell>{user.email || '-'}</TableCell>
+                  <TableCell>-</TableCell>
                   <TableCell>{user.phone || '-'}</TableCell>
                   <TableCell>{user.address || '-'}</TableCell>
                   <TableCell>{user.city || '-'}</TableCell>

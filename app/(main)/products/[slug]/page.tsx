@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/currency"
 import { ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw, Star, Clock } from "lucide-react"
-import { toast } from "sonner"
+import { notifyCartAdded, notifyWishlistAdded, notifyWishlistRemoved, notifyError, notifyInfo } from "@/lib/notifications"
 import Link from "next/link"
 import type { Product, Review, UserProfile } from "@/lib/types"
 
@@ -105,7 +105,7 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (product) {
       addToCart(product)
-      toast.success(`${product.name} đã được thêm vào giỏ hàng!`)
+      notifyCartAdded(product.name, () => useCartStore.getState().removeFromCart(product.id))
     }
   }
 
@@ -116,7 +116,7 @@ export default function ProductPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      toast.error("Vui lòng đăng nhập để thêm vào danh sách yêu thích")
+      notifyError("Vui lòng đăng nhập để thêm vào danh sách yêu thích")
       return
     }
 
@@ -132,7 +132,7 @@ export default function ProductPage() {
         if (error) throw error
 
         setIsInWishlist(false)
-        toast.success("Đã xóa khỏi danh sách yêu thích")
+        notifyWishlistRemoved(product.name)
       } else {
         // Add to wishlist
         const { error } = await supabase
@@ -145,11 +145,15 @@ export default function ProductPage() {
         if (error) throw error
 
         setIsInWishlist(true)
-        toast.success("Đã thêm vào danh sách yêu thích")
+        notifyWishlistAdded(product.name, () => {
+          // Undo wishlist add - refetch wishlist status or direct delete
+          supabase.from("wishlist").delete().eq("user_id", user.id).eq("product_id", product.id)
+          setIsInWishlist(false)
+        })
       }
     } catch (error) {
       console.error("Wishlist error:", error)
-      toast.error("Có lỗi xảy ra, vui lòng thử lại")
+      notifyError("Có lỗi xảy ra, vui lòng thử lại")
     }
   }
 
@@ -165,6 +169,7 @@ export default function ProductPage() {
           text: product.description,
           url: url,
         })
+        notifyInfo("Đã chia sẻ sản phẩm")
       } catch (error) {
         // User cancelled share or error occurred
         console.log("Share cancelled or failed")
@@ -173,9 +178,9 @@ export default function ProductPage() {
       // Fallback to clipboard
       try {
         await navigator.clipboard.writeText(url)
-        toast.success("Đã sao chép liên kết sản phẩm")
+        notifyInfo("Đã sao chép liên kết sản phẩm")
       } catch (error) {
-        toast.error("Không thể sao chép liên kết")
+        notifyError("Không thể sao chép liên kết")
       }
     }
   }
@@ -355,7 +360,7 @@ export default function ProductPage() {
         {/* Product Details Tabs */}
         <div className="mt-12">
           <Tabs defaultValue="specs" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+            <TabsList className="grid w-full grid-cols-3 lg:w-100">
               <TabsTrigger value="specs">Thông số</TabsTrigger>
               <TabsTrigger value="description">Mô tả</TabsTrigger>
               <TabsTrigger value="reviews">Đánh giá ({reviews.length})</TabsTrigger>

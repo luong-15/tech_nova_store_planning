@@ -3,10 +3,10 @@ import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "50")
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const limit = Number.parseInt(searchParams.get("limit") || "50")
     const search = searchParams.get("search") || ""
 
     const offset = (page - 1) * limit
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     if (profilesError) throw profilesError
 
     // Get auth users data to include emails (only for the profiles we fetched)
-    const userIds = profiles?.map(p => p.id) || []
+    const userIds = profiles?.map((p: any) => p.id) || []
     const { data, error: authError } = await supabase.auth.admin.listUsers()
 
     if (authError) throw authError
@@ -36,8 +36,8 @@ export async function GET(request: Request) {
     const authUsers = data?.users || []
 
     // Combine profile data with auth email data
-    const usersWithEmails = profiles?.map(profile => {
-      const authUser = authUsers.find(user => user.id === profile.id)
+    const usersWithEmails = profiles?.map((profile: any) => {
+      const authUser = authUsers.find((user: any) => user.id === profile.id)
       return {
         ...profile,
         email: authUser?.email || null
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { id, ...userData } = await request.json()
 
     const { data, error } = await supabase
@@ -81,7 +81,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 
