@@ -5,8 +5,8 @@ export async function GET(request: Request) {
   try {
     const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "50")
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const limit = Number.parseInt(searchParams.get("limit") || "50")
     const search = searchParams.get("search") || ""
     const categoryId = searchParams.get("category_id") || ""
 

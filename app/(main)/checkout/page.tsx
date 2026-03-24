@@ -67,25 +67,19 @@ export default function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
-      // Create order in Supabase
-      const supabase = await createClient()
-
       // Calculate totals
       const subtotal = getSubtotal()
       const shipping = subtotal >= 500000 ? 0 : 30000
       const total = subtotal + shipping
 
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: null, // Anonymous order for now
-          status: "pending",
-          payment_status: "pending",
-          payment_method: data.payment_method,
+      // Send to /api/orders
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
           subtotal,
           shipping_fee: shipping,
-          tax: 0,
           total,
           shipping_name: data.shipping_name,
           shipping_email: data.shipping_email,
@@ -93,42 +87,67 @@ export default function CheckoutPage() {
           shipping_address: data.shipping_address,
           shipping_city: data.shipping_city,
           shipping_postal_code: data.shipping_postal_code,
+          payment_method: data.payment_method,
           notes: data.notes,
-        })
-        .select()
-        .single()
+        }),
+      })
 
-      if (orderError) {
-        console.error("Order creation error:", orderError)
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
         toast.error("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.")
         return
       }
 
-      // Create order items
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        product_name: item.product.name,
-        product_image: item.product.image_url,
-        quantity: item.quantity,
-        price: item.product.price,
-      }))
+      clearCart()
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems)
-
-      if (itemsError) {
-        console.error("Order items creation error:", itemsError)
-        toast.error("Có lỗi xảy ra khi tạo chi tiết đơn hàng. Vui lòng thử lại.")
+      if (data.payment_method === 'cod') {
+        toast.success("Đặt hàng thành công!")
+        router.push(`/order-success?order_id=${result.order_id}`)
         return
       }
 
-      // Clear cart after successful order
-      clearCart()
+      // For online payment: create PaymentIntent
+      const intentResponse = await fetch('/api/stripe/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: result.order_id,
+          amount: total,
+        }),
+      })
 
-      toast.success("Đặt hàng thành công!")
-      router.push("/order-success")
+      const { client_secret } = await intentResponse.json()
+
+      if (!client_secret) {
+        toast.error("Lỗi tạo thanh toán")
+        return
+      }
+
+      // Use Stripe Elements for card payment (simple Elements integration)
+      // For full Checkout, use Stripe.redirectToCheckout
+      // Here using Elements for embedded form (requires loadStripe)
+
+      // Load Stripe
+      const { loadStripe } = await import('@stripe/stripe-js')
+      const stripe = await loadStripe((await (await fetch('/api/stripe/config')).json()).publishableKey!)
+
+      if (!stripe) return
+
+      const { error } = await stripe.confirmCardPayment(client_secret, {
+        payment_method: {
+          card: (document.getElementById('card-element') as any)?.value || undefined, // Requires Elements on page
+        }
+      })
+
+      if (error) {
+        toast.error(error.message || 'Thanh toán thất bại')
+        return
+      }
+
+      toast.success("Thanh toán thành công!")
+      router.push(`/order-success?order_id=${result.order_id}`)
+
     } catch (error) {
       console.error("Checkout error:", error)
       toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.")

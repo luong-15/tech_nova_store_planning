@@ -196,8 +196,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <div className="pt-4 mt-4 border-t border-border/50">
                   <button
+                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleLogout()
+                      }
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
                   >
                     <LogOut className="h-4 w-4" />
                     Đăng xuất

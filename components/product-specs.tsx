@@ -74,8 +74,8 @@ export function ProductSpecs({ specifications }: ProductSpecsProps) {
 function formatSpecKey(key: string): string {
   // Convert camelCase or snake_case to Title Case
   return key
-    .replace(/([A-Z])/g, " $1")
-    .replace(/_/g, " ")
+    .replaceAll(/([A-Z])/g, " $1")
+    .replaceAll(/_/g, " ")
     .replace(/^./, (str) => str.toUpperCase())
     .trim()
 }

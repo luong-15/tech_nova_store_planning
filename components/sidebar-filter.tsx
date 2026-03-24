@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, X, RotateCcw } from "lucide-react"
+import { ChevronDown, X, RotateCw } from "lucide-react"
 import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
@@ -257,7 +257,7 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
               activeCount > 0 ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 pointer-events-none",
             )}
           >
-            <RotateCcw className={cn("h-3 w-3 transition-transform", isClearing && "animate-spin")} />
+            <RotateCw className={cn("h-3 w-3 transition-transform", isClearing && "animate-spin")} />
             Xóa tất cả
           </Button>
         </div>
@@ -319,8 +319,16 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
             return (
               <div key={section.id} className="pb-4 border-b border-border last:border-0 last:pb-0">
                 <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => toggleSection(section.id)}
-                  className="flex items-center justify-between w-full group py-1 cursor-pointer"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      toggleSection(section.id)
+                    }
+                  }}
+                  className="flex items-center justify-between w-full group py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 hover:bg-accent p-0 border-none bg-transparent"
                 >
                   <div className="flex items-center gap-2">
                     <Label className="text-sm font-medium cursor-pointer">{section.label}</Label>
@@ -376,6 +384,8 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
 
                         return (
                           <div
+                            role="button"
+                            tabIndex={0}
                             key={option.value}
                             className={cn(
                               "flex items-center justify-between group/item rounded-lg px-2 py-2 transition-all duration-200 cursor-pointer",
@@ -386,6 +396,13 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
                             )}
                             style={{ animationDelay: `${index * 30}ms` }}
                             onClick={() => handleCheckboxChange(sectionKey, option.value, !isSelected)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                handleCheckboxChange(sectionKey, option.value, !isSelected)
+                              }
+                            }}
+                            title={option.label}
                           >
                             <div className="flex items-center space-x-3 flex-1">
                               <Checkbox
@@ -451,3 +468,4 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
     </aside>
   )
 }
+
