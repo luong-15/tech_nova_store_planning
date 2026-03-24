@@ -124,7 +124,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left Side - Branding */}
-      <div className="hidden w-1/2 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 lg:flex lg:flex-col lg:justify-between p-12">
+      <div className="hidden w-1/2 bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 lg:flex lg:flex-col lg:justify-between p-12">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
             <Zap className="h-6 w-6 text-white" />

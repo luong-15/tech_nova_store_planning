@@ -138,7 +138,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       <div className="grid gap-8 lg:grid-cols-4">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <SidebarFilter categoryId={category.id} />
+          <SidebarFilter />
         </div>
 
         {/* Products Grid */}
