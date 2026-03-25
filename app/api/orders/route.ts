@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
-        user_id: null,
+        user_id: body.user_id,
         order_number: `TN${Date.now()}`,
         status,
         payment_method,

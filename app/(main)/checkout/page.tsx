@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSupabaseSessionContext } from "@/hooks/use-session"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -15,7 +16,8 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { formatCurrency } from "@/lib/currency"
-import { ChevronRight, CreditCard, Truck, MapPin, User, Phone, Mail, Package, ArrowLeft } from "lucide-react"
+import { ChevronRight, CreditCard, Truck, MapPin, User, Phone, Mail, Package, ArrowLeft, Smartphone } from "lucide-react"
+import React, { useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -39,12 +41,89 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { cartItems: items, getSubtotal, clearCart } = useCartStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [qrData, setQrData] = useState<any>(null)
+  const [isPolling, setIsPolling] = useState(false)
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+
+  // Polling function
+  const startPolling = () => {
+    if (!qrData?.order_id || isPolling) return
+
+    setIsPolling(true)
+    const interval = setInterval(async () => {
+      try {
+        const statusRes = await fetch(`/api/orders/${qrData.order_id}/status`)
+        const statusData = await statusRes.json()
+
+        if (statusData.isPaid) {
+          clearInterval(interval)
+          setIsPolling(false)
+          toast.success("Thanh toán thành công!")
+          router.push(`/order-success?order_id=${qrData.order_id}`)
+        }
+      } catch (error) {
+        console.error('Polling error:', error)
+      }
+    }, 5000)
+
+    setPollInterval(interval)
+  }
+
+  const stopPolling = () => {
+    if (pollInterval) {
+      clearInterval(pollInterval)
+      setPollInterval(null)
+    }
+    setIsPolling(false)
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollInterval) stopPolling()
+    }
+  }, [])
+
+  // Get user session
+  const supabase = createClient()
+  const sessionContext = useSupabaseSessionContext()
+  const session = sessionContext.data.session
+  
+  useEffect(() => {
+    if (session?.user) {
+      // Pre-fill form with user info
+      form.setValue('shipping_email', session.user.email || '')
+      
+      // Fetch profile
+      supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (profile) {
+            form.reset({
+              shipping_name: profile.full_name || '',
+              shipping_email: session.user.email || '',
+              shipping_phone: profile.phone || '',
+              shipping_city: profile.city || '',
+              shipping_address: profile.address || '',
+              payment_method: "cod",
+              notes: "",
+            }, { keepDefaultValues: true })
+          }
+        })
+    } else {
+      router.push('/auth/login')
+      toast.error('Vui lòng đăng nhập để thanh toán')
+    }
+  }, [session])
 
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      shipping_name: "",
-      shipping_email: "",
+      shipping_name: session?.user_metadata?.full_name || "",
+      shipping_email: session?.user?.email || "",
       shipping_phone: "",
       shipping_address: "",
       shipping_city: "",
@@ -53,6 +132,7 @@ export default function CheckoutPage() {
       notes: "",
     },
   })
+
 
   const subtotal = getSubtotal()
   const shipping = subtotal >= 500000 ? 0 : 30000
@@ -107,46 +187,27 @@ export default function CheckoutPage() {
         return
       }
 
-      // For online payment: create PaymentIntent
-      const intentResponse = await fetch('/api/stripe/create-intent', {
+      // VietQR for online payment
+      const qrRes = await fetch('/api/vietqr/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           order_id: result.order_id,
-          amount: total,
+          total,
         }),
       })
 
-      const { client_secret } = await intentResponse.json()
+      const qrResult = await qrRes.json()
 
-      if (!client_secret) {
-        toast.error("Lỗi tạo thanh toán")
+      if (!qrRes.ok || !qrResult.success) {
+        toast.error(qrResult.error || "Lỗi tạo QR")
         return
       }
 
-      // Use Stripe Elements for card payment (simple Elements integration)
-      // For full Checkout, use Stripe.redirectToCheckout
-      // Here using Elements for embedded form (requires loadStripe)
+      setQrData(qrResult)
+      toast.info("Đã tạo đơn hàng! Quét QR để thanh toán.")
 
-      // Load Stripe
-      const { loadStripe } = await import('@stripe/stripe-js')
-      const stripe = await loadStripe((await (await fetch('/api/stripe/config')).json()).publishableKey!)
 
-      if (!stripe) return
-
-      const { error } = await stripe.confirmCardPayment(client_secret, {
-        payment_method: {
-          card: (document.getElementById('card-element') as any)?.value || undefined, // Requires Elements on page
-        }
-      })
-
-      if (error) {
-        toast.error(error.message || 'Thanh toán thất bại')
-        return
-      }
-
-      toast.success("Thanh toán thành công!")
-      router.push(`/order-success?order_id=${result.order_id}`)
 
     } catch (error) {
       console.error("Checkout error:", error)
@@ -333,16 +394,16 @@ export default function CheckoutPage() {
                             <div className="flex items-center space-x-3 rounded-lg border p-4">
                               <RadioGroupItem value="online" id="online" />
                               <div className="flex-1">
-                                <label
-                                  htmlFor="online"
-                                  className="flex items-center gap-2 font-medium cursor-pointer"
-                                >
-                                  <CreditCard className="h-4 w-4" />
-                                  Thanh toán online
-                                </label>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  Thanh toán qua thẻ tín dụng, ví điện tử
-                                </p>
+          <label
+            htmlFor="online"
+            className="flex items-center gap-2 font-medium cursor-pointer"
+          >
+            <Smartphone className="h-4 w-4" />
+            Thanh toán VietQR
+          </label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Quét QR bằng app ngân hàng Vietcombank
+          </p>
                               </div>
                             </div>
                           </RadioGroup>
@@ -378,7 +439,59 @@ export default function CheckoutPage() {
                   />
                 </CardContent>
               </Card>
+
+              {/* VietQR Payment */}
+              {qrData && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Smartphone className="h-5 w-5" />
+                      Thanh toán VietQR
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-4">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-48 w-48 rounded-xl border-2 border-dashed border-muted p-2">
+                        <Image
+                          src={qrData.qr_url}
+                          alt="VietQR Code"
+                          width={200}
+                          height={200}
+                          className="mx-auto rounded-lg"
+                        />
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <p><strong>Số tiền:</strong> {formatCurrency(qrData.amount)}</p>
+                        <p><strong>Số TK:</strong> {qrData.account_no}</p>
+                        <p><strong>Chủ TK:</strong> {qrData.account_name}</p>
+                        <p><strong>Nội dung:</strong> {qrData.order_number}</p>
+                      </div>
+                      <p className="mt-4 text-xs text-muted-foreground text-center">
+                        {qrData.instructions}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        className="flex-1" 
+                        onClick={startPolling}
+                        disabled={isPolling}
+                      >
+                        {isPolling ? "Đang kiểm tra..." : "Kiểm tra thanh toán"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={stopPolling}
+                      >
+                        Hủy
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </form>
+
           </Form>
         </div>
 
