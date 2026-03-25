@@ -1,31 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import https from 'https'
-
-// Service role direct client (bypass RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    },
-    global: {
-      fetch: (url: RequestInfo | URL, options: RequestInit = {}) => {
-        return fetch(url, {
-          ...options,
-          agent: new https.Agent({
-            rejectUnauthorized: false,
-          }),
-        } as any)
-      }
-    }
-  }
-)
+import { createAdminServerClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = await createAdminServerClient()
+    
     const body = await request.json()
 
     const {
@@ -42,6 +21,9 @@ export async function POST(request: NextRequest) {
       payment_method,
       notes
     } = body
+
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
 
     const status = payment_method === 'cod' ? 'processing' : 'pending'
 

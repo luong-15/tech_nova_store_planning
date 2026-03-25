@@ -205,7 +205,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
 
     const userImages = selectedImages.map((file) => URL.createObjectURL(file));
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: "user",
       content: input.trim(),
       timestamp: new Date(),
@@ -244,7 +244,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
 
       const data = await response.json();
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: "assistant",
         content: data.response,
         timestamp: new Date(),
@@ -253,11 +253,11 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
     } catch (error) {
       console.error("Error:", error);
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: "assistant",
         content: "Xin lỗi, tôi gặp chút sự cố kết nối. Thử lại sau nhé!",
-        timestamp: new Date(),
-      };
+         timestamp: new Date(),
+        };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
