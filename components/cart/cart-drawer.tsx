@@ -23,8 +23,8 @@ export function CartDrawer() {
 
   return (
     <Sheet open={isOpen} onOpenChange={closeCart}>
-      <SheetContent className="flex w-full flex-col border-l border-border/50 bg-background/95 backdrop-blur-xl sm:max-w-lg p-[15px]">
-        <SheetHeader className="space-y-2.5 pr-6">
+      <SheetContent className="flex h-full max-h-screen w-full flex-col border-l border-border/50 bg-background/95 backdrop-blur-xl sm:max-w-lg p-3.75">
+        <SheetHeader className="shrink-0 space-y-2.5 pr-6">
           <SheetTitle className="flex items-center gap-2 text-xl">
             <ShoppingBag className="h-5 w-5 text-primary" />
             Giỏ hàng
@@ -37,7 +37,7 @@ export function CartDrawer() {
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 py-12">
             <div className="relative">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5">
+              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5">
                 <ShoppingBag className="h-14 w-14 text-primary/50" />
               </div>
               <div className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
@@ -46,7 +46,7 @@ export function CartDrawer() {
             </div>
             <div className="text-center">
               <h3 className="text-xl font-semibold">Giỏ hàng trống</h3>
-              <p className="mt-2 max-w-[250px] text-sm text-muted-foreground">
+              <p className="mt-2 max-w-62.5 text-sm text-muted-foreground">
                 Hãy khám phá các sản phẩm công nghệ tuyệt vời và thêm vào giỏ hàng!
               </p>
             </div>
@@ -59,7 +59,8 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
-            <div className="border-b border-border/50 pb-4">
+
+            <div className="shrink-0 border-b border-border/50 pb-4 mt-4">
               {subtotal < freeShippingThreshold ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
@@ -72,7 +73,7 @@ export function CartDrawer() {
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-blue-400 transition-all duration-500 ease-out"
+                      className="h-full rounded-full bg-linear-to-r from-primary to-blue-400 transition-all duration-500 ease-out"
                       style={{ width: `${progressPercentage}%` }}
                     />
                   </div>
@@ -85,7 +86,7 @@ export function CartDrawer() {
               )}
             </div>
 
-            <ScrollArea className="flex-1 -mx-6 px-6">
+            <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
               <div className="space-y-4 py-4">
                 {items.map((item, index) => (
                   <div
@@ -167,7 +168,7 @@ export function CartDrawer() {
               </div>
             </ScrollArea>
 
-            <div className="border-t border-border/50 pt-4">
+            <div className="shrink-0 border-t border-border/50 pt-4">
               {/* Benefits */}
               <div className="mb-4 grid grid-cols-3 gap-2 text-center text-xs">
                 <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2">

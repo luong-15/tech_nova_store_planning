@@ -62,7 +62,7 @@ export function ProductCard({ product }: ProductCardProps) {
           className="flex-1 bg-linear-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isInCart}
         >
-          {isInCart ? "✓ Trong giỏ" : "🛒 Thêm vào giỏ"}
+          {isInCart ? "✓ Trong giỏ" : "Thêm vào giỏ"}
         </button>
         <button
           onClick={handleAddToComparison}
@@ -75,7 +75,7 @@ export function ProductCard({ product }: ProductCardProps) {
           }`}
           disabled={!canAddProduct(product)}
         >
-          {isProductInComparison(product.id) ? "✓ So sánh" : "⚖️ So sánh"}
+          {isProductInComparison(product.id) ? "✓ So sánh" : "So sánh"}
         </button>
       </div>
     </div>
