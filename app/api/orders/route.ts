@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminServerClient } from '@/lib/supabase/server'
+import { createAdminServerClient, createReadOnlyServerClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,8 +19,13 @@ export async function POST(request: NextRequest) {
       shipping_city,
       shipping_postal_code,
       payment_method,
-      notes
+      notes,
+      user_id
     } = body
+
+// Get current user for RLS (using read-only client)
+    const supabase = createReadOnlyServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
     console.log('Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -30,13 +35,13 @@ export async function POST(request: NextRequest) {
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
-        user_id: body.user_id,
+        user_id: user?.id || user_id,
         order_number: `TN${Date.now()}`,
         status,
         payment_method,
         subtotal,
         shipping_fee,
-        total,
+        total: Number(total),
         shipping_name,
         shipping_email,
         shipping_phone,

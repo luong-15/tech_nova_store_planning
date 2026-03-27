@@ -1226,11 +1226,37 @@ export default function AdminDashboard() {
                     </Badge>
                   </TableCell>
                   <TableCell>{formatCurrency(order.total)}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="outline">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+            <TableCell>
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                {order.status === 'pending' && order.payment_method === 'online' && (
+                  <Button 
+                    size="sm" 
+                    onClick={async () => {
+                      if (confirm(`Xác nhận thanh toán cho đơn #${order.order_number}?`)) {
+                        const res = await fetch(`/api/admin/orders/${order.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ payment_status: 'paid', status: 'processing' })
+                        })
+                        if (res.ok) {
+                          // Refresh orders
+                          fetchOrders()
+                          alert('Đã xác nhận thanh toán!')
+                        } else {
+                          alert('Lỗi cập nhật')
+                        }
+                      }
+                    }}
+                  >
+                    ✓ Thanh toán
+                  </Button>
+                )}
+              </div>
+            </TableCell>
+
                 </TableRow>
               ))}
             </TableBody>

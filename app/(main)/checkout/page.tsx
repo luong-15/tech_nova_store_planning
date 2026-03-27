@@ -1,26 +1,44 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useSupabaseSessionContext } from "@/hooks/use-session"
-import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { useCartStore } from "@/lib/store/cart-store"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { formatCurrency } from "@/lib/currency"
-import { ChevronRight, CreditCard, Truck, MapPin, User, Phone, Mail, Package, ArrowLeft, Smartphone } from "lucide-react"
-import React, { useEffect } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { toast } from "sonner"
+import { useState } from "react";
+import { useSupabaseSessionContext } from "@/hooks/use-session";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useCartStore } from "@/lib/store/cart-store";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { formatCurrency } from "@/lib/currency";
+import {
+  ChevronRight,
+  CreditCard,
+  Truck,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  Package,
+  ArrowLeft,
+  Smartphone,
+} from "lucide-react";
+import React, { useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { toast } from "sonner";
 
 const checkoutSchema = z.object({
   shipping_name: z.string().min(2, "Tên người nhận phải có ít nhất 2 ký tự"),
@@ -28,102 +46,82 @@ const checkoutSchema = z.object({
   shipping_phone: z.string().min(10, "Số điện thoại phải có ít nhất 10 ký tự"),
   shipping_address: z.string().min(5, "Địa chỉ phải có ít nhất 5 ký tự"),
   shipping_city: z.string().min(2, "Thành phố phải có ít nhất 2 ký tự"),
-  shipping_postal_code: z.string().min(5, "Mã bưu điện phải có ít nhất 5 ký tự"),
+  shipping_postal_code: z
+    .string()
+    .min(5, "Mã bưu điện phải có ít nhất 5 ký tự"),
   payment_method: z.enum(["cod", "online"], {
     required_error: "Vui lòng chọn phương thức thanh toán",
   }),
   notes: z.string().optional(),
-})
+});
 
-type CheckoutForm = z.infer<typeof checkoutSchema>
+type CheckoutForm = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
-  const router = useRouter()
-  const { cartItems: items, getSubtotal, clearCart } = useCartStore()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [qrData, setQrData] = useState<any>(null)
-  const [isPolling, setIsPolling] = useState(false)
-  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+  const router = useRouter();
+  const { cartItems: items, getSubtotal, clearCart } = useCartStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [qrData, setQrData] = useState<any>(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Polling function
   const startPolling = () => {
-    if (!qrData?.order_id || isPolling) return
+    if (!qrData?.order_id || isPolling) return;
 
-    setIsPolling(true)
+    setIsPolling(true);
     const interval = setInterval(async () => {
       try {
-        const statusRes = await fetch(`/api/orders/${qrData.order_id}/status`)
-        const statusData = await statusRes.json()
+        const statusRes = await fetch(`/api/orders/${qrData.order_id}/status`);
+        const statusData = await statusRes.json();
 
         if (statusData.isPaid) {
-          clearInterval(interval)
-          setIsPolling(false)
-          toast.success("Thanh toán thành công!")
-          router.push(`/order-success?order_id=${qrData.order_id}`)
+          clearInterval(interval);
+          setIsPolling(false);
+          toast.success("Thanh toán thành công!");
+          router.push(`/order-success?order_id=${qrData.order_id}`);
         }
       } catch (error) {
-        console.error('Polling error:', error)
+        console.error("Polling error:", error);
       }
-    }, 5000)
+    }, 5000);
 
-    setPollInterval(interval)
-  }
+    setPollInterval(interval);
+  };
 
   const stopPolling = () => {
     if (pollInterval) {
-      clearInterval(pollInterval)
-      setPollInterval(null)
+      clearInterval(pollInterval);
+      setPollInterval(null);
     }
-    setIsPolling(false)
-  }
+    setIsPolling(false);
+  };
+
+  // Cleanup on unmount
+  // Auto start polling when QR is ready
+  useEffect(() => {
+    if (qrData && !isPolling) {
+      startPolling();
+    }
+  }, [qrData]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (pollInterval) stopPolling()
-    }
-  }, [])
+      if (pollInterval) stopPolling();
+    };
+  }, []);
 
   // Get user session
-  const supabase = createClient()
-  const sessionContext = useSupabaseSessionContext()
-  const session = sessionContext.data.session
-  
-  useEffect(() => {
-    if (session?.user) {
-      // Pre-fill form with user info
-      form.setValue('shipping_email', session.user.email || '')
-      
-      // Fetch profile
-      supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
-        .then(({ data: profile }) => {
-          if (profile) {
-            form.reset({
-              shipping_name: profile.full_name || '',
-              shipping_email: session.user.email || '',
-              shipping_phone: profile.phone || '',
-              shipping_city: profile.city || '',
-              shipping_address: profile.address || '',
-              payment_method: "cod",
-              notes: "",
-            }, { keepDefaultValues: true })
-          }
-        })
-    } else {
-      router.push('/auth/login')
-      toast.error('Vui lòng đăng nhập để thanh toán')
-    }
-  }, [session])
+  const supabase = createClient();
+  const sessionContext = useSupabaseSessionContext();
+  const { session, isLoading } = sessionContext.data;
 
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      shipping_name: session?.user_metadata?.full_name || "",
-      shipping_email: session?.user?.email || "",
+      shipping_name: "",
+      shipping_email: "",
       shipping_phone: "",
       shipping_address: "",
       shipping_city: "",
@@ -131,36 +129,74 @@ export default function CheckoutPage() {
       payment_method: "cod",
       notes: "",
     },
-  })
+  });
 
+  // Show loading while checking auth + redirect if not logged in
+  useEffect(() => {
+    if (isLoading) return;
 
-  const subtotal = getSubtotal()
-  const shipping = subtotal >= 500000 ? 0 : 30000
-  const total = subtotal + shipping
+    if (!session?.user) {
+      router.push("/auth/login");
+      toast.error("Vui lòng đăng nhập để thanh toán");
+      return;
+    }
+
+    // Pre-fill form with user info
+    form.setValue("shipping_email", session.user.email || "");
+
+    // Fetch profile
+    supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single()
+      .then(({ data: profile }) => {
+        if (profile) {
+          form.reset(
+            {
+              shipping_name: profile.full_name || "",
+              shipping_email: session.user.email || "",
+              shipping_phone: profile.phone || "",
+              shipping_city: profile.city || "",
+              shipping_address: profile.address || "",
+              payment_method: "cod",
+              notes: "",
+            },
+            { keepDefaultValues: true },
+          );
+        }
+      });
+  }, [session, isLoading, supabase, form, router]);
+
+  const subtotal = getSubtotal();
+  const shipping = subtotal >= 500000 ? 0 : 30000;
+  const total = subtotal + shipping;
 
   const onSubmit = async (data: CheckoutForm) => {
     if (items.length === 0) {
-      toast.error("Giỏ hàng trống")
-      return
+      toast.error("Giỏ hàng trống");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       // Calculate totals
-      const subtotal = getSubtotal()
-      const shipping = subtotal >= 500000 ? 0 : 30000
-      const total = subtotal + shipping
+      const subtotal = getSubtotal();
+      const shipping = subtotal >= 500000 ? 0 : 30000;
+      const total = subtotal + shipping;
 
       // Send to /api/orders
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      console.log("Creating order for user:", session?.user?.id);
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
           subtotal,
           shipping_fee: shipping,
           total,
+          user_id: session?.user?.id,
           shipping_name: data.shipping_name,
           shipping_email: data.shipping_email,
           shipping_phone: data.shipping_phone,
@@ -170,52 +206,54 @@ export default function CheckoutPage() {
           payment_method: data.payment_method,
           notes: data.notes,
         }),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
+      console.log("Order response:", result, "Status:", response.status);
 
       if (!response.ok || !result.success) {
-        toast.error("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.")
-        return
+        console.error("Order API error:", result);
+        toast.error(result.error || "Lỗi tạo đơn hàng: " + response.status);
+        return;
       }
 
-      clearCart()
+      clearCart();
 
-      if (data.payment_method === 'cod') {
-        toast.success("Đặt hàng thành công!")
-        router.push(`/order-success?order_id=${result.order_id}`)
-        return
+      if (data.payment_method === "cod") {
+        toast.success("Đặt hàng thành công!");
+        router.push(`/order-success?order_id=${result.order_id}`);
+        return;
       }
 
       // VietQR for online payment
-      const qrRes = await fetch('/api/vietqr/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      console.log("Creating QR for order:", result.order_id);
+      const qrRes = await fetch("/api/vietqr/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           order_id: result.order_id,
           total,
         }),
-      })
+      });
 
-      const qrResult = await qrRes.json()
+      const qrResult = await qrRes.json();
+      console.log("QR response:", qrResult);
 
       if (!qrRes.ok || !qrResult.success) {
-        toast.error(qrResult.error || "Lỗi tạo QR")
-        return
+        toast.error(qrResult.error || "Lỗi tạo QR code");
+        return;
       }
 
-      setQrData(qrResult)
-      toast.info("Đã tạo đơn hàng! Quét QR để thanh toán.")
-
-
-
+      setQrData(qrResult);
+      toast.success("QR code sẵn sàng! Quét để thanh toán.");
+      startPolling();
     } catch (error) {
-      console.error("Checkout error:", error)
-      toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.")
+      console.error("Checkout error:", error);
+      toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (items.length === 0) {
     return (
@@ -229,13 +267,11 @@ export default function CheckoutPage() {
             Bạn cần thêm sản phẩm vào giỏ hàng trước khi thanh toán.
           </p>
           <Button asChild size="lg">
-            <Link href="/products">
-              Khám phá sản phẩm
-            </Link>
+            <Link href="/products">Khám phá sản phẩm</Link>
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -288,7 +324,11 @@ export default function CheckoutPage() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="Nhập email" {...field} />
+                            <Input
+                              type="email"
+                              placeholder="Nhập email"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -303,7 +343,10 @@ export default function CheckoutPage() {
                         <FormItem>
                           <FormLabel>Số điện thoại</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nhập số điện thoại" {...field} />
+                            <Input
+                              placeholder="Nhập số điện thoại"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -394,16 +437,16 @@ export default function CheckoutPage() {
                             <div className="flex items-center space-x-3 rounded-lg border p-4">
                               <RadioGroupItem value="online" id="online" />
                               <div className="flex-1">
-          <label
-            htmlFor="online"
-            className="flex items-center gap-2 font-medium cursor-pointer"
-          >
-            <Smartphone className="h-4 w-4" />
-            Thanh toán VietQR
-          </label>
-          <p className="text-sm text-muted-foreground mt-1">
-            Quét QR bằng app ngân hàng Vietcombank
-          </p>
+                                <label
+                                  htmlFor="online"
+                                  className="flex items-center gap-2 font-medium cursor-pointer"
+                                >
+                                  <Smartphone className="h-4 w-4" />
+                                  Thanh toán VietQR
+                                </label>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Quét QR bằng app ngân hàng Vietcombank
+                                </p>
                               </div>
                             </div>
                           </RadioGroup>
@@ -461,10 +504,19 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="text-sm space-y-1">
-                        <p><strong>Số tiền:</strong> {formatCurrency(qrData.amount)}</p>
-                        <p><strong>Số TK:</strong> {qrData.account_no}</p>
-                        <p><strong>Chủ TK:</strong> {qrData.account_name}</p>
-                        <p><strong>Nội dung:</strong> {qrData.order_number}</p>
+                        <p>
+                          <strong>Số tiền:</strong>{" "}
+                          {formatCurrency(qrData.amount)}
+                        </p>
+                        <p>
+                          <strong>Số TK:</strong> {qrData.account_no}
+                        </p>
+                        <p>
+                          <strong>Chủ TK:</strong> {qrData.account_name}
+                        </p>
+                        <p>
+                          <strong>Nội dung:</strong> {qrData.order_number}
+                        </p>
                       </div>
                       <p className="mt-4 text-xs text-muted-foreground text-center">
                         {qrData.instructions}
@@ -472,15 +524,15 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                      <Button 
-                        className="flex-1" 
+                      <Button
+                        className="flex-1"
                         onClick={startPolling}
                         disabled={isPolling}
                       >
                         {isPolling ? "Đang kiểm tra..." : "Kiểm tra thanh toán"}
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1"
                         onClick={stopPolling}
                       >
@@ -491,7 +543,6 @@ export default function CheckoutPage() {
                 </Card>
               )}
             </form>
-
           </Form>
         </div>
 
@@ -516,10 +567,16 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.product.name}</p>
-                        <p className="text-xs text-muted-foreground">SL: {item.quantity}</p>
+                        <p className="text-sm font-medium truncate">
+                          {item.product.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          SL: {item.quantity}
+                        </p>
                       </div>
-                      <p className="text-sm font-medium">{formatCurrency(item.product.price * item.quantity)}</p>
+                      <p className="text-sm font-medium">
+                        {formatCurrency(item.product.price * item.quantity)}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -533,7 +590,9 @@ export default function CheckoutPage() {
                     <span>{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Phí vận chuyển</span>
+                    <span className="text-muted-foreground">
+                      Phí vận chuyển
+                    </span>
                     <span className={shipping === 0 ? "text-green-500" : ""}>
                       {shipping === 0 ? "Miễn phí" : formatCurrency(shipping)}
                     </span>
@@ -541,7 +600,9 @@ export default function CheckoutPage() {
                   <Separator />
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Tổng cộng</span>
-                    <span className="text-primary">{formatCurrency(total)}</span>
+                    <span className="text-primary">
+                      {formatCurrency(total)}
+                    </span>
                   </div>
                 </div>
 
@@ -569,5 +630,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

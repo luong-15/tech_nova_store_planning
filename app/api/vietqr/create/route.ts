@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminServerClient } from '@/lib/supabase/server'
 
-const BANK_CODE = process.env.VIETQR_BANK_CODE || 'VCB'
-const ACCOUNT_NO = process.env.VIETQR_ACCOUNT_NO || '1234567890'
-const ACCOUNT_NAME = process.env.VIETQR_ACCOUNT_NAME || 'Tech Nova Store'
+const BANK_CODE = process.env.VIETQR_BANK_CODE || 'TPBank'
+const ACCOUNT_NO = process.env.VIETQR_ACCOUNT_NO || '0367366802'
+const ACCOUNT_NAME = process.env.VIETQR_ACCOUNT_NAME || 'MAC NGOC LUONG'
 
 export async function POST(request: NextRequest) {
   try {
