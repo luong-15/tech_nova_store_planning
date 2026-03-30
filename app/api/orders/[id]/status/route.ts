@@ -6,17 +6,19 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id: paramId } = await params
-    const orderId = parseInt(paramId)
-    if (isNaN(orderId)) {
-      return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 })
+const { id } = await params
+    if (!id) {
+      console.error('No order ID in params:', params)
+      return NextResponse.json({ error: 'Missing order ID' }, { status: 400 })
     }
+
+    console.log('Checking status for order ID:', id)
 
     const supabase = await createAdminServerClient()
     const { data: order, error } = await supabase
       .from('orders')
-      .select('status')
-      .eq('id', orderId)
+      .select('status, order_number')
+      .eq('id', id)
       .single()
 
     if (error || !order) {
@@ -29,7 +31,7 @@ export async function GET(
       success: true,
       status: order.status,
       isPaid,
-      order_id: orderId
+      order_id: id
     })
   } catch (error) {
     console.error('Order status error:', error)

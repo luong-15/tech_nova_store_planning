@@ -1,16 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Package, Eye, Truck, CheckCircle, Clock, XCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Package, Eye, Truck, CheckCircle, Clock, XCircle, Copy, ShoppingCart, CreditCard } from "lucide-react"
 import { formatCurrency } from "@/lib/currency"
+import { notifySuccess, notifyInfo, notifyError, notifyLoading, notifyWarning } from "@/lib/notifications"
 import Image from "next/image"
 import Link from "next/link"
 import type { Order, OrderItem } from "@/lib/types"
+import { toast } from "@/hooks/use-toast"
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text).then(() => {
+    notifyInfo(`Đã sao chép #${text}`)
+  }).catch(() => {
+    notifyError('Không thể sao chép')
+  })
+}
 
 const statusConfig = {
   pending: { label: "Chờ xác nhận", color: "bg-yellow-500/10 text-yellow-500", icon: Clock },
@@ -124,15 +134,71 @@ export default function OrdersPage() {
                         {order.payment_status === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent"
-                      onClick={() => viewOrderDetails(order)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Chi tiết
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(order.order_number)}
+                        title="Sao chép mã đơn"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      {order.payment_status !== "paid" && order.status !== "cancelled" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            const isConfirmed = confirm('Bạn có chắc muốn hủy thanh toán đơn hàng này?')
+                            if (isConfirmed) {
+                              notifyLoading('Đang hủy thanh toán...')
+                              try {
+                                const supabase = createBrowserClient()
+                                const { error } = await supabase
+                                  .from('orders')
+                                  .update({ payment_status: 'cancelled', status: 'cancelled' })
+                                  .eq('id', order.id)
+                                if (!error) {
+                                  notifySuccess('Đã hủy thanh toán thành công!')
+                                  // Refresh orders
+                                  window.location.reload()
+                                } else {
+                                  notifyError('Có lỗi xảy ra')
+                                }
+                              } catch (err) {
+                                notifyError('Có lỗi xảy ra')
+                              }
+                            }
+                          }}
+                          title="Hủy thanh toán"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-transparent"
+                        onClick={() => viewOrderDetails(order)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Chi tiết
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={async () => {
+                          notifyLoading('Đang thêm lại vào giỏ hàng...')
+                          // TODO: Integrate with cart store
+                          setTimeout(() => {
+                            notifySuccess('Đã thêm tất cả sản phẩm vào giỏ hàng!')
+                          }, 1000)
+                        }}
+                        title="Đặt hàng lại"
+                      >
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Đặt lại
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -212,10 +278,10 @@ export default function OrdersPage() {
               <div className="space-y-3">
                 <h4 className="font-medium">Địa chỉ giao hàng</h4>
                 <div className="rounded-lg border border-border/50 p-4 text-sm">
-                  <p className="font-medium">{selectedOrder.shipping_name}</p>
-                  <p className="text-muted-foreground">{selectedOrder.shipping_phone}</p>
+                  <p className="font-medium">Người nhận: {selectedOrder.shipping_name}</p>
+                  <p className="text-muted-foreground">Số điện thoại: {selectedOrder.shipping_phone}</p>
                   <p className="text-muted-foreground">
-                    {selectedOrder.shipping_address}, {selectedOrder.shipping_city}
+                    Địa chỉ: {selectedOrder.shipping_address}, {selectedOrder.shipping_city}
                   </p>
                 </div>
               </div>

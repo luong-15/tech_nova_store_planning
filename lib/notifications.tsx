@@ -9,11 +9,11 @@ import { ToastAction } from '@/components/ui/toast'
 type Variant = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
 const ICONS: Record<Variant, React.FC<{ className?: string }>> = {
-  success: (props) => <CheckCircle2 className={cn('h-5 w-5 shrink-0 text-emerald-500', props?.className)} />,
-  error: (props) => <XCircle className={cn('h-5 w-5 shrink-0 text-red-500', props?.className)} />,
-  warning: (props) => <AlertTriangle className={cn('h-5 w-5 shrink-0 text-amber-500', props?.className)} />,
-  info: (props) => <Info className={cn('h-5 w-5 shrink-0 text-blue-500', props?.className)} />,
-  loading: (props) => <Loader2 className={cn('h-5 w-5 shrink-0 animate-spin text-slate-500', props?.className)} />
+  success: (props) => <CheckCircle2 className={cn('h-6 w-6 shrink-0 text-emerald-400 drop-shadow-md', props?.className)} />,
+  error: (props) => <XCircle className={cn('h-6 w-6 shrink-0 text-red-400 drop-shadow-md', props?.className)} />,
+  warning: (props) => <AlertTriangle className={cn('h-6 w-6 shrink-0 text-amber-400 drop-shadow-md', props?.className)} />,
+  info: (props) => <Info className={cn('h-6 w-6 shrink-0 text-blue-400 drop-shadow-md', props?.className)} />,
+  loading: (props) => <Loader2 className={cn('h-6 w-6 shrink-0 animate-spin text-slate-400 drop-shadow-sm', props?.className)} />
 }
 
 const MESSAGES = {
@@ -45,9 +45,13 @@ export function notify(
   const Icon = ICONS[variant]
   
   const toastDescription = (
-    <div className="flex items-center gap-3" role="alert" aria-live="polite">
+    <div className="flex items-start gap-4 p-1" role="alert" aria-live="polite">
       <Icon />
-      <span className="font-medium">{content}</span>
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="font-semibold text-sm leading-5 text-foreground line-clamp-2">
+          {content}
+        </p>
+      </div>
     </div>
   )
 
@@ -57,8 +61,9 @@ export function notify(
     <ToastAction 
       altText="Hoàn tác"
       onClick={() => options.undo?.()}
-      className="bg-transparent hover:bg-secondary text-sm font-medium"
+      className="gap-2 bg-linear-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-sm border border-emerald-200/50 hover:from-emerald-500/20 hover:border-emerald-300/70 text-sm font-medium h-9 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02] hover:ring-2 ring-emerald-200/50"
     >
+      <XCircle className="h-4 w-4" />
       Hoàn tác
     </ToastAction>
   ) : undefined
@@ -67,7 +72,8 @@ export function notify(
     variant: toastVariant,
     description: toastDescription,
     action: toastAction,
-    duration: options.duration ?? (variant === 'loading' ? 6000 : 2500)
+    duration: options.duration ?? (variant === 'loading' ? 6000 : 3500),
+    className: 'backdrop-blur-sm bg-background/80 border-border/50 shadow-2xl border max-w-md animate-in slide-in-from-top-2 fade-in duration-300 ease-out'
   })
 }
 

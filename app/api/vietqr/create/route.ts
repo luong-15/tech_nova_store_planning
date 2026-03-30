@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      order_id,
       qr_url: qrUrl,
       bank_code: BANK_CODE,
       account_no: ACCOUNT_NO,
