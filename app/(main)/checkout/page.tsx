@@ -76,10 +76,11 @@ export default function CheckoutPage() {
         const statusData = await statusRes.json();
 
         if (statusData.isPaid) {
+          clearCart(); // NOW safe to clear cart after payment confirmed
           clearInterval(interval);
           setIsPolling(false);
           toast.success("Thanh toán thành công!");
-          router.push(`/order-success?order_id=${qrData.order_id}`);
+          router.push(`/order-success?order_id=${qrData.order_id}`); 
         }
       } catch (error) {
         console.error("Polling error:", error);
@@ -99,11 +100,23 @@ export default function CheckoutPage() {
 
   // Cleanup on unmount
   // Auto start polling when QR is ready
-  useEffect(() => {
-    if (qrData && !isPolling) {
-      startPolling();
-    }
-  }, [qrData]);
+      useEffect(() => {
+        if (qrData && !isPolling) {
+          startPolling();
+        }
+      }, [qrData]);
+
+      // Auto-scroll to QR section
+      useEffect(() => {
+        if (qrData) {
+          setTimeout(() => {
+            const qrElement = document.getElementById('qr-section');
+            if (qrElement) {
+              qrElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 300);
+        }
+      }, [qrData]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -208,6 +221,7 @@ export default function CheckoutPage() {
         }),
       });
 
+
       const result = await response.json();
       console.log("Order response:", result, "Status:", response.status);
 
@@ -217,9 +231,9 @@ export default function CheckoutPage() {
         return;
       }
 
-      clearCart();
-
+      // Clear cart ONLY for COD. For online payments, clear after confirmation
       if (data.payment_method === "cod") {
+        clearCart();
         toast.success("Đặt hàng thành công!");
         router.push(`/order-success?order_id=${result.order_id}`);
         return;
@@ -493,14 +507,20 @@ export default function CheckoutPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-4">
-                    <div className="text-center">
-                      <div className="mx-auto mb-4 h-48 w-48 rounded-xl border-2 border-dashed border-muted p-2">
-                        <Image
+                    <div id="qr-section" className="text-center">
+                      <div className="mx-auto mb-4 w-fit rounded-xl border-2 border-dashed border-muted p-2">
+                        <img
                           src={qrData.qr_url}
-                          alt="VietQR Code"
-                          width={200}
-                          height={200}
-                          className="mx-auto rounded-lg"
+                          alt="Mã QR VietQR - Quét để thanh toán"
+                          style={{ width: '100%', height: 'auto', maxWidth: '280px' }}
+                          className="mx-auto rounded-xl border-4 border-primary shadow-xl"
+                          loading="lazy"
+                          onLoad={() => console.log('QR loaded successfully')}
+                          onError={(e) => {
+                            console.error('QR image load failed:', qrData.qr_url);
+                            (e.target as any).style.display = 'none';
+                            toast.error('Không tải được QR. Kiểm tra mạng!');
+                          }}
                         />
                       </div>
                       <div className="text-sm space-y-1">
@@ -521,12 +541,45 @@ export default function CheckoutPage() {
                       <p className="mt-4 text-xs text-muted-foreground text-center">
                         {qrData.instructions}
                       </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-4 w-full"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${formatCurrency(qrData.amount).replace(/[^\d]/g, '')} - ${qrData.order_number}`);
+                          toast.success(`✅ Đã copy: ${formatCurrency(qrData.amount)} - ${qrData.order_number}`);
+                        }}
+
+                      >
+                        📋 Copy "Số tiền - Nội dung chuyển khoản"
+                      </Button>
                     </div>
 
                     <div className="flex gap-2 pt-2">
                       <Button
                         className="flex-1"
-                        onClick={startPolling}
+                        onClick={async () => {
+                          if (isPolling) return;
+                          setIsPolling(true);
+                          try {
+                            const statusRes = await fetch(`/api/orders/${qrData.order_id}/status`);
+                            const statusData = await statusRes.json();
+                            console.log('Manual check:', statusData);
+                            if (statusData.isPaid) {
+                              clearCart();
+                              toast.success("Thanh toán thành công!");
+                              router.push(`/order-success?order_id=${qrData.order_id}`);
+                            } else {
+                              toast.info(`Chưa thanh toán (status: ${statusData.status})`);
+                            }
+                          } catch (error) {
+                            console.error('Manual check error:', error);
+                            toast.error('Lỗi kiểm tra');
+                          } finally {
+                            setIsPolling(false);
+                          }
+                        }}
                         disabled={isPolling}
                       >
                         {isPolling ? "Đang kiểm tra..." : "Kiểm tra thanh toán"}
@@ -612,7 +665,7 @@ export default function CheckoutPage() {
                     type="submit"
                     className="w-full"
                     size="lg"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !!qrData}
                     onClick={form.handleSubmit(onSubmit)}
                   >
                     {isSubmitting ? "Đang xử lý..." : "Đặt hàng"}

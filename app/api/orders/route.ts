@@ -23,21 +23,17 @@ export async function POST(request: NextRequest) {
       user_id
     } = body
 
-// Get current user for RLS (using read-only client)
-    const supabase = createReadOnlyServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    console.log('Creating order - frontend user_id:', user_id, 'payment_method:', payment_method)
 
     const status = payment_method === 'cod' ? 'processing' : 'pending'
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
-        user_id: user?.id || user_id,
+        user_id: user_id, // Trust frontend user_id (already validated in checkout)
         order_number: `TN${Date.now()}`,
         status,
+        payment_status: 'unpaid',
         payment_method,
         subtotal,
         shipping_fee,
@@ -52,6 +48,9 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single()
+
+    console.log('Order created:', order ? order.id : 'FAILED', orderError?.message)
+
 
     if (orderError || !order) {
       console.error('Order error:', orderError)

@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createReadOnlyServerClient } from '@/lib/supabase/server'
+import { createAdminServerClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const orderId = parseInt(params.id)
+    const { id: paramId } = await params
+    const orderId = parseInt(paramId)
     if (isNaN(orderId)) {
       return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 })
     }
 
-    const supabase = createReadOnlyServerClient()
+    const supabase = await createAdminServerClient()
     const { data: order, error } = await supabase
       .from('orders')
       .select('status')
