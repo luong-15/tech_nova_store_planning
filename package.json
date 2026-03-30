@@ -76,7 +76,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "baseline-browser-mapping": "^2.10.10",
+    "baseline-browser-mapping": "^2.10.12",
     "eslint": "^9.39.2",
     "pg": "^8.17.1",
     "postcss": "^8.5",

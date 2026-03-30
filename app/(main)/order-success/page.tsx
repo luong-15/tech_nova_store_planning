@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -37,6 +37,39 @@ interface Order {
 }
 
 export default function OrderSuccessPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <Suspense fallback={
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12 animate-pulse">
+              <div className="mx-auto mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+                <div className="h-10 w-10 bg-muted-foreground/20 rounded-full animate-pulse" />
+              </div>
+              <div className="h-8 bg-muted mx-auto w-48 mb-4 animate-pulse rounded" />
+              <div className="h-6 bg-muted mx-auto w-64 animate-pulse rounded" />
+            </div>
+            <div className="grid lg:grid-cols-2 gap-8 mb-8">
+              <div className="space-y-4 animate-pulse">
+                <div className="h-6 bg-muted w-3/4 rounded" />
+                <div className="h-6 bg-muted w-1/2 rounded" />
+                <div className="h-6 bg-muted w-2/3 rounded" />
+              </div>
+              <div className="space-y-2 animate-pulse">
+                <div className="h-5 bg-muted w-4/5 rounded" />
+                <div className="h-4 bg-muted w-3/4 rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+      }>
+        <ClientOrderSuccessContent />
+      </Suspense>
+    </div>
+  )
+}
+
+function ClientOrderSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
@@ -209,4 +242,3 @@ export default function OrderSuccessPage() {
     </div>
   )
 }
-
