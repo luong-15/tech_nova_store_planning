@@ -1,18 +1,18 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Package, Eye, Truck, CheckCircle, Clock, XCircle, Copy, ShoppingCart, CreditCard } from "lucide-react"
+import { Package, Eye, Truck, CheckCircle, Clock, XCircle, Copy, ShoppingCart, CreditCard, Loader2 } from "lucide-react"
 import { formatCurrency } from "@/lib/currency"
 import { notifySuccess, notifyInfo, notifyError, notifyLoading, notifyWarning } from "@/lib/notifications"
 import Image from "next/image"
 import Link from "next/link"
 import type { Order, OrderItem } from "@/lib/types"
-import { toast } from "@/hooks/use-toast"
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text).then(() => {
@@ -35,30 +35,65 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null)
+
+  const refetchOrders = useCallback(async () => {
+    setLoading(true)
+    const supabase = createBrowserClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+      if (data) {
+        setOrders(data as Order[])
+      }
+    }
+    setLoading(false)
+  }, [])
+
+  const handleCancelOrder = useCallback(async (orderId: string) => {
+    const orderIndex = orders.findIndex(o => o.id === orderId)
+    if (orderIndex === -1) return
+
+    const originalOrder = { ...orders[orderIndex] }
+    setCancellingOrderId(orderId)
+
+    // Optimistic update
+    const cancelledOrder = { ...orders[orderIndex], status: 'cancelled' as const, payment_status: 'cancelled' as const }
+    setOrders(prev => prev.map(o => o.id === orderId ? cancelledOrder : o))
+
+    try {
+      notifyLoading('Đang hủy thanh toán...')
+      const response = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Cancel failed')
+      }
+
+      notifySuccess('Đã hủy thanh toán thành công!')
+      await refetchOrders()
+    } catch (error) {
+      notifyError('Hủy thất bại: ' + (error as Error).message)
+      // Revert optimistic
+      setOrders(prev => prev.map((o, i) => i === orderIndex ? originalOrder : o))
+    } finally {
+      setCancellingOrderId(null)
+    }
+  }, [orders, refetchOrders])
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const supabase = createBrowserClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-
-        if (data) {
-          setOrders(data as Order[])
-        }
-      }
-      setLoading(false)
-    }
-
-    fetchOrders()
-  }, [])
+    refetchOrders()
+  }, [refetchOrders])
 
   const viewOrderDetails = async (order: Order) => {
     setSelectedOrder(order)
@@ -110,7 +145,7 @@ export default function OrdersPage() {
             return (
               <div
                 key={order.id}
-                className="group rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-primary/30"
+                className="group rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md"
                 style={{ animation: `fadeIn 0.3s ease-out ${index * 0.05}s both` }}
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -134,12 +169,13 @@ export default function OrdersPage() {
                         {order.payment_status === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-wrap">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => copyToClipboard(order.order_number)}
                         title="Sao chép mã đơn"
+                        className="shrink-0"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -147,31 +183,22 @@ export default function OrdersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={async () => {
-                            const isConfirmed = confirm('Bạn có chắc muốn hủy thanh toán đơn hàng này?')
-                            if (isConfirmed) {
-                              notifyLoading('Đang hủy thanh toán...')
-                              try {
-                                const supabase = createBrowserClient()
-                                const { error } = await supabase
-                                  .from('orders')
-                                  .update({ payment_status: 'cancelled', status: 'cancelled' })
-                                  .eq('id', order.id)
-                                if (!error) {
-                                  notifySuccess('Đã hủy thanh toán thành công!')
-                                  // Refresh orders
-                                  window.location.reload()
-                                } else {
-                                  notifyError('Có lỗi xảy ra')
-                                }
-                              } catch (err) {
-                                notifyError('Có lỗi xảy ra')
-                              }
+                          onClick={() => {
+                            if (confirm('Bạn có chắc muốn hủy thanh toán đơn hàng này?')) {
+                              handleCancelOrder(order.id)
                             }
                           }}
-                          title="Hủy thanh toán"
+                          disabled={cancellingOrderId === order.id}
                         >
-                          <CreditCard className="h-4 w-4" />
+                          {cancellingOrderId === order.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Đang hủy...
+                            </>
+                          ) : (
+                            <CreditCard className="mr-2 h-4 w-4" />
+                          )}
+                          Hủy thanh toán
                         </Button>
                       )}
                       <Button
@@ -312,3 +339,4 @@ export default function OrdersPage() {
     </div>
   )
 }
+

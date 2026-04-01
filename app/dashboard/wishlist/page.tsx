@@ -14,7 +14,8 @@ import type { WishlistItem, Product } from "@/lib/types"
 export default function WishlistPage() {
   const [wishlistItems, setWishlistItems] = useState<(WishlistItem & { product: Product })[]>([])
   const [loading, setLoading] = useState(true)
-  const { addItem } = useCartStore()
+  const cartStore = useCartStore()
+  const addItem = cartStore.addToCart
 
   const fetchWishlist = async () => {
     const supabase = createBrowserClient()
@@ -91,7 +92,7 @@ export default function WishlistPage() {
           {wishlistItems.map((item, index) => (
             <div
               key={item.id}
-              className="group flex gap-4 rounded-xl border border-border/50 bg-card/50 p-4 backdrop-blur-sm transition-all hover:border-primary/30"
+              className="group flex gap-4 rounded-xl border border-border/50 bg-card/50 p-4 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md"
               style={{ animation: `fadeIn 0.3s ease-out ${index * 0.05}s both` }}
             >
               {/* Product Image */}
@@ -137,16 +138,16 @@ export default function WishlistPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-1">
+              <div className="flex gap-1 flex-wrap">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 w-8 bg-transparent p-0"
+                      className="h-8 w-8 bg-transparent p-0 shrink-0"
                       onClick={() => removeFromWishlist(item.id)}
                     >
                       <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                     </Button>
-                    <Button size="sm" className="h-8" onClick={() => addToCart(item.product)}>
+                    <Button size="sm" className="h-8 shrink-0" onClick={() => addToCart(item.product)}>
                       <ShoppingCart className="mr-1 h-4 w-4" />
                       Thêm
                     </Button>

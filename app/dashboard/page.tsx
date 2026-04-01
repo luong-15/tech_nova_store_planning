@@ -132,7 +132,8 @@ export default function ProfilePage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
+        <div className="group rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md">
+
           {/* Avatar Section */}
           <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row">
             <div className="relative">

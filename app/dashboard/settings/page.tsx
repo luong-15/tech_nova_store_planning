@@ -85,7 +85,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Change Password */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
+      <div className="group rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md">
+
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <Shield className="h-5 w-5 text-primary" />
@@ -137,7 +138,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Notifications */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
+      <div className="group rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md">
+
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <Bell className="h-5 w-5 text-primary" />
@@ -202,7 +204,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Language & Region */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
+      <div className="group rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md">
+
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <Globe className="h-5 w-5 text-primary" />
@@ -232,7 +235,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Danger Zone */}
-      <div className="rounded-xl border border-destructive/50 bg-destructive/5 p-6">
+      <div className="group rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md">
+
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
             <Trash2 className="h-5 w-5 text-destructive" />

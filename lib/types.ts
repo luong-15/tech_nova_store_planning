@@ -57,7 +57,7 @@ export interface Order {
   order_number: string
   user_id: string
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
-  payment_status: "pending" | "paid" | "failed"
+  payment_status: "pending" | "paid" | "failed" | "cancelled"
   payment_method: string
   subtotal: number
   shipping_fee: number
