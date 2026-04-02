@@ -1,13 +1,16 @@
 -- Create Categories table
 CREATE TABLE IF NOT EXISTS categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL UNIQUE,
-  slug TEXT NOT NULL UNIQUE,
-  description TEXT,
-  image_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  slug text not null,
+  description text null,
+  image_url text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint categories_pkey primary key (id),
+  constraint categories_name_key unique (name),
+  constraint categories_slug_key unique (slug)
+) TABLESPACE pg_default;
 
 -- Create Products table
 CREATE TABLE IF NOT EXISTS products (

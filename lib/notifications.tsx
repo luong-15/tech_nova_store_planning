@@ -8,12 +8,13 @@ import { ToastAction } from '@/components/ui/toast'
 
 type Variant = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
+// Vẫn giữ nguyên ICONS object của bạn, chỉ tối ưu lại class cho đồng bộ
 const ICONS: Record<Variant, React.FC<{ className?: string }>> = {
-  success: (props) => <CheckCircle2 className={cn('h-6 w-6 shrink-0 text-emerald-400 drop-shadow-md', props?.className)} />,
-  error: (props) => <XCircle className={cn('h-6 w-6 shrink-0 text-red-400 drop-shadow-md', props?.className)} />,
-  warning: (props) => <AlertTriangle className={cn('h-6 w-6 shrink-0 text-amber-400 drop-shadow-md', props?.className)} />,
-  info: (props) => <Info className={cn('h-6 w-6 shrink-0 text-blue-400 drop-shadow-md', props?.className)} />,
-  loading: (props) => <Loader2 className={cn('h-6 w-6 shrink-0 animate-spin text-slate-400 drop-shadow-sm', props?.className)} />
+  success: (props) => <CheckCircle2 className={cn('h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400', props?.className)} />,
+  error: (props) => <XCircle className={cn('h-5 w-5 shrink-0 text-red-600 dark:text-red-400', props?.className)} />,
+  warning: (props) => <AlertTriangle className={cn('h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400', props?.className)} />,
+  info: (props) => <Info className={cn('h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400', props?.className)} />,
+  loading: (props) => <Loader2 className={cn('h-5 w-5 shrink-0 animate-spin text-slate-600 dark:text-slate-400', props?.className)} />
 }
 
 const MESSAGES = {
@@ -42,35 +43,58 @@ export function notify(
   variant: Variant = 'info',
   options: NotifyOptions = {}
 ) {
-  const Icon = ICONS[variant]
-  
-const toastDescription = (
-    <div className="flex items-start gap-3 p-3 sm:p-4" role="alert" aria-live="polite">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br">
-        {variant === 'success' && <CheckCircle2 className="h-5 w-5 text-emerald-400 drop-shadow-lg animate-pulse" />}
-        {variant === 'error' && <XCircle className="h-5 w-5 text-red-400 drop-shadow-lg" />}
-        {variant === 'warning' && <AlertTriangle className="h-5 w-5 text-amber-400 drop-shadow-lg" />}
-        {variant === 'info' && <Info className="h-5 w-5 text-blue-400 drop-shadow-lg" />}
-        {variant === 'loading' && <Loader2 className="h-5 w-5 animate-spin text-slate-400 drop-shadow-sm" />}
-      </div>
+  // Tinh chỉnh lại UI của nội dung Toast
+  const toastDescription = (
+    <div className="flex items-center gap-3.5 w-full" role="alert" aria-live="polite">
+      {/* Icon với Soft Background tùy theo variant */}
+      {variant === 'success' && (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+        </div>
+      )}
+      {variant === 'error' && (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/15">
+          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+        </div>
+      )}
+      {variant === 'warning' && (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15">
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        </div>
+      )}
+      {variant === 'info' && (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        </div>
+      )}
+      {variant === 'loading' && (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-500/15">
+          <Loader2 className="h-4 w-4 animate-spin text-slate-600 dark:text-slate-400" />
+        </div>
+      )}
+
+      {/* Nội dung Text */}
       <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="font-semibold text-sm leading-5 text-foreground line-clamp-2 group-hover:text-primary/95">
+        <p className="text-sm font-medium leading-tight text-foreground line-clamp-2">
           {content}
         </p>
-        <p className="text-xs text-muted-foreground/80 font-medium">TechNova Store</p>
+        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+          TechNova Store
+        </p>
       </div>
     </div>
   )
 
   const toastVariant = variant === 'error' ? 'destructive' : 'default'
 
+  // Tinh chỉnh UI cho Action Button (Nút Hoàn tác) - Trở nên Minimal và chuyên nghiệp hơn
   const toastAction = options.undo ? (
     <ToastAction 
       altText="Hoàn tác"
       onClick={() => options.undo?.()}
-      className="gap-2 bg-linear-to-r from-emerald-500/10 via-blue-500/10 to-indigo-500/10 backdrop-blur-sm border border-emerald-200/50 hover:from-emerald-500/20 hover:to-indigo-500/20 hover:border-emerald-300/70 text-sm font-semibold h-9 px-4 rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 hover:scale-[1.02] hover:ring-2 ring-emerald-200/50 active:scale-[0.98]"
+      className="ml-auto flex h-8 items-center justify-center gap-1.5 rounded-md border border-border/50 bg-background/50 px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus:ring-1 focus:ring-ring"
     >
-      <XCircle className="h-4 w-4 shrink-0" />
+      <XCircle className="h-3 w-3 shrink-0" />
       Hoàn tác
     </ToastAction>
   ) : undefined
@@ -80,7 +104,11 @@ const toastDescription = (
     description: toastDescription,
     action: toastAction,
     duration: options.duration ?? (variant === 'loading' ? 6000 : 3500),
-    className: 'toaster group border border-border/30 bg-card backdrop-blur-xl shadow-xl ring-1 ring-border/20 max-w-sm sm:max-w-md mx-4 animate-in slide-in-from-top-2 fade-in duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-2xl hover:border-primary/50 hover:scale-[1.01] hover:ring-primary/30'
+    // Tinh chỉnh Container Toast: Bỏ scale/ring quá lố, thêm glassmorphism nhẹ
+    className: cn(
+      "group relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-xl border bg-background/95 p-3.5 pr-4 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl sm:max-w-[400px]",
+      variant === 'error' ? 'border-red-500/20' : 'border-border/40'
+    )
   })
 }
 
@@ -130,4 +158,3 @@ export const notifyOutOfStock = (name: string) =>
 
 export const notifyStockLow = (name: string) => 
   notifyWarning(`${name}: ${MESSAGES.stockLow}`, { duration: 3500 })
-

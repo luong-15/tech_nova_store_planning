@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createReadOnlyServerClient } from "@/lib/supabase/server"
 import { ProductCard } from "@/components/product-card"
 import { SidebarFilter } from "@/components/sidebar-filter"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { notFound } from "next/navigation"
 
 interface CategoryPageProps {
   params: {
-    slug: string
+    slug?: string
   }
   searchParams: {
     sort?: string
@@ -21,13 +21,20 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
-  const supabase = await createClient()
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const { slug } = resolvedParams;
+  if (!slug) {
+    notFound()
+  }
+
+const supabase = await createClient()
 
   // Fetch category
   const { data: category } = await supabase
     .from("categories")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single()
 
   if (!category) {
@@ -42,21 +49,21 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     .eq("is_active", true)
 
   // Apply filters
-  if (searchParams.price_min) {
-    query = query.gte("price", Number.parseInt(searchParams.price_min))
+  if (resolvedSearchParams.price_min) {
+    query = query.gte("price", Number.parseInt(resolvedSearchParams.price_min))
   }
-  if (searchParams.price_max) {
-    query = query.lte("price", Number.parseInt(searchParams.price_max))
+  if (resolvedSearchParams.price_max) {
+    query = query.lte("price", Number.parseInt(resolvedSearchParams.price_max))
   }
-  if (searchParams.brand) {
-    query = query.eq("brand", searchParams.brand)
+  if (resolvedSearchParams.brand) {
+    query = query.eq("brand", resolvedSearchParams.brand)
   }
-  if (searchParams.in_stock === "true") {
+  if (resolvedSearchParams.in_stock === "true") {
     query = query.gt("stock_quantity", 0)
   }
 
   // Apply sorting
-  switch (searchParams.sort) {
+  switch (resolvedSearchParams.sort) {
     case "price_asc":
       query = query.order("price", { ascending: true })
       break
@@ -198,13 +205,20 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 }
 
 // Generate metadata
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  if (!slug) {
+    return {
+      title: 'Danh mục không tồn tại',
+    }
+  }
+
   const supabase = await createClient()
 
   const { data: category } = await supabase
     .from("categories")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single()
   if (!category) {
     return {
@@ -217,3 +231,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     description: category.description || `Khám phá các sản phẩm ${category.name} chất lượng tại TechNova Store`,
   }
 }
+
+export async function generateStaticParams() {
+  const supabase = createReadOnlyServerClient()
+  
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('slug')
+  
+  return categories?.map(({ slug }) => ({
+    params: { slug }
+  })) || []
+}
+
