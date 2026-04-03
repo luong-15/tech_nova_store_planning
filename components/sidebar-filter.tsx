@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, X, RotateCw } from "lucide-react"
+import { ChevronDown, X, RotateCw, Filter } from "lucide-react"
 import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
@@ -136,12 +136,10 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
 
   const triggerFilterChange = useCallback(
     (newFilters: FilterState) => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
-      }
+      if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
         onFilterChange?.(newFilters)
-      }, 150)
+      }, 250) // Tăng slight delay để filter mượt hơn
     },
     [onFilterChange],
   )
@@ -206,14 +204,12 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
       setFilters(resetFilters)
       triggerFilterChange(resetFilters)
       setIsClearing(false)
-    }, 200)
+    }, 300)
   }
 
   const getActiveFilterCount = () => {
     let count = 0
-    if (filters.priceRange.min !== PRICE_MIN || filters.priceRange.max !== PRICE_MAX) {
-      count++
-    }
+    if (filters.priceRange.min !== PRICE_MIN || filters.priceRange.max !== PRICE_MAX) count++
     Object.entries(filters).forEach(([key, value]) => {
       if (key !== "priceRange" && Array.isArray(value) && value.length > 0) {
         count += value.length
@@ -224,92 +220,98 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
 
   const activeCount = getActiveFilterCount()
 
+  // CSS classes cho custom scrollbar dùng Tailwind arbitrary variants
+  const scrollbarClasses = "scrollbar-thin [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/60 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary/50 transition-colors"
+
   return (
-    <aside className="w-full lg:w-72 shrink-0">
+    <aside className="w-full">
       <div
         className={cn(
-          "sticky top-20 bg-card border border-border rounded-xl p-6 space-y-6 transition-all duration-300",
-          isClearing && "scale-[0.98] opacity-80",
+          "bg-background/80 backdrop-blur-xl border border-border/50 rounded-3xl p-6 space-y-7 shadow-2xl shadow-black/5 transition-all duration-500 ease-out",
+          isClearing && "scale-[0.98] opacity-50 blur-[2px]",
         )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-foreground">Bộ lọc</h2>
+        {/* Header Section */}
+        <div className="flex items-center justify-between pb-2">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-primary/10 p-2 rounded-xl text-primary">
+              <Filter className="w-4 h-4" />
+            </div>
+            <h2 className="text-lg font-bold tracking-tight text-foreground">Bộ lọc</h2>
             <div
               className={cn(
-                "transition-all duration-300",
-                activeCount > 0 ? "scale-100 opacity-100" : "scale-0 opacity-0",
+                "transition-all duration-500 ease-out-expo",
+                activeCount > 0 ? "scale-100 opacity-100 translate-x-0" : "scale-50 opacity-0 -translate-x-4",
               )}
             >
-              <Badge variant="secondary" className="bg-primary/20 text-primary tabular-nums">
+              <Badge variant="default" className="h-6 w-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shadow-sm p-0">
                 {activeCount}
               </Badge>
             </div>
           </div>
+          
           <Button
             variant="ghost"
             size="sm"
             onClick={clearAllFilters}
             disabled={activeCount === 0}
             className={cn(
-              "h-8 text-xs gap-1.5 transition-all duration-300",
-              activeCount > 0 ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 pointer-events-none",
+              "h-8 px-2.5 text-xs font-semibold gap-1.5 rounded-lg transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
+              activeCount > 0 ? "opacity-100" : "opacity-0 pointer-events-none",
             )}
           >
-            <RotateCw className={cn("h-3 w-3 transition-transform", isClearing && "animate-spin")} />
-            Xóa tất cả
+            <RotateCw className={cn("h-3.5 w-3.5 transition-transform duration-500", isClearing && "animate-spin")} />
+            Xóa lọc
           </Button>
         </div>
 
         {/* Price Range Slider */}
-        <div className="space-y-4 pb-6 border-b border-border">
+        <div className="space-y-5 pb-7 border-b border-border/40">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Khoảng giá</Label>
+            <Label className="text-sm font-bold text-foreground">Mức giá</Label>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => clearFilter("priceRange")}
               className={cn(
-                "h-6 w-6 p-0 transition-all duration-200",
+                "h-6 w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
                 filters.priceRange.min !== PRICE_MIN || filters.priceRange.max !== PRICE_MAX
                   ? "opacity-100 scale-100"
-                  : "opacity-0 scale-0 pointer-events-none",
+                  : "opacity-0 scale-50 pointer-events-none",
               )}
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
-          <Slider
-            value={[filters.priceRange.min, filters.priceRange.max]}
-            onValueChange={handlePriceChange}
-            min={PRICE_MIN}
-            max={PRICE_MAX}
-            step={1000000}
-            className="w-full"
-          />
-          <div className="flex items-center justify-between text-sm">
-            <span
-              className={cn(
-                "text-muted-foreground transition-all duration-200 tabular-nums",
-                filters.priceRange.min !== PRICE_MIN && "text-primary font-medium",
-              )}
-            >
-              {formatCurrency(filters.priceRange.min)}
-            </span>
-            <span
-              className={cn(
-                "text-muted-foreground transition-all duration-200 tabular-nums",
-                filters.priceRange.max !== PRICE_MAX && "text-primary font-medium",
-              )}
-            >
-              {formatCurrency(filters.priceRange.max)}
-            </span>
+          
+          <div className="px-1 pt-2">
+            <Slider
+              value={[filters.priceRange.min, filters.priceRange.max]}
+              onValueChange={handlePriceChange}
+              min={PRICE_MIN}
+              max={PRICE_MAX}
+              step={1000000}
+              className="w-full"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between gap-4">
+            <div className={cn("flex-1 rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-center transition-colors", filters.priceRange.min !== PRICE_MIN && "border-primary/30 bg-primary/5 text-primary")}>
+              <span className="text-xs font-bold tabular-nums">
+                {formatCurrency(filters.priceRange.min)}
+              </span>
+            </div>
+            <div className="h-px w-4 bg-border/60 shrink-0" />
+            <div className={cn("flex-1 rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-center transition-colors", filters.priceRange.max !== PRICE_MAX && "border-primary/30 bg-primary/5 text-primary")}>
+              <span className="text-xs font-bold tabular-nums">
+                {formatCurrency(filters.priceRange.max)}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Filter Sections */}
-        <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto pr-1 custom-scrollbar">
+        <div className={cn("space-y-1 max-h-[calc(100vh-320px)] overflow-y-auto pr-2", scrollbarClasses)}>
           {FILTER_SECTIONS.map((section) => {
             const isExpanded = expandedSections.has(section.id)
             const sectionKey = section.id as keyof FilterState
@@ -317,7 +319,7 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
             const selectedCount = selectedValues.length
 
             return (
-              <div key={section.id} className="pb-4 border-b border-border last:border-0 last:pb-0">
+              <div key={section.id} className="pb-3 border-b border-border/40 last:border-0 last:pb-0">
                 <div
                   role="button"
                   tabIndex={0}
@@ -328,42 +330,36 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
                       toggleSection(section.id)
                     }
                   }}
-                  className="flex items-center justify-between w-full group py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 hover:bg-accent p-0 border-none bg-transparent"
+                  className="flex items-center justify-between w-full group py-3 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary -mx-2 px-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <Label className="text-sm font-medium cursor-pointer">{section.label}</Label>
-                    <div
-                      className={cn(
-                        "transition-all duration-300",
-                        selectedCount > 0 ? "scale-100 opacity-100" : "scale-0 opacity-0",
-                      )}
-                    >
-                      <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-primary/20 text-primary tabular-nums">
-                        {selectedCount}
-                      </Badge>
-                    </div>
+                  <div className="flex items-center gap-2.5">
+                    <Label className="text-sm font-bold cursor-pointer">{section.label}</Label>
+                    {selectedCount > 0 && (
+                       <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-primary/10 text-primary font-bold tabular-nums animate-in zoom-in duration-300">
+                         {selectedCount}
+                       </Badge>
+                    )}
                   </div>
+                  
                   <div className="flex items-center gap-1">
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={(e) => {
                         e.stopPropagation()
                         clearFilter(sectionKey)
                       }}
                       className={cn(
-                        "h-6 w-6 p-0 transition-all duration-200",
-                        selectedCount > 0
-                          ? "opacity-0 group-hover:opacity-100 scale-100"
-                          : "opacity-0 scale-0 pointer-events-none",
+                        "h-6 w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
+                        selectedCount > 0 ? "opacity-0 group-hover:opacity-100 scale-100" : "opacity-0 scale-50 pointer-events-none",
                       )}
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </Button>
                     <ChevronDown
                       className={cn(
-                        "h-4 w-4 text-muted-foreground transition-transform duration-300",
-                        isExpanded && "rotate-180",
+                        "h-4 w-4 text-muted-foreground/70 transition-transform duration-500 ease-out-expo",
+                        isExpanded && "rotate-180 text-foreground",
                       )}
                     />
                   </div>
@@ -371,12 +367,12 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
 
                 <div
                   className={cn(
-                    "grid transition-all duration-300 ease-out",
-                    isExpanded ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0 mt-0",
+                    "grid transition-all duration-500 ease-out-expo",
+                    isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
                   )}
                 >
                   <div className="overflow-hidden">
-                    <div className="space-y-1 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-1 pt-1 pb-3">
                       {section.options.map((option, index) => {
                         const itemKey = `${section.id}-${option.value}`
                         const isSelected = selectedValues.includes(option.value)
@@ -388,13 +384,13 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
                             tabIndex={0}
                             key={option.value}
                             className={cn(
-                              "flex items-center justify-between group/item rounded-lg px-2 py-2 transition-all duration-200 cursor-pointer",
+                              "flex items-center justify-between group/item rounded-xl px-2.5 py-2.5 transition-all duration-300 cursor-pointer border",
                               isSelected
-                                ? "bg-primary/10 border border-primary/20"
-                                : "hover:bg-accent/50 border border-transparent",
-                              isAnimating && "scale-[0.98]",
+                                ? "bg-primary/5 border-primary/20 shadow-sm"
+                                : "hover:bg-muted/50 border-transparent",
+                              isAnimating && "scale-[0.97] opacity-80",
                             )}
-                            style={{ animationDelay: `${index * 30}ms` }}
+                            style={{ animationDelay: `${index * 20}ms` }}
                             onClick={() => handleCheckboxChange(sectionKey, option.value, !isSelected)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
@@ -402,18 +398,15 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
                                 handleCheckboxChange(sectionKey, option.value, !isSelected)
                               }
                             }}
-                            title={option.label}
                           >
                             <div className="flex items-center space-x-3 flex-1">
                               <Checkbox
                                 id={itemKey}
                                 checked={isSelected}
-                                onCheckedChange={(checked) =>
-                                  handleCheckboxChange(sectionKey, option.value, checked as boolean)
-                                }
+                                onCheckedChange={(checked) => handleCheckboxChange(sectionKey, option.value, checked as boolean)}
                                 onClick={(e) => e.stopPropagation()}
                                 className={cn(
-                                  "border-border transition-all duration-200",
+                                  "border-muted-foreground/30 transition-all duration-300 shadow-sm rounded-lg",
                                   "data-[state=checked]:bg-primary data-[state=checked]:border-primary",
                                   isAnimating && "scale-110",
                                 )}
@@ -421,21 +414,22 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
                               <Label
                                 htmlFor={itemKey}
                                 className={cn(
-                                  "text-sm cursor-pointer flex-1 transition-colors duration-200",
-                                  isSelected ? "text-foreground font-medium" : "text-muted-foreground",
+                                  "text-sm cursor-pointer flex-1 transition-colors duration-300",
+                                  isSelected ? "text-foreground font-semibold" : "text-muted-foreground group-hover/item:text-foreground",
                                 )}
                               >
                                 {option.label}
                               </Label>
                             </div>
+                            
                             {option.count !== undefined && (
                               <span
                                 className={cn(
-                                  "text-xs transition-colors duration-200",
-                                  isSelected ? "text-primary" : "text-muted-foreground/60",
+                                  "text-xs font-medium transition-colors duration-300 tabular-nums px-2 py-0.5 rounded-md",
+                                  isSelected ? "bg-primary/10 text-primary" : "text-muted-foreground/50 bg-muted/30 group-hover/item:bg-muted/60",
                                 )}
                               >
-                                ({option.count})
+                                {option.count}
                               </span>
                             )}
                           </div>
@@ -449,23 +443,6 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
           })}
         </div>
       </div>
-
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: hsl(var(--border));
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: hsl(var(--primary) / 0.5);
-        }
-      `}</style>
     </aside>
   )
 }
-

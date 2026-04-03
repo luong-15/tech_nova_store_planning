@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/currency"
-import { ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw, Star, Clock } from "lucide-react"
+import { cn } from "@/lib/utils" // Đảm bảo import cn
+import { ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw, Star, Clock, ChevronRight } from "lucide-react"
 import { notifyCartAdded, notifyWishlistAdded, notifyWishlistRemoved, notifyError, notifyInfo } from "@/lib/notifications"
 import Link from "next/link"
 import type { Product, Review, UserProfile } from "@/lib/types"
@@ -47,14 +48,14 @@ export default function ProductPage() {
 
       setProduct(productData)
 
-      // Fetch reviews - separate queries to avoid relationship issues
+      // Fetch reviews
       const { data: reviewsData } = await supabase
         .from("reviews")
         .select("*")
         .eq("product_id", productData.id)
         .order("created_at", { ascending: false })
 
-      // Fetch user profiles for reviews if reviews exist
+      // Fetch user profiles for reviews
       let reviewsWithUsers: (Review & { user?: UserProfile | null })[] = []
       if (reviewsData && reviewsData.length > 0) {
         const userIds = [...new Set(reviewsData.map((r: any) => r.user_id))]
@@ -83,7 +84,7 @@ export default function ProductPage() {
         setRelatedProducts(related)
       }
 
-      // Check if product is in wishlist (if user is logged in)
+      // Check wishlist status
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: wishlistItem } = await supabase
@@ -111,7 +112,6 @@ export default function ProductPage() {
 
   const handleAddToWishlist = async () => {
     if (!product) return
-
     const supabase = createBrowserClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -122,60 +122,62 @@ export default function ProductPage() {
 
     try {
       if (isInWishlist) {
-        // Remove from wishlist
+        // Undo: delete
         const { error } = await supabase
           .from("wishlist")
           .delete()
           .eq("user_id", user.id)
           .eq("product_id", product.id)
-
         if (error) throw error
-
         setIsInWishlist(false)
         notifyWishlistRemoved(product.name)
       } else {
-        // Add to wishlist
+        // Add - check duplicate first
+        const { data: existing } = await supabase
+          .from("wishlist")
+          .select('*')
+          .eq("user_id", user.id)
+          .eq("product_id", product.id)
+          .single()
+        
+        if (existing) {
+          notifyInfo("Sản phẩm đã có trong wishlist")
+          return
+        }
+
         const { error } = await supabase
           .from("wishlist")
-          .insert({
-            user_id: user.id,
-            product_id: product.id,
+          .insert({ 
+            user_id: user.id, 
+            product_id: product.id 
           })
-
         if (error) throw error
-
         setIsInWishlist(true)
-        notifyWishlistAdded(product.name, () => {
-          // Undo wishlist add - refetch wishlist status or direct delete
-          supabase.from("wishlist").delete().eq("user_id", user.id).eq("product_id", product.id)
-          setIsInWishlist(false)
-        })
+        notifyWishlistAdded(product.name)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Wishlist error:", error)
-      notifyError("Có lỗi xảy ra, vui lòng thử lại")
+      if (error.code === 'P0001') {
+        notifyError("Duplicate wishlist entry")
+      } else if (error.message.includes('RLS')) {
+        notifyError("Vui lòng đăng nhập lại")
+      } else {
+        notifyError("Có lỗi xảy ra")
+      }
     }
   }
 
   const handleShare = async () => {
     if (!product) return
-
     const url = window.location.href
-
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: product.name,
-          text: product.description,
-          url: url,
-        })
+        await navigator.share({ title: product.name, text: product.description, url: url })
         notifyInfo("Đã chia sẻ sản phẩm")
       } catch (error) {
-        // User cancelled share or error occurred
         console.log("Share cancelled or failed")
       }
     } else {
-      // Fallback to clipboard
       try {
         await navigator.clipboard.writeText(url)
         notifyInfo("Đã sao chép liên kết sản phẩm")
@@ -185,30 +187,9 @@ export default function ProductPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <Skeleton className="aspect-square w-full rounded-xl" />
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-12 w-32" />
-            <Skeleton className="h-24 w-full" />
-            <div className="flex gap-4">
-              <Skeleton className="h-12 flex-1" />
-              <Skeleton className="h-12 w-12" />
-              <Skeleton className="h-12 w-12" />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <ProductPageSkeleton />
 
-  if (!product) {
-    return notFound()
-  }
+  if (!product) return notFound()
 
   const discount = product.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
@@ -217,188 +198,242 @@ export default function ProductPage() {
   const images = (product.images as string[]) || [product.image_url]
 
   return (
-    <>
-      {/* Breadcrumb */}
-      <div className="border-b border-border/50 bg-muted/30">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link href="/" className="hover:text-primary">
-              Trang chủ
-            </Link>
-            <span>/</span>
-            <Link href="/products" className="hover:text-primary">
-              Sản phẩm
-            </Link>
-            <span>/</span>
-            <span className="text-foreground">{product.name}</span>
+    <div className="min-h-screen bg-slate-50/30 dark:bg-transparent animate-in fade-in duration-700">
+      {/* Breadcrumb - Sticky Glass */}
+      <div className="sticky top-16 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-backdrop-filter:bg-background/60">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground/80">
+            <Link href="/" className="hover:text-primary transition-colors">Trang chủ</Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <Link href="/products" className="hover:text-primary transition-colors">Sản phẩm</Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="text-foreground truncate max-w-50 sm:max-w-none">{product.name}</span>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Product Main Section */}
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Gallery */}
-          <ProductGallery images={images} productName={product.name} />
+      <div className="container mx-auto px-4 py-10 lg:py-16">
+        {/* Main Grid: Gallery + Info */}
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-start">
+          
+          {/* Left Column: Gallery */}
+          <div className="rounded-3xl p-1 bg-white dark:bg-background/50 border border-border/40 shadow-2xl shadow-black/5">
+            <ProductGallery images={images} productName={product.name} />
+          </div>
 
-          {/* Product Info */}
-          <div className="space-y-6">
-            {/* Brand & Rating */}
-            <div className="flex items-center gap-4">
-              {product.brand && (
-                <Badge variant="outline" className="text-xs">
-                  {product.brand}
-                </Badge>
-              )}
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                <span className="font-medium">{product.rating?.toFixed(1) || "0.0"}</span>
-                <span className="text-muted-foreground">({product.review_count || 0} đánh giá)</span>
+          {/* Right Column: Sticky Info */}
+          <div className="sticky top-32 flex flex-col gap-8">
+            
+            {/* Header: Brand, Title, Rating */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                {product.brand && (
+                  <Badge variant="secondary" className="px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors rounded-lg font-bold">
+                    {product.brand}
+                  </Badge>
+                )}
+                <div className="flex items-center gap-1.5 bg-yellow-500/10 px-2.5 py-1 rounded-lg text-yellow-600 dark:text-yellow-500 font-semibold text-sm">
+                  <Star className="h-4 w-4 fill-current" />
+                  <span>{product.rating?.toFixed(1) || "0.0"}</span>
+                  <span className="text-muted-foreground ml-1">({product.review_count || 0} đánh giá)</span>
+                </div>
               </div>
+
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+                {product.name}
+              </h1>
+              
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                {product.description}
+              </p>
             </div>
 
-            {/* Name */}
-            <h1 className="text-2xl font-bold md:text-3xl">{product.name}</h1>
-
-            {/* Price */}
-            <div className="space-y-2">
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-primary">
+            {/* Pricing Section */}
+            <div className="p-6 rounded-3xl bg-muted/30 border border-border/50 space-y-4">
+              <div className="flex flex-wrap items-baseline gap-4">
+                <span className="text-4xl md:text-5xl font-extrabold text-primary tracking-tighter">
                   {formatCurrency(product.discount_price || product.price)}
                 </span>
                 {product.discount_price && (
-                  <>
-                    <span className="text-lg text-muted-foreground line-through">{formatCurrency(product.price)}</span>
-                    <Badge className="bg-red-500 hover:bg-red-600">-{discount}%</Badge>
-                  </>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl text-muted-foreground/60 font-semibold line-through decoration-2">
+                      {formatCurrency(product.price)}
+                    </span>
+                    <Badge className="bg-destructive hover:bg-destructive text-white px-2.5 py-1 text-sm font-bold rounded-lg shadow-sm">
+                      -{discount}%
+                    </Badge>
+                  </div>
                 )}
               </div>
 
+              {/* Deal Timer */}
               {product.is_deal && (
-                <div className="flex items-center gap-2 text-sm text-orange-500">
-                  <Clock className="h-4 w-4" />
-                  <span>Deal kết thúc sau: 02:45:30</span>
+                <div className="flex items-center gap-2 text-sm font-bold text-orange-500 bg-orange-500/10 w-fit px-3 py-1.5 rounded-lg border border-orange-500/20">
+                  <Clock className="h-4 w-4 animate-pulse" />
+                  <span>Flash Sale kết thúc sau: 02:45:30</span>
                 </div>
               )}
+              
+              {/* Stock Status */}
+              <div className="flex items-center gap-2 pt-2 border-t border-border/40 mt-4">
+                <span className="relative flex h-3 w-3">
+                  {(product.stock ?? 0) > 0 && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+                  <span className={cn("relative inline-flex rounded-full h-3 w-3", (product.stock ?? 0) > 0 ? "bg-green-500" : "bg-destructive")}></span>
+                </span>
+                <span className={cn("font-semibold", (product.stock ?? 0) > 0 ? "text-green-600 dark:text-green-500" : "text-destructive")}>
+                  {(product.stock ?? 0) > 0 ? `Sẵn sàng giao (${product.stock} sản phẩm)` : "Tạm hết hàng"}
+                </span>
+              </div>
             </div>
 
-            {/* Short Description */}
-            <p className="text-muted-foreground">{product.description}</p>
-
-            {/* Stock Status */}
-            <div className="flex items-center gap-2">
-              <div
-                className={`h-2 w-2 rounded-full ${product.stock && product.stock > 0 ? "bg-green-500" : "bg-red-500"}`}
-              />
-              <span className={product.stock && product.stock > 0 ? "text-green-500" : "text-red-500"}>
-                {product.stock && product.stock > 0 ? `Còn ${product.stock} sản phẩm` : "Hết hàng"}
-              </span>
-            </div>
-
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex gap-4">
               <Button
                 size="lg"
-                className="flex-1 gap-2"
+                className="flex-1 h-14 text-base font-bold rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300"
                 disabled={!product.stock || product.stock <= 0}
                 onClick={handleAddToCart}
               >
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="mr-2 h-5 w-5" />
                 Thêm vào giỏ hàng
               </Button>
               <Button
-                size="lg"
+                size="icon"
                 variant="outline"
-                className={`bg-transparent ${isInWishlist ? 'text-red-500 border-red-500' : ''}`}
+                className={cn(
+                  "h-14 w-14 rounded-2xl border-border/50 transition-all duration-300",
+                  isInWishlist ? "bg-red-50 border-red-200 text-red-500 dark:bg-red-500/10 dark:border-red-500/30" : "hover:bg-muted"
+                )}
                 onClick={handleAddToWishlist}
               >
-                <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} />
+                <Heart className={cn("h-6 w-6 transition-transform", isInWishlist ? "fill-current scale-110" : "scale-100")} />
               </Button>
               <Button
-                size="lg"
+                size="icon"
                 variant="outline"
-                className="bg-transparent"
+                className="h-14 w-14 rounded-2xl border-border/50 hover:bg-muted transition-all duration-300"
                 onClick={handleShare}
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-6 w-6 text-muted-foreground" />
               </Button>
             </div>
 
-            {/* Benefits */}
-            <div className="grid gap-4 rounded-xl border border-border/50 bg-card/50 p-4 sm:grid-cols-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Truck className="h-5 w-5 text-primary" />
+            {/* Benefits Cards */}
+            <div className="grid grid-cols-3 gap-4 pt-4">
+              {[
+                { icon: Truck, title: "Freeship", desc: "Đơn từ 500K" },
+                { icon: Shield, title: "Bảo hành", desc: "24 tháng" },
+                { icon: RotateCcw, title: "Đổi trả", desc: "30 ngày" }
+              ].map((benefit, i) => (
+                <div key={i} className="group flex flex-col items-center justify-center p-4 rounded-2xl border border-border/40 bg-card/40 hover:bg-primary/5 hover:border-primary/20 hover:-translate-y-1 transition-all duration-300 text-center space-y-2 cursor-default">
+                  <div className="bg-primary/10 p-3 rounded-xl group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
+                    <benefit.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{benefit.title}</p>
+                    <p className="text-xs text-muted-foreground">{benefit.desc}</p>
+                  </div>
                 </div>
-                <div className="text-sm">
-                  <p className="font-medium">Miễn phí vận chuyển</p>
-                  <p className="text-muted-foreground">Đơn từ 500K</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium">Bảo hành chính hãng</p>
-                  <p className="text-muted-foreground">24 tháng</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <RotateCcw className="h-5 w-5 text-primary" />
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium">Đổi trả dễ dàng</p>
-                  <p className="text-muted-foreground">Trong 30 ngày</p>
-                </div>
-              </div>
+              ))}
             </div>
+            
           </div>
         </div>
 
-        {/* Product Details Tabs */}
-        <div className="mt-12">
-          <Tabs defaultValue="specs" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:w-100">
-              <TabsTrigger value="specs">Thông số</TabsTrigger>
-              <TabsTrigger value="description">Mô tả</TabsTrigger>
-              <TabsTrigger value="reviews">Đánh giá ({reviews.length})</TabsTrigger>
+        {/* Tabs Section */}
+        <div className="mt-20 lg:mt-32">
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="w-full justify-start h-auto p-1.5 bg-muted/40 backdrop-blur-md rounded-2xl overflow-x-auto overflow-y-hidden flex-nowrap border border-border/40">
+              <TabsTrigger value="description" className="rounded-xl px-6 py-3 text-base font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Mô tả chi tiết
+              </TabsTrigger>
+              <TabsTrigger value="specs" className="rounded-xl px-6 py-3 text-base font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Thông số kỹ thuật
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="rounded-xl px-6 py-3 text-base font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Đánh giá ({reviews.length})
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="specs" className="mt-6">
-              <ProductSpecs specifications={product.specs as Record<string, string>} />
-            </TabsContent>
+            <div className="mt-8">
+              <TabsContent value="description" className="animate-in slide-in-from-bottom-4 fade-in duration-500">
+                <div className="prose prose-slate dark:prose-invert max-w-4xl mx-auto text-base leading-loose p-8 rounded-3xl bg-card border border-border/40 shadow-sm">
+                  <p>{product.description}</p>
+                  {/* Có thể render rich text (HTML) ở đây nếu DB hỗ trợ */}
+                </div>
+              </TabsContent>
 
-            <TabsContent value="description" className="mt-6">
-              <div className="prose prose-invert max-w-none rounded-xl border border-border/50 bg-card/50 p-6">
-                <p>{product.description}</p>
-              </div>
-            </TabsContent>
+              <TabsContent value="specs" className="animate-in slide-in-from-bottom-4 fade-in duration-500">
+                <div className="max-w-4xl mx-auto">
+                  <ProductSpecs specifications={product.specs as Record<string, string>} />
+                </div>
+              </TabsContent>
 
-            <TabsContent value="reviews" className="mt-6">
-              <ProductReviews
-                reviews={reviews}
-                productId={product.id}
-                averageRating={product.rating || 0}
-                totalReviews={product.review_count || 0}
-              />
-            </TabsContent>
+              <TabsContent value="reviews" className="animate-in slide-in-from-bottom-4 fade-in duration-500">
+                <ProductReviews
+                  reviews={reviews}
+                  productId={product.id}
+                  averageRating={product.rating || 0}
+                  totalReviews={product.review_count || 0}
+                />
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
 
-        {/* Related Products */}
+        {/* Related Products Section */}
         {relatedProducts && relatedProducts.length > 0 && (
-          <div className="mt-16">
-            <h2 className="mb-8 text-2xl font-bold">Sản phẩm liên quan</h2>
+          <div className="mt-24">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-extrabold tracking-tight">Sản phẩm tương tự</h2>
+              <Button variant="ghost" className="text-primary hover:bg-primary/10 rounded-xl font-bold">
+                Xem tất cả <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedProducts.map((relatedProduct: Product) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              {relatedProducts.map((relatedProduct: Product, index) => (
+                <div 
+                  key={relatedProduct.id} 
+                  className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <ProductCard product={relatedProduct} />
+                </div>
               ))}
             </div>
           </div>
         )}
       </div>
-    </>
+    </div>
+  )
+}
+
+// Skeleton Component được tách ra để code gọn gàng hơn
+function ProductPageSkeleton() {
+  return (
+    <div className="container mx-auto px-4 py-10 lg:py-16">
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+        <Skeleton className="aspect-square w-full rounded-3xl" />
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-24 rounded-lg" />
+            <Skeleton className="h-14 w-full rounded-xl" />
+            <Skeleton className="h-14 w-4/5 rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-32 w-full rounded-3xl" />
+          <div className="flex gap-4">
+            <Skeleton className="h-14 flex-1 rounded-2xl" />
+            <Skeleton className="h-14 w-14 rounded-2xl" />
+            <Skeleton className="h-14 w-14 rounded-2xl" />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

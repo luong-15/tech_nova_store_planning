@@ -2,13 +2,12 @@
 
 import { toast as shadcnToast } from '@/hooks/use-toast'
 import React from 'react'
-import { CheckCircle2, XCircle, AlertTriangle, Info, Loader2 } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Info, Loader2, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ToastAction } from '@/components/ui/toast'
 
 type Variant = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
-// Vẫn giữ nguyên ICONS object của bạn, chỉ tối ưu lại class cho đồng bộ
 const ICONS: Record<Variant, React.FC<{ className?: string }>> = {
   success: (props) => <CheckCircle2 className={cn('h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400', props?.className)} />,
   error: (props) => <XCircle className={cn('h-5 w-5 shrink-0 text-red-600 dark:text-red-400', props?.className)} />,
@@ -43,10 +42,9 @@ export function notify(
   variant: Variant = 'info',
   options: NotifyOptions = {}
 ) {
-  // Tinh chỉnh lại UI của nội dung Toast
   const toastDescription = (
-    <div className="flex items-center gap-3.5 w-full" role="alert" aria-live="polite">
-      {/* Icon với Soft Background tùy theo variant */}
+    <div className="flex items-center gap-3.5 w-full pr-2" role="alert" aria-live="polite">
+      {/* Icon Background */}
       {variant === 'success' && (
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -73,7 +71,7 @@ export function notify(
         </div>
       )}
 
-      {/* Nội dung Text */}
+      {/* Text Content */}
       <div className="min-w-0 flex-1 space-y-0.5">
         <p className="text-sm font-medium leading-tight text-foreground line-clamp-2">
           {content}
@@ -87,14 +85,17 @@ export function notify(
 
   const toastVariant = variant === 'error' ? 'destructive' : 'default'
 
-  // Tinh chỉnh UI cho Action Button (Nút Hoàn tác) - Trở nên Minimal và chuyên nghiệp hơn
+  // Nút Hoàn Tác đã được tối ưu: Thêm shrink-0 để không bị bóp méo, đổi icon RotateCcw
   const toastAction = options.undo ? (
     <ToastAction 
       altText="Hoàn tác"
-      onClick={() => options.undo?.()}
-      className="ml-auto flex h-8 items-center justify-center gap-1.5 rounded-md border border-border/50 bg-background/50 px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus:ring-1 focus:ring-ring"
+      onClick={(e) => {
+        e.stopPropagation() // Ngăn chặn nổi bọt sự kiện
+        if (options.undo) options.undo()
+      }}
+      className="ml-auto flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border/50 bg-background/80 px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary hover:text-secondary-foreground focus:ring-1 focus:ring-ring"
     >
-      <XCircle className="h-3 w-3 shrink-0" />
+      <RotateCcw className="h-3 w-3 shrink-0" />
       Hoàn tác
     </ToastAction>
   ) : undefined
@@ -104,57 +105,28 @@ export function notify(
     description: toastDescription,
     action: toastAction,
     duration: options.duration ?? (variant === 'loading' ? 6000 : 3500),
-    // Tinh chỉnh Container Toast: Bỏ scale/ring quá lố, thêm glassmorphism nhẹ
     className: cn(
-      "group relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-xl border bg-background/95 p-3.5 pr-4 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl sm:max-w-[400px]",
-      variant === 'error' ? 'border-red-500/20' : 'border-border/40'
+      "group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border bg-background/95 p-4 shadow-2xl backdrop-blur-md transition-all duration-300 hover:shadow-3xl !z-[99999] sm:max-w-[450px]",
+      variant === 'error' ? 'border-red-500/30' : 'border-border/40'
     )
   })
 }
 
 // Generic helpers
-export const notifySuccess = (content: React.ReactNode, options?: NotifyOptions) => 
-  notify(content, 'success', options)
-
-export const notifyError = (content: React.ReactNode, options?: NotifyOptions) => 
-  notify(content, 'error', options)
-
-export const notifyWarning = (content: React.ReactNode, options?: NotifyOptions) => 
-  notify(content, 'warning', options)
-
-export const notifyInfo = (content: React.ReactNode, options?: NotifyOptions) => 
-  notify(content, 'info', options)
-
-export const notifyLoading = (content: React.ReactNode, options?: NotifyOptions) => 
-  notify(content, 'loading', options)
+export const notifySuccess = (content: React.ReactNode, options?: NotifyOptions) => notify(content, 'success', options)
+export const notifyError = (content: React.ReactNode, options?: NotifyOptions) => notify(content, 'error', options)
+export const notifyWarning = (content: React.ReactNode, options?: NotifyOptions) => notify(content, 'warning', options)
+export const notifyInfo = (content: React.ReactNode, options?: NotifyOptions) => notify(content, 'info', options)
+export const notifyLoading = (content: React.ReactNode, options?: NotifyOptions) => notify(content, 'loading', options)
 
 // E-commerce specific notifications
-export const notifyCartAdded = (name: string, undo?: () => void) => 
-  notifySuccess(MESSAGES.cartAdded(name), { duration: 2500, undo })
-
-export const notifyWishlistAdded = (name: string, undo?: () => void) => 
-  notifySuccess(MESSAGES.wishlistAdded(name), { duration: 2500, undo })
-
-export const notifyWishlistRemoved = (name: string) => 
-  notifyInfo(MESSAGES.wishlistRemoved(name), { duration: 2500 })
-
-export const notifyComparisonAdded = (name: string) => 
-  notifySuccess(MESSAGES.comparisonAdded(name), { duration: 2500 })
-
-export const notifyShareCopied = () => 
-  notifyInfo(MESSAGES.shareCopied, { duration: 2000 })
-
-export const notifyLoginRequired = () => 
-  notifyWarning(MESSAGES.loginRequired, { duration: 2500 })
-
-export const notifyOrderPlaced = (orderNumber: string) => 
-  notifySuccess(`Đơn hàng #${orderNumber} ${MESSAGES.orderPlaced}`, { duration: 3000 })
-
-export const notifyPaymentSuccess = () => 
-  notifySuccess(MESSAGES.paymentSuccess, { duration: 3000 })
-
-export const notifyOutOfStock = (name: string) => 
-  notifyError(`${name}: ${MESSAGES.outOfStock}`, { duration: 3000 })
-
-export const notifyStockLow = (name: string) => 
-  notifyWarning(`${name}: ${MESSAGES.stockLow}`, { duration: 3500 })
+export const notifyCartAdded = (name: string, undo?: () => void) => notifySuccess(MESSAGES.cartAdded(name), { duration: 2500, undo })
+export const notifyWishlistAdded = (name: string, undo?: () => void) => notifySuccess(MESSAGES.wishlistAdded(name), { duration: 2500, undo })
+export const notifyWishlistRemoved = (name: string) => notifyInfo(MESSAGES.wishlistRemoved(name), { duration: 2500 })
+export const notifyComparisonAdded = (name: string) => notifySuccess(MESSAGES.comparisonAdded(name), { duration: 2500 })
+export const notifyShareCopied = () => notifyInfo(MESSAGES.shareCopied, { duration: 2000 })
+export const notifyLoginRequired = () => notifyWarning(MESSAGES.loginRequired, { duration: 2500 })
+export const notifyOrderPlaced = (orderNumber: string) => notifySuccess(`Đơn hàng #${orderNumber} ${MESSAGES.orderPlaced}`, { duration: 3000 })
+export const notifyPaymentSuccess = () => notifySuccess(MESSAGES.paymentSuccess, { duration: 3000 })
+export const notifyOutOfStock = (name: string) => notifyError(`${name}: ${MESSAGES.outOfStock}`, { duration: 3000 })
+export const notifyStockLow = (name: string) => notifyWarning(`${name}: ${MESSAGES.stockLow}`, { duration: 3500 })

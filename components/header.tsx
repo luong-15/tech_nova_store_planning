@@ -1,7 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Search, User, Menu, X, LogOut, GitCompare } from "lucide-react"
+import { 
+  ShoppingCart, Search, User as UserIcon, Menu, LogOut, GitCompare,
+  Home, Smartphone, FolderTree, Flame, Info, Laptop, Tablet, Headphones
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
@@ -12,6 +15,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import type { User } from "@supabase/supabase-js"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,19 +26,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 function CartButton() {
-  const totalItems = useCartStore((state) => state.getTotalItems())
+  const totalItems = useCartStore((state) => state.getItemCount())
   const openCart = useCartStore((state) => state.openCart)
   const [isClient, setIsClient] = useState(false)
 
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+  useEffect(() => setIsClient(true), [])
 
   return (
-    <Button variant="ghost" size="icon" className="relative" onClick={openCart}>
+    <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 hover:text-primary transition-colors" onClick={openCart}>
       <ShoppingCart className="h-5 w-5" />
       {isClient && totalItems > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm animate-in zoom-in">
           {totalItems}
         </span>
       )}
@@ -47,15 +49,13 @@ function ComparisonButton() {
   const openComparison = useComparisonStore((state) => state.openComparison)
   const [isClient, setIsClient] = useState(false)
 
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+  useEffect(() => setIsClient(true), [])
 
   return (
-    <Button variant="ghost" size="icon" className="relative" onClick={openComparison}>
+    <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 hover:text-primary transition-colors" onClick={openComparison}>
       <GitCompare className="h-5 w-5" />
       {isClient && productCount > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm animate-in zoom-in">
           {productCount}
         </span>
       )}
@@ -70,34 +70,27 @@ export function Header() {
   const [isSearching, setIsSearching] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = createBrowserClient()
+    
     const checkAuth = async () => {
       try {
-        const supabase = createBrowserClient()
         const { data: { user: authUser } } = await supabase.auth.getUser()
-
-        if (authUser) {
-          setUser(authUser)
-        }
+        if (authUser) setUser(authUser)
       } catch (error) {
         console.error("Auth check failed:", error)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     checkAuth()
 
-    // Listen for auth changes
-    const supabase = createBrowserClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser(session.user)
-      } else {
-        setUser(null)
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null)
     })
 
     return () => subscription.unsubscribe()
@@ -109,126 +102,114 @@ export function Header() {
     router.push("/")
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
+  // Gộp logic tìm kiếm chung để tái sử dụng
+  const executeSearch = (query: string) => {
     setIsSearching(true)
-
-    if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+    const trimmedQuery = query.trim()
+    
+    if (trimmedQuery) {
+      router.push(`/products?search=${encodeURIComponent(trimmedQuery)}`)
     } else {
       router.push('/products')
     }
-
-    // Reset searching state after navigation
-    setTimeout(() => setIsSearching(false), 100)
-  }
-
-  const handleMobileSearch = (e: React.FormEvent) => {
-    e.preventDefault()
+    
+    setTimeout(() => setIsSearching(false), 300)
     setIsMobileSearchOpen(false)
-
-    if (mobileSearchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(mobileSearchQuery.trim())}`)
-    } else {
-      router.push('/products')
-    }
   }
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 shadow-sm">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex h-16 items-center justify-between gap-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">TN</span>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm group-hover:scale-105 transition-transform">
+                <span className="text-base font-bold text-primary-foreground tracking-tight">TN</span>
               </div>
-              <span className="hidden text-xl font-bold md:inline-block">TechNova</span>
+              <span className="hidden text-xl font-bold tracking-tight md:inline-block">TechNova</span>
             </Link>
 
-            {/* Search Bar */}
-            <div className="mx-4 hidden flex-1 max-w-xl lg:block">
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {/* Desktop Search Bar */}
+            <div className="hidden flex-1 max-w-xl lg:block">
+              <form 
+                onSubmit={(e) => { e.preventDefault(); executeSearch(searchQuery); }} 
+                className="relative group"
+              >
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input
                   type="search"
                   placeholder="Tìm kiếm laptop, smartphone, phụ kiện..."
-                  className="w-full pl-10 pr-10"
+                  className="w-full pl-10 pr-10 bg-muted/40 border-transparent hover:border-border focus-visible:bg-background focus-visible:ring-primary/20 rounded-full h-10 transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   disabled={isSearching}
                 />
                 {isSearching && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   </div>
                 )}
               </form>
             </div>
 
-            {/* Navigation */}
-            <nav className="hidden items-center gap-6 md:flex">
-              <Link href="/products" className="text-sm font-medium transition-colors hover:text-primary">
+            {/* Desktop Navigation */}
+            <nav className="hidden items-center gap-7 lg:flex">
+              <Link href="/products" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Sản phẩm
               </Link>
-              <Link href="/deals" className="text-sm font-medium text-blue-500 transition-colors hover:text-blue-600">
-                Deal hot
+              <Link href="/deals" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1">
+                <Flame className="h-4 w-4" /> Deal hot
               </Link>
-              <Link href="/about" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Giới thiệu
               </Link>
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              {/* Mobile Search Toggle */}
               <Sheet open={isMobileSearchOpen} onOpenChange={setIsMobileSearchOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden">
+                  <Button variant="ghost" size="icon" className="lg:hidden hover:bg-primary/10">
                     <Search className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="top" className="h-auto pb-6 p-2.5">
+                <SheetContent side="top" className="h-auto pb-6 p-4 rounded-b-2xl">
                   <SheetTitle className="sr-only">Tìm kiếm sản phẩm</SheetTitle>
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <h2 className="text-lg font-semibold mt-2.5">Tìm kiếm sản phẩm</h2>
-                      <p className="text-sm text-muted-foreground">Tìm laptop, smartphone, phụ kiện...</p>
-                    </div>
-
-                    <form onSubmit={handleMobileSearch} className="space-y-4">
+                  <div className="space-y-5">
+                    <form 
+                      onSubmit={(e) => { e.preventDefault(); executeSearch(mobileSearchQuery); }} 
+                      className="space-y-4 pt-2"
+                    >
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           type="search"
                           placeholder="Nhập tên sản phẩm..."
-                          className="pl-12 h-12 text-base"
+                          className="pl-11 h-12 text-base rounded-xl bg-muted/50 border-border/50"
                           value={mobileSearchQuery}
                           onChange={(e) => setMobileSearchQuery(e.target.value)}
                           autoFocus
                         />
                       </div>
-
-                      <Button type="submit" className="w-full h-11" size="lg">
-                        <Search className="mr-2 h-4 w-4" />
+                      <Button type="submit" className="w-full h-11 rounded-xl" size="lg">
                         Tìm kiếm
                       </Button>
                     </form>
 
-                    {/* Quick Search Suggestions */}
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Tìm kiếm phổ biến:</p>
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Từ khóa phổ biến</p>
                       <div className="flex flex-wrap gap-2">
-                        {["iPhone", "Samsung", "MacBook", "Dell", "Gaming"].map((term) => (
+                        {["iPhone 15", "MacBook M3", "Samsung S24", "Bàn phím cơ", "Tai nghe"].map((term) => (
                           <Button
                             key={term}
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
-                            className="h-8 text-xs"
+                            className="h-8 text-xs rounded-full bg-muted/60 hover:bg-primary hover:text-primary-foreground"
                             onClick={() => {
                               setMobileSearchQuery(term)
-                              router.push(`/products?search=${encodeURIComponent(term)}`)
-                              setIsMobileSearchOpen(false)
+                              executeSearch(term)
                             }}
                           >
                             {term}
@@ -240,191 +221,124 @@ export function Header() {
                 </SheetContent>
               </Sheet>
 
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.user_metadata?.avatar_url} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {user.email?.charAt(0)?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user.user_metadata?.full_name || "Người dùng"}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard" className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        Tài khoản
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Đăng xuất
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href="/auth/login">
-                    <User className="h-5 w-5" />
-                  </Link>
-                </Button>
+              {/* User Dropdown */}
+              {!loading && (
+                user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="relative rounded-full h-9 w-9 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        <Avatar className="h-8 w-8 border border-border/50">
+                          <AvatarImage src={user.user_metadata?.avatar_url} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                            {user.email?.charAt(0)?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-60 rounded-xl p-2">
+                      <DropdownMenuLabel className="font-normal px-2.5 py-2">
+                        <div className="flex flex-col space-y-1.5">
+                          <p className="text-sm font-semibold leading-none text-foreground">
+                            {user.user_metadata?.full_name || "Thành viên TechNova"}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator className="my-1" />
+                      <DropdownMenuItem asChild className="rounded-lg cursor-pointer py-2.5">
+                        <Link href="/dashboard">
+                          <UserIcon className="mr-2.5 h-4 w-4 text-muted-foreground" />
+                          Quản lý tài khoản
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="my-1" />
+                      <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer py-2.5 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30">
+                        <LogOut className="mr-2.5 h-4 w-4" />
+                        Đăng xuất
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button variant="ghost" size="icon" asChild className="hover:bg-primary/10 hover:text-primary">
+                    <Link href="/auth/login">
+                      <UserIcon className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                )
               )}
+
               <ComparisonButton />
               <CartButton />
 
+              {/* Mobile Menu */}
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
+                  <Button variant="ghost" size="icon" className="lg:hidden hover:bg-muted">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80 sm:w-96">
+                <SheetContent side="right" className="w-[85vw] sm:w-96 p-0 border-l-0">
                   <SheetTitle className="sr-only">Menu điều hướng</SheetTitle>
-                  <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="flex items-center justify-between py-4 border-b">
-                      <h2 className="text-lg font-semibold p-2.5">Menu</h2>
-                      {/* <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <X className="h-5 w-5" />
-                      </Button> */}
+                  <div className="flex flex-col h-full bg-background">
+                    <div className="flex items-center justify-between p-5 border-b border-border/40 bg-muted/20">
+                      <span className="text-lg font-bold tracking-tight">Menu</span>
                     </div>
 
-                    {/* Navigation Links */}
-                    <div className="flex-1 py-6">
+                    <div className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
                       <div className="space-y-1">
-                        <Link
-                          href="/"
-                          className="flex items-center gap-3 px-3 py-3 text-base font-medium rounded-lg hover:bg-accent transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          🏠 Trang chủ
+                        <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl hover:bg-muted transition-colors">
+                          <Home className="h-5 w-5 text-muted-foreground" /> Trang chủ
                         </Link>
-                        <Link
-                          href="/products"
-                          className="flex items-center gap-3 px-3 py-3 text-base font-medium rounded-lg hover:bg-accent transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          📱 Sản phẩm
+                        <Link href="/products" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl hover:bg-muted transition-colors">
+                          <Smartphone className="h-5 w-5 text-muted-foreground" /> Tất cả sản phẩm
                         </Link>
-                        <Link
-                          href="/categories"
-                          className="flex items-center gap-3 px-3 py-3 text-base font-medium rounded-lg hover:bg-accent transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          📂 Danh mục
+                        <Link href="/categories" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl hover:bg-muted transition-colors">
+                          <FolderTree className="h-5 w-5 text-muted-foreground" /> Danh mục
                         </Link>
-                        <Link
-                          href="/deals"
-                          className="flex items-center gap-3 px-3 py-3 text-base font-medium text-blue-600 rounded-lg hover:bg-accent transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          🔥 Deal hot
+                        <Link href="/deals" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                          <Flame className="h-5 w-5" /> Deal hot
                         </Link>
-                        <Link
-                          href="/about"
-                          className="flex items-center gap-3 px-3 py-3 text-base font-medium rounded-lg hover:bg-accent transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          ℹ️ Giới thiệu
+                        <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl hover:bg-muted transition-colors">
+                          <Info className="h-5 w-5 text-muted-foreground" /> Giới thiệu
                         </Link>
                       </div>
 
-                      {/* Categories Section */}
-                      <div className="mt-8">
-                        <h3 className="px-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                          Danh mục phổ biến
-                        </h3>
+                      <div className="mt-8 px-3">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Danh mục nổi bật</h3>
                         <div className="space-y-1">
-                          <Link
-                            href="/categories/laptop"
-                            className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            💻 Laptop
+                          <Link href="/categories/laptop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors">
+                            <Laptop className="h-4 w-4 text-muted-foreground" /> Laptop
                           </Link>
-                          <Link
-                            href="/categories/smartphone"
-                            className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            📱 Smartphone
+                          <Link href="/categories/smartphone" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors">
+                            <Smartphone className="h-4 w-4 text-muted-foreground" /> Smartphone
                           </Link>
-                          <Link
-                            href="/categories/tablet"
-                            className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            📟 Tablet
+                          <Link href="/categories/tablet" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors">
+                            <Tablet className="h-4 w-4 text-muted-foreground" /> Tablet
                           </Link>
-                          <Link
-                            href="/categories/accessories"
-                            className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            🎧 Phụ kiện
+                          <Link href="/categories/accessories" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors">
+                            <Headphones className="h-4 w-4 text-muted-foreground" /> Phụ kiện
                           </Link>
                         </div>
                       </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="border-t pt-4">
-                      <div className="space-y-2">
-                        {user ? (
-                          <>
-                            <Link
-                              href="/dashboard"
-                              className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                              onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                              👤 Tài khoản
-                            </Link>
-                            <button
-                              onClick={() => {
-                                handleLogout()
-                                setIsMobileMenuOpen(false)
-                              }}
-                              className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors text-left"
-                            >
-                              🚪 Đăng xuất
-                            </button>
-                          </>
-                        ) : (
-                          <Link
-                            href="/auth/login"
-                            className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            👤 Đăng nhập
+                    <div className="p-4 border-t border-border/40 bg-muted/10">
+                      {user ? (
+                        <div className="space-y-2">
+                          <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors">
+                            <UserIcon className="h-4 w-4" /> Quản lý tài khoản
                           </Link>
-                        )}
-                        <Link
-                          href="/cart"
-                          className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          🛒 Giỏ hàng
+                          <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-foreground bg-background border border-border rounded-xl hover:bg-muted transition-colors">
+                            <LogOut className="h-4 w-4" /> Đăng xuất
+                          </button>
+                        </div>
+                      ) : (
+                        <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors">
+                          <UserIcon className="h-4 w-4" /> Đăng nhập / Đăng ký
                         </Link>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </SheetContent>

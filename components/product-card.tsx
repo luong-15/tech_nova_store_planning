@@ -26,12 +26,12 @@ export function ProductCard({ product }: ProductCardProps) {
     addToCart(product);
     setIsInCart(true);
     
-    notifyCartAdded(product.name, () => {
-      removeFromCart(product.id);
-      setIsInCart(false);
+    notifyCartAdded(product.name, async () => {
+      const freshCartStore = useCartStore.getState()
+      freshCartStore.removeFromCart(product.id)
+      setIsInCart(false)
       if (wasEmpty) {
-        // Show empty cart message if was empty
-        notifyError("Giỏ hàng đã được hoàn tác");
+        notifyError("Giỏ hàng đã được hoàn tác")
       }
     });
   }, [product, addToCart, removeFromCart, cartItems.length]);

@@ -1,96 +1,100 @@
--- Enable Row Level Security
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE wishlist ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+-- 1. Kích hoạt RLS cho tất cả các bảng
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
--- User Profiles Policies
-CREATE POLICY "Users can view their own profile"
-  ON user_profiles FOR SELECT
-  USING (auth.uid() = id);
+-- ==========================================
+-- 2. PUBLIC ACCESS (Ai cũng có thể xem)
+-- ==========================================
 
-CREATE POLICY "Users can update their own profile"
-  ON user_profiles FOR UPDATE
-  USING (auth.uid() = id);
+-- Categories: Ai cũng có thể xem danh mục để hiện sidebar
+CREATE POLICY "Allow public read access for categories"
+  ON public.categories FOR SELECT USING (true);
 
-CREATE POLICY "Users can insert their own profile"
-  ON user_profiles FOR INSERT
-  WITH CHECK (auth.uid() = id);
+-- Products: Ai cũng có thể xem sản phẩm
+CREATE POLICY "Allow public read access for products"
+  ON public.products FOR SELECT USING (true);
 
-CREATE POLICY "Users can upsert their own profile"
-  ON user_profiles FOR ALL
+-- Reviews: Ai cũng có thể xem đánh giá
+CREATE POLICY "Allow public read access for reviews"
+  ON public.reviews FOR SELECT USING (true);
+
+-- ==========================================
+-- 3. USER PROFILES (Cá nhân hóa)
+-- ==========================================
+
+-- Thay vì dùng nhiều chính sách, gom lại để dễ quản lý
+CREATE POLICY "Users can manage their own profile"
+  ON public.user_profiles
+  FOR ALL -- Bao gồm SELECT, INSERT, UPDATE, DELETE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
--- Orders Policies
+-- ==========================================
+-- 4. ORDERS (Đơn hàng)
+-- ==========================================
+
+-- Xem đơn hàng của chính mình
 CREATE POLICY "Users can view their own orders"
-  ON orders FOR SELECT
+  ON public.orders FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can create their own orders"
-  ON orders FOR INSERT
+-- Tạo đơn hàng mới (Ràng buộc user_id phải là chính mình)
+CREATE POLICY "Users can insert their own orders"
+  ON public.orders FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Order Items Policies (linked to orders)
-CREATE POLICY "Users can view their order items"
-  ON order_items FOR SELECT
+-- ==========================================
+-- 5. ORDER ITEMS (Chi tiết đơn hàng)
+-- ==========================================
+
+-- Xem chi tiết đơn hàng (Tối ưu hóa query để tránh chậm sidebar/filter)
+CREATE POLICY "Users can view their own order items"
+  ON public.order_items FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM orders 
+      SELECT 1 FROM public.orders 
       WHERE orders.id = order_items.order_id 
       AND orders.user_id = auth.uid()
     )
   );
 
-CREATE POLICY "Users can create order items for their orders"
-  ON order_items FOR INSERT
+-- Chèn chi tiết đơn hàng (Dùng CHECK trực tiếp để đảm bảo tính nhất quán)
+CREATE POLICY "Users can insert order items"
+  ON public.order_items FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM orders 
+      SELECT 1 FROM public.orders 
       WHERE orders.id = order_items.order_id 
       AND orders.user_id = auth.uid()
     )
   );
 
--- Wishlist Policies
-CREATE POLICY "Users can view their own wishlist"
-  ON wishlist FOR SELECT
-  USING (auth.uid() = user_id);
+-- ==========================================
+-- 6. WISHLIST (Danh sách yêu thích)
+-- ==========================================
 
-CREATE POLICY "Users can add to their wishlist"
-  ON wishlist FOR INSERT
+CREATE POLICY "Users can manage their own wishlist"
+  ON public.wishlist
+  FOR ALL
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can remove from their wishlist"
-  ON wishlist FOR DELETE
-  USING (auth.uid() = user_id);
+-- ==========================================
+-- 7. REVIEWS (Đánh giá sản phẩm)
+-- ==========================================
 
--- Reviews Policies
-CREATE POLICY "Anyone can view reviews"
-  ON reviews FOR SELECT
-  USING (true);
-
-CREATE POLICY "Users can create their own reviews"
-  ON reviews FOR INSERT
+-- Lưu ý: SELECT đã được set ở phần Public phía trên
+CREATE POLICY "Users can insert their own reviews"
+  ON public.reviews FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own reviews"
-  ON reviews FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own reviews"
-  ON reviews FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Public read access for categories and products (no auth required)
-ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Anyone can view categories"
-  ON categories FOR SELECT
-  USING (true);
-
-CREATE POLICY "Anyone can view products"
-  ON products FOR SELECT
-  USING (true);
+CREATE POLICY "Users can update/delete their own reviews"
+  ON public.reviews
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
