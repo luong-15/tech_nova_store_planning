@@ -37,6 +37,18 @@ function ProductsPageContent() {
   })
   const [filtering, setFiltering] = useState(false)
 
+  const handleBackdropDismiss = (e: React.KeyboardEvent | React.MouseEvent) => {
+    if ('key' in e) {
+      const keyEvent = e as React.KeyboardEvent
+      if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+        keyEvent.preventDefault()
+        setShowMobileFilter(false)
+      }
+      return
+    }
+    setShowMobileFilter(false)
+  }
+
   const fetchProducts = useCallback(async (params = new URLSearchParams()) => {
     setLoading(true)
     const response = await fetch(`/api/products?${params}`)
@@ -152,7 +164,14 @@ function ProductsPageContent() {
         {/* Mobile Filter Drawer - Tinh chỉnh hiệu ứng trượt và backdrop */}
         {showMobileFilter && (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-md transition-opacity duration-300" onClick={() => setShowMobileFilter(false)} />
+            <div 
+              className="absolute inset-0 bg-background/80 backdrop-blur-md transition-opacity duration-300" 
+              role="button"
+              tabIndex={0}
+              onClick={handleBackdropDismiss}
+              onKeyDown={handleBackdropDismiss}
+              aria-label="Đóng bộ lọc"
+            />
             <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50">
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b px-6 py-5">
