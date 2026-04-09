@@ -1,0 +1,78 @@
+{
+  "common": {
+    "home": "Trang Chủ",
+    "about": "Về Chúng Tôi",
+    "contact": "Liên Hệ",
+    "products": "Sản Phẩm",
+    "categories": "Danh Mục",
+    "cart": "Giỏ Hàng",
+    "checkout": "Thanh Toán",
+    "login": "Đăng Nhập",
+    "logout": "Đăng Xuất",
+    "signup": "Đăng Ký",
+    "email": "Email",
+    "password": "Mật Khẩu",
+    "confirmPassword": "Xác Nhận Mật Khẩu",
+    "forgotPassword": "Quên Mật Khẩu?",
+    "search": "Tìm Kiếm",
+    "filter": "Lọc",
+    "sort": "Sắp Xếp",
+    "price": "Giá",
+    "quantity": "Số Lượng",
+    "addToCart": "Thêm Vào Giỏ",
+    "removeFromCart": "Xóa Khỏi Giỏ",
+    "buyNow": "Mua Ngay",
+    "wishlist": "Danh Sách Yêu Thích",
+    "compare": "So Sánh",
+    "rating": "Đánh Giá",
+    "reviews": "Nhận Xét",
+    "details": "Chi Tiết",
+    "specifications": "Thông Số Kỹ Thuật",
+    "shipping": "Vận Chuyển",
+    "warranty": "Bảo Hành",
+    "returns": "Hoàn Trả",
+    "faq": "Câu Hỏi Thường Gặp",
+    "orderSuccess": "Đặt Hàng Thành Công",
+    "dashboard": "Bảng Điều Khiển",
+    "orders": "Đơn Hàng",
+    "settings": "Cài Đặt",
+    "admin": "Quản Trị",
+    "deals": "Khuyến Mãi"
+  },
+  "header": {
+    "title": "Tech Nova Store",
+    "subtitle": "Công Nghệ Hàng Đầu",
+    "selectLanguage": "Chọn Ngôn Ngữ"
+  },
+  "footer": {
+    "company": "Công Ty",
+    "products": "Sản Phẩm",
+    "support": "Hỗ Trợ",
+    "contact": "Liên Hệ Chúng Tôi",
+    "followUs": "Theo Dõi Chúng Tôi",
+    "copyright": "© 2024 Tech Nova Store. Tất Cả Quyền Được Bảo Vệ.",
+    "privacyPolicy": "Chính Sách Bảo Mật",
+    "termsOfService": "Điều Khoản Dịch Vụ"
+  },
+  "products": {
+    "noProducts": "Không Tìm Thấy Sản Phẩm",
+    "inStock": "Còn Hàng",
+    "outOfStock": "Hết Hàng",
+    "newProduct": "Sản Phẩm Mới",
+    "featured": "Nổi Bật",
+    "related": "Sản Phẩm Liên Quan"
+  },
+  "cart": {
+    "empty": "Giỏ Hàng Trống",
+    "subtotal": "Tổng Cộng",
+    "shipping": "Vận Chuyển",
+    "tax": "Thuế",
+    "total": "Tổng Tiền",
+    "continueShopping": "Tiếp Tục Mua Sắm"
+  },
+  "errors": {
+    "pageNotFound": "Trang Không Tìm Thấy",
+    "somethingWentWrong": "Đã Xảy Ra Lỗi",
+    "tryAgain": "Thử Lại"
+  }
+}

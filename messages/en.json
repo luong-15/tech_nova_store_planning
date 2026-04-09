@@ -1,0 +1,78 @@
+{
+  "common": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact",
+    "products": "Products",
+    "categories": "Categories",
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "login": "Login",
+    "logout": "Logout",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "price": "Price",
+    "quantity": "Quantity",
+    "addToCart": "Add to Cart",
+    "removeFromCart": "Remove from Cart",
+    "buyNow": "Buy Now",
+    "wishlist": "Wishlist",
+    "compare": "Compare",
+    "rating": "Rating",
+    "reviews": "Reviews",
+    "details": "Details",
+    "specifications": "Specifications",
+    "shipping": "Shipping",
+    "warranty": "Warranty",
+    "returns": "Returns",
+    "faq": "FAQ",
+    "orderSuccess": "Order Successful",
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "settings": "Settings",
+    "admin": "Admin",
+    "deals": "Deals"
+  },
+  "header": {
+    "title": "Tech Nova Store",
+    "subtitle": "Leading Technology",
+    "selectLanguage": "Select Language"
+  },
+  "footer": {
+    "company": "Company",
+    "products": "Products",
+    "support": "Support",
+    "contact": "Contact Us",
+    "followUs": "Follow Us",
+    "copyright": "© 2024 Tech Nova Store. All Rights Reserved.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
+  "products": {
+    "noProducts": "No Products Found",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "newProduct": "New Product",
+    "featured": "Featured",
+    "related": "Related Products"
+  },
+  "cart": {
+    "empty": "Your Cart is Empty",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "tax": "Tax",
+    "total": "Total",
+    "continueShopping": "Continue Shopping"
+  },
+  "errors": {
+    "pageNotFound": "Page Not Found",
+    "somethingWentWrong": "Something Went Wrong",
+    "tryAgain": "Try Again"
+  }
+}

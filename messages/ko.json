@@ -1,0 +1,78 @@
+{
+  "common": {
+    "home": "홈",
+    "about": "정보",
+    "contact": "연락처",
+    "products": "상품",
+    "categories": "카테고리",
+    "cart": "장바구니",
+    "checkout": "결제",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "signup": "가입",
+    "email": "이메일",
+    "password": "비밀번호",
+    "confirmPassword": "비밀번호 확인",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "price": "가격",
+    "quantity": "수량",
+    "addToCart": "장바구니에 추가",
+    "removeFromCart": "장바구니에서 제거",
+    "buyNow": "지금 구매",
+    "wishlist": "위시리스트",
+    "compare": "비교",
+    "rating": "평점",
+    "reviews": "리뷰",
+    "details": "상세정보",
+    "specifications": "사양",
+    "shipping": "배송",
+    "warranty": "보증",
+    "returns": "반품",
+    "faq": "자주 묻는 질문",
+    "orderSuccess": "주문 성공",
+    "dashboard": "대시보드",
+    "orders": "주문",
+    "settings": "설정",
+    "admin": "관리자",
+    "deals": "특가"
+  },
+  "header": {
+    "title": "Tech Nova Store",
+    "subtitle": "최신 기술",
+    "selectLanguage": "언어 선택"
+  },
+  "footer": {
+    "company": "회사",
+    "products": "상품",
+    "support": "지원",
+    "contact": "문의하기",
+    "followUs": "팔로우",
+    "copyright": "© 2024 Tech Nova Store. 모든 권리 보유.",
+    "privacyPolicy": "개인정보보호정책",
+    "termsOfService": "서비스 약관"
+  },
+  "products": {
+    "noProducts": "상품을 찾을 수 없습니다",
+    "inStock": "재고 있음",
+    "outOfStock": "재고 없음",
+    "newProduct": "신제품",
+    "featured": "추천",
+    "related": "관련 상품"
+  },
+  "cart": {
+    "empty": "장바구니가 비어있습니다",
+    "subtotal": "소계",
+    "shipping": "배송",
+    "tax": "세금",
+    "total": "합계",
+    "continueShopping": "계속 쇼핑하기"
+  },
+  "errors": {
+    "pageNotFound": "페이지를 찾을 수 없습니다",
+    "somethingWentWrong": "문제가 발생했습니다",
+    "tryAgain": "다시 시도"
+  }
+}

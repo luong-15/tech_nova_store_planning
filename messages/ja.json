@@ -1,0 +1,78 @@
+{
+  "common": {
+    "home": "ホーム",
+    "about": "概要",
+    "contact": "お問い合わせ",
+    "products": "商品",
+    "categories": "カテゴリー",
+    "cart": "カート",
+    "checkout": "チェックアウト",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "signup": "サインアップ",
+    "email": "メール",
+    "password": "パスワード",
+    "confirmPassword": "パスワード確認",
+    "forgotPassword": "パスワードをお忘れですか?",
+    "search": "検索",
+    "filter": "フィルター",
+    "sort": "並べ替え",
+    "price": "価格",
+    "quantity": "数量",
+    "addToCart": "カートに追加",
+    "removeFromCart": "カートから削除",
+    "buyNow": "今すぐ購入",
+    "wishlist": "ウィッシュリスト",
+    "compare": "比較",
+    "rating": "評価",
+    "reviews": "レビュー",
+    "details": "詳細",
+    "specifications": "仕様",
+    "shipping": "配送",
+    "warranty": "保証",
+    "returns": "返品",
+    "faq": "FAQ",
+    "orderSuccess": "注文成功",
+    "dashboard": "ダッシュボード",
+    "orders": "注文",
+    "settings": "設定",
+    "admin": "管理者",
+    "deals": "取引"
+  },
+  "header": {
+    "title": "Tech Nova Store",
+    "subtitle": "最先端技術",
+    "selectLanguage": "言語を選択"
+  },
+  "footer": {
+    "company": "会社",
+    "products": "商品",
+    "support": "サポート",
+    "contact": "お問い合わせ",
+    "followUs": "フォロー",
+    "copyright": "© 2024 Tech Nova Store。著作権所有。",
+    "privacyPolicy": "プライバシーポリシー",
+    "termsOfService": "利用規約"
+  },
+  "products": {
+    "noProducts": "商品が見つかりません",
+    "inStock": "在庫あり",
+    "outOfStock": "在庫なし",
+    "newProduct": "新商品",
+    "featured": "フィーチャー",
+    "related": "関連商品"
+  },
+  "cart": {
+    "empty": "カートが空です",
+    "subtotal": "小計",
+    "shipping": "配送",
+    "tax": "税",
+    "total": "合計",
+    "continueShopping": "ショッピングを続ける"
+  },
+  "errors": {
+    "pageNotFound": "ページが見つかりません",
+    "somethingWentWrong": "問題が発生しました",
+    "tryAgain": "もう一度試す"
+  }
+}

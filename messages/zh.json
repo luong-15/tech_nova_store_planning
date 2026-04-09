@@ -1,0 +1,78 @@
+{
+  "common": {
+    "home": "首页",
+    "about": "关于",
+    "contact": "联系",
+    "products": "产品",
+    "categories": "分类",
+    "cart": "购物车",
+    "checkout": "结账",
+    "login": "登录",
+    "logout": "登出",
+    "signup": "注册",
+    "email": "电子邮件",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "forgotPassword": "忘记密码?",
+    "search": "搜索",
+    "filter": "筛选",
+    "sort": "排序",
+    "price": "价格",
+    "quantity": "数量",
+    "addToCart": "添加到购物车",
+    "removeFromCart": "从购物车中移除",
+    "buyNow": "立即购买",
+    "wishlist": "愿望清单",
+    "compare": "比较",
+    "rating": "评分",
+    "reviews": "评论",
+    "details": "详情",
+    "specifications": "规格",
+    "shipping": "运输",
+    "warranty": "保修",
+    "returns": "退货",
+    "faq": "常见问题",
+    "orderSuccess": "订单成功",
+    "dashboard": "仪表板",
+    "orders": "订单",
+    "settings": "设置",
+    "admin": "管理员",
+    "deals": "优惠"
+  },
+  "header": {
+    "title": "Tech Nova Store",
+    "subtitle": "领先的技术",
+    "selectLanguage": "选择语言"
+  },
+  "footer": {
+    "company": "公司",
+    "products": "产品",
+    "support": "支持",
+    "contact": "联系我们",
+    "followUs": "关注我们",
+    "copyright": "© 2024 Tech Nova Store。版权所有。",
+    "privacyPolicy": "隐私政策",
+    "termsOfService": "服务条款"
+  },
+  "products": {
+    "noProducts": "未找到产品",
+    "inStock": "有货",
+    "outOfStock": "缺货",
+    "newProduct": "新产品",
+    "featured": "特色",
+    "related": "相关产品"
+  },
+  "cart": {
+    "empty": "您的购物车为空",
+    "subtotal": "小计",
+    "shipping": "运输",
+    "tax": "税",
+    "total": "总计",
+    "continueShopping": "继续购物"
+  },
+  "errors": {
+    "pageNotFound": "找不到页面",
+    "somethingWentWrong": "出了问题",
+    "tryAgain": "重试"
+  }
+}

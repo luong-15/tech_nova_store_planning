@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { useCartStore } from "@/lib/store/cart-store"
 import { useComparisonStore } from "@/lib/store/comparison-store"
 import { CartDrawer } from "@/components/cart/cart-drawer"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -168,6 +169,10 @@ export function Header() {
 
             {/* Actions */}
             <div className="flex items-center gap-1.5 md:gap-2">
+              {/* Language Switcher */}
+              <div className="hidden sm:block">
+                <LanguageSwitcher />
+              </div>
               {/* Mobile Search Toggle */}
               <Sheet open={isMobileSearchOpen} onOpenChange={setIsMobileSearchOpen}>
                 <SheetTrigger asChild>
