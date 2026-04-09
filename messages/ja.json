@@ -1,5 +1,8 @@
 {
   "common": {
+    "welcome": "TechNova Storeへようこそ",
+    "description": "最高のテクノロジー製品コレクションを探索し、最も競争力のある価格をお楽しみください",
+    "powered_by": "提供元",
     "home": "ホーム",
     "about": "概要",
     "contact": "お問い合わせ",

@@ -1,5 +1,8 @@
 {
   "common": {
+    "welcome": "Welcome to TechNova Store",
+    "description": "Explore the best collection of technology with the most competitive prices",
+    "powered_by": "Powered by",
     "home": "Home",
     "about": "About",
     "contact": "Contact",

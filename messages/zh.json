@@ -1,5 +1,8 @@
 {
   "common": {
+    "welcome": "欢迎来到TechNova商店",
+    "description": "探索最好的科技产品集合，享受最具竞争力的价格",
+    "powered_by": "由以下提供支持",
     "home": "首页",
     "about": "关于",
     "contact": "联系",

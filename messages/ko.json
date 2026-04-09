@@ -1,5 +1,8 @@
 {
   "common": {
+    "welcome": "TechNova Store에 오신 것을 환영합니다",
+    "description": "최고의 기술 제품 컬렉션을 탐색하고 가장 경쟁력 있는 가격을 즐기세요",
+    "powered_by": "제공처",
     "home": "홈",
     "about": "정보",
     "contact": "연락처",

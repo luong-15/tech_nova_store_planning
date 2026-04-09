@@ -1,5 +1,8 @@
 {
   "common": {
+    "welcome": "Chào Mừng Đến TechNova Store",
+    "description": "Khám phá bộ sưu tập công nghệ tốt nhất với giá cạnh tranh nhất",
+    "powered_by": "Được cấp lực bởi",
     "home": "Trang Chủ",
     "about": "Về Chúng Tôi",
     "contact": "Liên Hệ",
