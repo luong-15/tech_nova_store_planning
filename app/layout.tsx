@@ -2,12 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { notFound } from "next/navigation"
-import { NextIntlClientProvider } from "next-intl"
-import { getMessages } from "next-intl/server"
-import { locales, type Locale } from "@/i18n.config"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -38,42 +32,15 @@ export const metadata: Metadata = {
   },
 }
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
-  params,
 }: Readonly<{
   children: React.ReactNode
-  params: Promise<{ locale: string }>
 }>) {
-  const { locale } = await params;
-
-  // Validate that the requested locale exists
-  if (!locales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  const messages = await getMessages();
-
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
-        <NextIntlClientProvider messages={messages}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </NextIntlClientProvider>
-        <Analytics />
-      </body>
-    </html>
+    <>
+      {children}
+      <Analytics />
+    </>
   )
 }
