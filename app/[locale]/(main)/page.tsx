@@ -1,7 +1,9 @@
-import { getTranslations } from 'next-intl/server';
+'use client';
 
-export default async function HomePage() {
-  const t = await getTranslations('common');
+import { useTranslations } from 'next-intl';
+
+export default function HomePage() {
+  const t = useTranslations('common');
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-background/50">
