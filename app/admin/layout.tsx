@@ -4,13 +4,15 @@ import type React from "react"
 import { useEffect, useState, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import { Toaster } from "@/components/ui/toaster"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { 
   User, Package, ShoppingCart, Users, Settings, 
-  LogOut, ChevronRight, Menu, X, Shield, LayoutDashboard 
+  LogOut, ChevronRight, Menu, X, Shield, LayoutDashboard, 
+  Settings2 
 } from "lucide-react"
 import type { UserProfile } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -21,7 +23,7 @@ const adminSidebarItems = [
   { href: "/admin/categories", label: "Danh mục", icon: Package },
   { href: "/admin/orders", label: "Đơn hàng", icon: ShoppingCart },
   { href: "/admin/users", label: "Người dùng", icon: Users },
-  { href: "/admin/settings", label: "Cài đặt", icon: Settings },
+  { href: "/admin/settings", label: "Cài đặt", icon: Settings2 },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -31,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false)
   
   const router = useRouter()
-  const pathname = usePathname() // Chuẩn Next.js cho việc check active link
+  const pathname = usePathname()
 
   useEffect(() => {
     let isMounted = true
@@ -39,7 +41,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const checkAuth = async () => {
       try {
-        // Dev Mode Mocking
         if (process.env.NODE_ENV === 'development') {
           setEmail("admin@example.com")
           setUser({
@@ -61,7 +62,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
 
         setEmail(authUser.email || null)
-        const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", authUser.id).single()
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("id", authUser.id)
+          .single()
 
         if (isMounted) {
           if (profile) setUser(profile)
@@ -94,7 +99,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-black">
-      {/* Header chuẩn Modern */}
+      <Toaster />
+      
+      {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/60 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/admin" className="flex items-center gap-3 transition-opacity hover:opacity-80">
@@ -113,13 +120,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Breadcrumb nhẹ nhàng */}
-        <div className="mb-8 flex items-center gap-2 text-sm font-medium">
-          <Link href="/admin" className="text-muted-foreground hover:text-primary transition-colors">Admin</Link>
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-          <span className="text-foreground capitalize">{pathname.split('/').pop() || 'Dashboard'}</span>
-        </div>
-
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Sidebar */}
           <aside className={cn(
@@ -211,8 +211,8 @@ function AdminSkeleton() {
     <div className="container mx-auto px-4 py-8 space-y-8">
       <Skeleton className="h-16 w-full rounded-2xl" />
       <div className="flex gap-10">
-        <Skeleton className="hidden lg:block h-125 w-64 rounded-2xl" />
-        <Skeleton className="flex-1 h-150 rounded-3xl" />
+        <Skeleton className="hidden lg:block h-150 w-64 rounded-2xl" />
+        <Skeleton className="flex-1 h-200 rounded-3xl" />
       </div>
     </div>
   )

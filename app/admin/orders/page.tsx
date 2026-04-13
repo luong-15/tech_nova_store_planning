@@ -208,7 +208,7 @@ export default function OrdersPage() {
       </Card>
 
       <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b pb-4">
             <div className="flex justify-between items-center pr-6">
               <DialogTitle className="text-2xl">Chi tiết đơn hàng #{selectedOrder?.order_number}</DialogTitle>
