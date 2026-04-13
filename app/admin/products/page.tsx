@@ -16,14 +16,18 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
 import { formatCurrency } from "@/lib/currency"
 import type { Product, Category } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
 import { 
   Plus, Package, ShoppingCart, Users, DollarSign, Edit, 
   Trash2, Eye, ChevronDown, ChevronUp, Info, Box, 
   ImageIcon, Settings2
 } from "lucide-react"
 
+
 export default function ProductsPage() {
+  const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
+
   const [categories, setCategories] = useState<Category[]>([])
   const [productsPagination, setProductsPagination] = useState({
     page: 1,
@@ -123,9 +127,14 @@ export default function ProductsPage() {
       setProductDialogOpen(false)
       fetchProducts()
     } catch (error) {
-      alert("Lỗi khi lưu sản phẩm: " + error)
+      toast({
+        title: "Lỗi",
+        description: "Lỗi khi lưu sản phẩm: " + (error as Error).message,
+        variant: "destructive",
+      })
     }
   }
+
 
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Xóa sản phẩm này?")) return
@@ -309,7 +318,7 @@ export default function ProductsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="bg-background">{product.category?.name || "Chưa phân loại"}</Badge>
+                        {categories.find(c => c.id === product.category_id)?.name || "Chưa phân loại"}
                       </TableCell>
                       <TableCell>
                         <div className="font-semibold text-primary">{formatCurrency(product.price)}</div>

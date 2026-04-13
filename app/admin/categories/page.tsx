@@ -12,10 +12,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Plus, Edit, Trash2, Search, ImageIcon, FolderTree, ExternalLink } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 import type { Category } from "@/lib/types"
 
+
 export default function CategoriesPage() {
+  const { toast } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
+
   const [categoriesSearch, setCategoriesSearch] = useState("")
   const [debouncedCategoriesSearch, setDebouncedCategoriesSearch] = useState("")
   const [categoriesLoading, setCategoriesLoading] = useState(false)
@@ -56,29 +60,76 @@ export default function CategoriesPage() {
   }, [categoriesSearch])
 
   // Gửi Form (Tạo mới hoặc Cập nhật)
+const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special chars
+      .replace(/[\s_-]+/g, '-') // Replace spaces/_ with single -
+      .replace(/^-+|-+$/g, ''); // Trim leading/trailing -
+  };
+
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!categoryForm.name.trim()) {
+      toast({
+        title: "Lỗi",
+        description: "Tên danh mục không được để trống.",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
-      const method = selectedCategory ? "PUT" : "POST"
+      const isEdit = !!selectedCategory;
+      const slug = isEdit ? selectedCategory.slug : generateSlug(categoryForm.name);
+      
+      const payload: any = {
+        name: categoryForm.name,
+        description: categoryForm.description || null,
+        image_url: categoryForm.image_url || null,
+        ...(isEdit && { id: selectedCategory!.id }),
+        ...(isEdit && { slug }), // Preserve existing slug
+        ...(!isEdit && { slug }), // New slug for create
+        sort_order: 0,
+        is_active: true,
+      };
+
+      const method = isEdit ? "PUT" : "POST"
       const url = "/api/admin/categories"
+
+      console.log('Submitting:', { method, payload }); // Debug
 
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selectedCategory ? { id: selectedCategory.id, ...categoryForm } : categoryForm),
+        body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error("Failed to save category")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData); // Debug
+        throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: Failed to save category`);
+      }
 
       setCategoryDialogOpen(false)
       setSelectedCategory(null)
       setCategoryForm({ name: "", description: "", image_url: "" })
+      toast({
+        title: "Thành công",
+        description: isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.",
+      })
       fetchCategories()
     } catch (error) {
-      alert("Lỗi khi lưu danh mục. Vui lòng thử lại.")
+      toast({
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Lỗi khi lưu danh mục. Vui lòng thử lại.",
+        variant: "destructive",
+      })
       console.error(error)
     }
   }
+
 
   // Xóa danh mục
   const handleDeleteCategory = async (id: string) => {

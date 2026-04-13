@@ -44,9 +44,14 @@ export default function AdminSettingsPage() {
         alert('Lỗi lưu cài đặt')
       }
     } catch (error) {
-      alert('Lỗi kết nối')
+      toast({
+        title: "Lỗi",
+        description: "Lỗi kết nối",
+        variant: "destructive",
+      })
     }
   }
+
 
 
   return (

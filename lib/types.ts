@@ -91,6 +91,7 @@ export interface UserProfile {
   id: string
   full_name: string
   phone?: string
+  email?: string
   avatar_url?: string
   address?: string
   city?: string

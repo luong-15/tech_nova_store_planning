@@ -16,7 +16,9 @@ import { notifySuccess, notifyInfo, notifyError, notifyLoading } from "@/lib/not
 import Image from "next/image"
 import Link from "next/link"
 import type { Order, OrderItem } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+
 
 const statusConfig = {
   pending: { label: "Chờ xác nhận", color: "bg-amber-500/10 text-amber-600 border-amber-200", icon: Clock },
@@ -27,7 +29,9 @@ const statusConfig = {
 }
 
 export default function OrdersPage() {
+  const { toast } = useToast()
   const [orders, setOrders] = useState<Order[]>([])
+
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
@@ -62,10 +66,19 @@ export default function OrdersPage() {
       notifyLoading('Đang xử lý yêu cầu hủy...')
       const response = await fetch(`/api/orders/${orderId}/cancel`, { method: 'POST' })
       if (!response.ok) throw new Error('Hủy thất bại')
-      notifySuccess('Đơn hàng đã được hủy')
+    toast({
+      title: "Thành công",
+      description: 'Đơn hàng đã được hủy',
+    })
+
       refetchOrders()
     } catch (error) {
-      notifyError('Lỗi: ' + (error as Error).message)
+    toast({
+      title: "Lỗi",
+      description: (error as Error).message,
+      variant: "destructive",
+    })
+
       setOrders(prev => prev.map((o, i) => i === orderIndex ? originalOrder : o))
     } finally {
       setCancellingOrderId(null)

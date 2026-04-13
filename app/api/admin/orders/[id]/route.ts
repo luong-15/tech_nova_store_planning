@@ -49,24 +49,24 @@ export async function PATCH(
   try {
     const { id } = await params
 
-
     const body = await request.json()
     const orderId = id
-    const { status, paymentStatus } = body
+    const { status, payment_status } = body
 
     const supabaseAdmin = await createAdminServerClient()
 
-
+    // TODO: Re-enable joins after DB schema fix. Current fix: plain update to avoid schema cache issues
+const updateData = { 
+        ...(status && { status }),
+        ...(payment_status && { payment_status }),
+        updated_at: new Date().toISOString()
+      };
     const { data, error } = await supabaseAdmin
       .from('orders')
-      .update({ 
-        status: status || 'processing',
-        paymentStatus: paymentStatus || 'paid',
-        updated_at: new Date().toISOString()
-      })
-
+      .update(updateData)
       .eq('id', orderId)
-      .select()
+      .select("*")
+
 
     if (error) {
       console.error('Update order error:', error)
@@ -82,5 +82,4 @@ export async function PATCH(
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
-
 

@@ -11,10 +11,14 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Edit, Trash2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 import type { UserProfile } from "@/lib/types"
 
+
 export default function UsersPage() {
+  const { toast } = useToast()
   const [users, setUsers] = useState<UserProfile[]>([])
+
   const [usersPagination, setUsersPagination] = useState({
     page: 1,
     limit: 50,
@@ -28,12 +32,14 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [userForm, setUserForm] = useState({
     full_name: "",
+    email: "",
     phone: "",
     address: "",
     city: "",
     postal_code: "",
     country: "",
   })
+
 
   // Fetch users
   const fetchUsers = useCallback(async () => {
@@ -91,17 +97,25 @@ export default function UsersPage() {
       setSelectedUser(null)
       setUserForm({
         full_name: "",
+        email: "",
         phone: "",
         address: "",
         city: "",
         postal_code: "",
         country: "",
       })
+
       fetchUsers() // Refresh
     } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật người dùng",
+        variant: "destructive",
+      })
       console.error("Error updating user:", error)
     }
   }
+
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return
@@ -167,11 +181,19 @@ export default function UsersPage() {
                     onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })}
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label>Số điện thoại</Label>
                   <Input
                     value={userForm.phone}
                     onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -181,6 +203,7 @@ export default function UsersPage() {
                     onChange={(e) => setUserForm({ ...userForm, address: e.target.value })}
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label>Thành phố</Label>
                   <Input
@@ -238,7 +261,7 @@ export default function UsersPage() {
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.full_name || '-'}</TableCell>
-<TableCell>-</TableCell>
+                <TableCell>{user.email || '-'}</TableCell>
                 <TableCell>{user.phone || '-'}</TableCell>
                 <TableCell className="max-w-xs">{user.address || '-'}</TableCell>
                 <TableCell>{user.city || '-'}</TableCell>
@@ -253,12 +276,14 @@ export default function UsersPage() {
                         setSelectedUser(user)
                         setUserForm({
                           full_name: user.full_name || "",
+                          email: user.email || "",
                           phone: user.phone || "",
                           address: user.address || "",
                           city: user.city || "",
                           postal_code: user.postal_code || "",
                           country: user.country || "",
                         })
+
                         setUserDialogOpen(true)
                       }}
                     >
@@ -288,4 +313,3 @@ export default function UsersPage() {
     </div>
   )
 }
-

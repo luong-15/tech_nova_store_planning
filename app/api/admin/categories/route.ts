@@ -24,11 +24,13 @@ export async function PUT(request: Request) {
     const supabase = await createAdminServerClient()
     const { id, ...categoryData } = await request.json()
 
+
     const { data, error } = await supabase
       .from("categories")
       .update(categoryData)
       .eq("id", id)
-      .select()
+      .select('id, name, slug, description, image_url')
+
 
     if (error) throw error
 
@@ -44,10 +46,12 @@ export async function POST(request: Request) {
     const supabase = await createAdminServerClient()
     const categoryData = await request.json()
 
+
     const { data, error } = await supabase
       .from("categories")
       .insert(categoryData)
-      .select()
+      .select('id, name, slug, description, image_url')
+
 
     if (error) throw error
 
