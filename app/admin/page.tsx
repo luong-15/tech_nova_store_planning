@@ -1,1411 +1,538 @@
 "use client"
 
-import type React from "react"
-import { useEffect, useState } from "react"
-import { createBrowserClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Eye, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
-import type { Product, Category, Order, UserProfile } from "@/lib/types"
+import { useEffect, useState, useCallback } from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { 
+  Plus, Edit, Trash2, Eye, Search, Loader2, Package, 
+  ShoppingCart, Users, DollarSign, LayoutDashboard, Phone, Mail 
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+// --- Interfaces ---
+interface Stats {
+  totalProducts: number
+  totalOrders: number
+  totalUsers: number
+  totalRevenue: number
+}
+interface Category { id: string; name: string; description?: string }
+interface Product { id: string; name: string; price: number; stock: number; category: Category }
+interface Order { id: string; order_number: string; status: string; total: number; created_at: string }
+interface User { id: string; full_name: string; email: string | null; phone: string }
+
+// --- Thẻ Thống kê Premium ---
+function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: any, description: string }) {
+  return (
+    <Card className="relative overflow-hidden border-border/40 shadow-sm hover:shadow-md transition-all bg-white dark:bg-card/50 rounded-4xl group">
+      <div className="absolute -right-4 -top-4 p-3 opacity-5 group-hover:opacity-10 transition-opacity group-hover:scale-110 group-hover:-rotate-12 duration-500">
+        <Icon className="h-32 w-32" />
+      </div>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{title}</CardTitle>
+        <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-black tracking-tighter">{value}</div>
+        <p className="text-xs text-muted-foreground mt-2 font-medium">{description}</p>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    totalOrders: 0,
-    totalUsers: 0,
-    totalRevenue: 0,
-  })
+  const [activeTab, setActiveTab] = useState('overview')
+  const [stats, setStats] = useState<Stats>({ totalProducts: 0, totalOrders: 0, totalUsers: 0, totalRevenue: 0 })
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [orders, setOrders] = useState<Order[]>([])
-  const [users, setUsers] = useState<UserProfile[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("products")
-  const [productsPagination, setProductsPagination] = useState({
-    page: 1,
-    limit: 50,
-    total: 0,
-    totalPages: 0
-  })
-  const [ordersPagination, setOrdersPagination] = useState({
-    page: 1,
-    limit: 50,
-    total: 0,
-    totalPages: 0
-  })
-  const [usersPagination, setUsersPagination] = useState({
-    page: 1,
-    limit: 50,
-    total: 0,
-    totalPages: 0
-  })
-  const [productsSearch, setProductsSearch] = useState("")
-  const [debouncedProductsSearch, setDebouncedProductsSearch] = useState("")
-  const [productsCategoryFilter, setProductsCategoryFilter] = useState("")
-  const [productsLoading, setProductsLoading] = useState(false)
-  const [categoriesSearch, setCategoriesSearch] = useState("")
-  const [debouncedCategoriesSearch, setDebouncedCategoriesSearch] = useState("")
-  const [usersSearch, setUsersSearch] = useState("")
-  const [debouncedUsersSearch, setDebouncedUsersSearch] = useState("")
-  const [ordersSearch, setOrdersSearch] = useState("")
-  const [debouncedOrdersSearch, setDebouncedOrdersSearch] = useState("")
-  const [ordersStatusFilter, setOrdersStatusFilter] = useState("")
-  const [categoriesLoading, setCategoriesLoading] = useState(false)
-  const [usersLoading, setUsersLoading] = useState(false)
-  const [ordersLoading, setOrdersLoading] = useState(false)
-  const [productDialogOpen, setProductDialogOpen] = useState(false)
-  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [users, setUsers] = useState<User[]>([])
+  
+  const [loadingStats, setLoadingStats] = useState(true)
+  const [loadingProducts, setLoadingProducts] = useState(false)
+  const [loadingCategories, setLoadingCategories] = useState(false)
+  const [loadingOrders, setLoadingOrders] = useState(false)
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  
+  const [productsSearch, setProductsSearch] = useState('')
+  const [ordersSearch, setOrdersSearch] = useState('')
+  const [usersSearch, setUsersSearch] = useState('')
+  
+  const [newCategoryOpen, setNewCategoryOpen] = useState(false)
+  const [editCategoryOpen, setEditCategoryOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
-  const [userDialogOpen, setUserDialogOpen] = useState(false)
-  const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set())
-  const [expandedSpecs, setExpandedSpecs] = useState<Set<string>>(new Set())
+  const [newCategoryName, setNewCategoryName] = useState('')
+  
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
-  const [userForm, setUserForm] = useState({
-    full_name: "",
-    phone: "",
-    address: "",
-    city: "",
-    postal_code: "",
-    country: "",
-  })
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
 
-  const [productForm, setProductForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    original_price: "",
-    discount_price: "",
-    stock: "",
-    brand: "",
-    category_id: "",
-    image_url: "",
-    images: "",
-    is_featured: false,
-    is_deal: false,
-    specs: "",
-  })
-
-  const [categoryForm, setCategoryForm] = useState({
-    name: "",
-    description: "",
-    image_url: "",
-  })
-
+  // Fetch API Logic (Giữ nguyên)
   useEffect(() => {
-    console.log("Admin page mounted, fetching stats only")
-    fetchStats()
+    fetch('/api/admin/stats').then(res => res.json()).then(setStats).finally(() => setLoadingStats(false))
   }, [])
 
-  useEffect(() => {
-    if (activeTab === "products") {
-      fetchProducts()
-    }
-  }, [productsPagination.page, debouncedProductsSearch, productsCategoryFilter, activeTab])
-
-  useEffect(() => {
-    if (activeTab === "categories") {
-      fetchCategories()
-    }
-  }, [debouncedCategoriesSearch, activeTab])
-
-  useEffect(() => {
-    if (activeTab === "orders") {
-      fetchOrders()
-    }
-  }, [ordersPagination.page, debouncedOrdersSearch, ordersStatusFilter, activeTab])
-
-  useEffect(() => {
-    if (activeTab === "users") {
-      fetchUsers()
-    }
-  }, [usersPagination.page, debouncedUsersSearch, activeTab])
-
-  // Debounce search inputs
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedProductsSearch(productsSearch)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [productsSearch])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedCategoriesSearch(categoriesSearch)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [categoriesSearch])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedUsersSearch(usersSearch)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [usersSearch])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedOrdersSearch(ordersSearch)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [ordersSearch])
-
-  const fetchStats = async () => {
+  const fetchProducts = useCallback(async () => {
+    setLoadingProducts(true)
     try {
-      const statsResponse = await fetch("/api/admin/stats")
-      const statsData = await statsResponse.json()
-      setStats(statsData)
-    } catch (error) {
-      console.error("Error fetching stats:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchCategories = async () => {
-    try {
-      setCategoriesLoading(true)
-      const response = await fetch("/api/admin/categories")
-      const data = await response.json()
-      setCategories(data || [])
-    } catch (error) {
-      console.error("Error fetching categories:", error)
-    } finally {
-      setCategoriesLoading(false)
-    }
-  }
-
-  const fetchOrders = async () => {
-    try {
-      setOrdersLoading(true)
-      const params = new URLSearchParams({
-        page: ordersPagination.page.toString(),
-        limit: ordersPagination.limit.toString(),
-      })
-
-      if (ordersSearch) {
-        params.append("search", ordersSearch)
-      }
-
-      if (ordersStatusFilter && ordersStatusFilter !== "all") {
-        params.append("status", ordersStatusFilter)
-      }
-
-      const response = await fetch(`/api/admin/orders?${params}`)
-      const data = await response.json()
-
-      setOrders(data.data || [])
-      setOrdersPagination(prev => ({
-        ...prev,
-        total: data.pagination.total,
-        totalPages: data.pagination.totalPages
-      }))
-    } catch (error) {
-      console.error("Error fetching orders:", error)
-    } finally {
-      setOrdersLoading(false)
-    }
-  }
-
-  const fetchUsers = async () => {
-    try {
-      setUsersLoading(true)
-      const params = new URLSearchParams({
-        page: usersPagination.page.toString(),
-        limit: usersPagination.limit.toString(),
-      })
-
-      if (usersSearch) {
-        params.append("search", usersSearch)
-      }
-
-      const response = await fetch(`/api/admin/users?${params}`)
-      const data = await response.json()
-
-      setUsers(data.data || [])
-      setUsersPagination(prev => ({
-        ...prev,
-        total: data.pagination.total,
-        totalPages: data.pagination.totalPages
-      }))
-    } catch (error) {
-      console.error("Error fetching users:", error)
-    } finally {
-      setUsersLoading(false)
-    }
-  }
-
-  const fetchProducts = async () => {
-    try {
-      setProductsLoading(true)
-      const params = new URLSearchParams({
-        page: productsPagination.page.toString(),
-        limit: productsPagination.limit.toString(),
-      })
-
-      if (productsSearch) {
-        params.append("search", productsSearch)
-      }
-
-      if (productsCategoryFilter) {
-        params.append("category_id", productsCategoryFilter)
-      }
-
-      const response = await fetch(`/api/admin/products?${params}`)
-      const data = await response.json()
-
+      const res = await fetch('/api/admin/products?limit=1000')
+      const data = await res.json()
       setProducts(data.data || [])
-      setProductsPagination(prev => ({
-        ...prev,
-        total: data.pagination.total,
-        totalPages: data.pagination.totalPages
-      }))
-    } catch (error) {
-      console.error("Error fetching products:", error)
-    } finally {
-      setProductsLoading(false)
-    }
+    } catch (error) { console.error('Error fetching products:', error) } finally { setLoadingProducts(false) }
+  }, [])
+
+  const fetchCategories = useCallback(async () => {
+    setLoadingCategories(true)
+    try {
+      const res = await fetch('/api/admin/categories')
+      const data = await res.json()
+      setCategories(data || [])
+    } catch (error) { console.error('Error fetching categories:', error) } finally { setLoadingCategories(false) }
+  }, [])
+
+  const fetchOrders = useCallback(async () => {
+    setLoadingOrders(true)
+    try {
+      const res = await fetch('/api/admin/orders?limit=1000')
+      const data = await res.json()
+      setOrders(data.data || [])
+    } catch (error) { console.error('Error fetching orders:', error) } finally { setLoadingOrders(false) }
+  }, [])
+
+  const fetchUsers = useCallback(async () => {
+    setLoadingUsers(true)
+    try {
+      const res = await fetch('/api/admin/users?limit=1000')
+      const data = await res.json()
+      setUsers(data.data || [])
+    } catch (error) { console.error('Error fetching users:', error) } finally { setLoadingUsers(false) }
+  }, [])
+
+  // CRUD Category
+  const handleCreateCategory = async () => {
+    try {
+      const res = await fetch('/api/admin/categories', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCategoryName })
+      })
+      if (res.ok) {
+        const newCat = await res.json()
+        setCategories(prev => [newCat, ...prev])
+        setNewCategoryOpen(false)
+        setNewCategoryName('')
+      }
+    } catch (error) { console.error('Error creating category:', error) }
   }
 
-  const handleProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const productData = {
-      ...productForm,
-      price: Number.parseFloat(productForm.price),
-      original_price: productForm.original_price ? Number.parseFloat(productForm.original_price) : null,
-      discount_price: productForm.discount_price ? Number.parseFloat(productForm.discount_price) : null,
-      stock: Number.parseInt(productForm.stock),
-      category_id: productForm.category_id || null,
-      images: productForm.images ? productForm.images.split(",").map(img => img.trim()) : [],
-      specs: productForm.specs ? JSON.parse(productForm.specs) : null,
-    }
-
+  const handleUpdateCategory = async () => {
+    if (!selectedCategory) return
     try {
-      const method = selectedProduct ? "PUT" : "POST"
-      const url = "/api/admin/products"
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(selectedProduct ? { id: selectedProduct.id, ...productData } : productData),
+      const res = await fetch('/api/admin/categories', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedCategory.id, name: newCategoryName })
       })
-
-      if (!response.ok) {
-        throw new Error("Failed to save product")
+      if (res.ok) {
+        const updatedCat = await res.json()
+        setCategories(prev => prev.map(c => c.id === selectedCategory.id ? updatedCat : c))
+        setEditCategoryOpen(false)
+        setSelectedCategory(null)
+        setNewCategoryName('')
       }
-
-      const savedProduct = await response.json()
-
-      if (selectedProduct) {
-        // Update existing product in state
-        setProducts(prev => prev.map(p => p.id === selectedProduct.id ? savedProduct : p))
-      } else {
-        // Add new product to state
-        setProducts(prev => [savedProduct, ...prev])
-        // Update stats for new product
-        setStats(prev => ({ ...prev, totalProducts: prev.totalProducts + 1 }))
-      }
-
-      setProductDialogOpen(false)
-      setSelectedProduct(null)
-      setProductForm({
-        name: "",
-        description: "",
-        price: "",
-        original_price: "",
-        discount_price: "",
-        stock: "",
-        brand: "",
-        category_id: "",
-        image_url: "",
-        images: "",
-        is_featured: false,
-        is_deal: false,
-        specs: "",
-      })
-    } catch (error) {
-      console.error("Error saving product:", error)
-    }
-  }
-
-  const handleCategorySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    try {
-      const method = selectedCategory ? "PUT" : "POST"
-      const url = "/api/admin/categories"
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(selectedCategory ? { id: selectedCategory.id, ...categoryForm } : categoryForm),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to save category")
-      }
-
-      const savedCategory = await response.json()
-
-      if (selectedCategory) {
-        // Update existing category in state
-        setCategories(prev => prev.map(c => c.id === selectedCategory.id ? savedCategory : c))
-      } else {
-        // Add new category to state
-        setCategories(prev => [savedCategory, ...prev])
-      }
-
-      setCategoryDialogOpen(false)
-      setSelectedCategory(null)
-      setCategoryForm({ name: "", description: "", image_url: "" })
-    } catch (error) {
-      console.error("Error saving category:", error)
-    }
-  }
-
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return
-
-    try {
-      const response = await fetch(`/api/admin/products?id=${id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to delete product")
-      }
-
-      // Remove product from state
-      setProducts(prev => prev.filter(p => p.id !== id))
-      // Update stats for deleted product
-      setStats(prev => ({ ...prev, totalProducts: prev.totalProducts - 1 }))
-    } catch (error) {
-      console.error("Error deleting product:", error)
-    }
+    } catch (error) { console.error('Error updating category:', error) }
   }
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa danh mục này?")) return
-
+    if (!confirm('Xóa danh mục này?')) return
     try {
-      const response = await fetch(`/api/admin/categories?id=${id}`, {
-        method: "DELETE",
-      })
+      const res = await fetch(`/api/admin/categories?id=${id}`, { method: 'DELETE' })
+      if (res.ok) setCategories(prev => prev.filter(c => c.id !== id))
+    } catch (error) { console.error('Error deleting category:', error) }
+  }
 
-      if (!response.ok) {
-        throw new Error("Failed to delete category")
-      }
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order)
+    setOrderDialogOpen(true)
+  }
 
-      // Remove category from state
-      setCategories(prev => prev.filter(c => c.id !== id))
-    } catch (error) {
-      console.error("Error deleting category:", error)
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'delivered': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none rounded-md text-[10px] uppercase font-bold tracking-widest">Đã giao</Badge>
+      case 'cancelled': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-none rounded-md text-[10px] uppercase font-bold tracking-widest">Đã hủy</Badge>
+      case 'shipped': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none rounded-md text-[10px] uppercase font-bold tracking-widest">Đang giao</Badge>
+      default: return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none rounded-md text-[10px] uppercase font-bold tracking-widest">Đang xử lý</Badge>
     }
   }
 
-  const handleUserSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    try {
-      const response = await fetch("/api/admin/users", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: selectedUser?.id,
-          ...userForm,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to update user")
-      }
-
-      const updatedUser = await response.json()
-
-      // Update existing user in state
-      setUsers(prev => prev.map(u => u.id === selectedUser?.id ? { ...u, ...updatedUser } : u))
-
-      setUserDialogOpen(false)
-      setSelectedUser(null)
-      setUserForm({
-        full_name: "",
-        phone: "",
-        address: "",
-        city: "",
-        postal_code: "",
-        country: "",
-      })
-    } catch (error) {
-      console.error("Error updating user:", error)
-    }
-  }
-
-  const handleDeleteUser = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return
-
-    try {
-      const response = await fetch(`/api/admin/users?id=${id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to delete user")
-      }
-
-      fetchStats()
-    } catch (error) {
-      console.error("Error deleting user:", error)
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount)
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...new Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <Skeleton className="h-150 w-full" />
-      </div>
-    )
-  }
+  useEffect(() => {
+    if (activeTab === 'products') fetchProducts()
+    if (activeTab === 'categories') fetchCategories()
+    if (activeTab === 'orders') fetchOrders()
+    if (activeTab === 'users') fetchUsers()
+  }, [activeTab, fetchProducts, fetchCategories, fetchOrders, fetchUsers])
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Quản lý toàn bộ website</p>
+    <div className="container mx-auto p-6 space-y-8 pb-20">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight">Hệ thống Quản trị</h1>
+          <p className="text-muted-foreground font-medium mt-1">Quản lý cửa hàng một cách toàn diện.</p>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng sản phẩm</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProducts}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng đơn hàng</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng người dùng</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Management Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex justify-center">
-          <TabsList className="grid w-full max-w-md grid-cols-4">
-            <TabsTrigger value="products" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">Sản phẩm</span>
-            </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
-              <span className="hidden sm:inline">Danh mục</span>
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              <span className="hidden sm:inline">Đơn hàng</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Người dùng</span>
-            </TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
+        <div className="flex overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-center justify-between bg-muted/50 p-1.5 rounded-2xl w-max border border-border/50">
+            <TabsList className="bg-transparent border-none flex gap-1 h-auto p-0">
+              {[
+                { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
+                { id: "products", label: "Sản phẩm", icon: Package },
+                { id: "orders", label: "Đơn hàng", icon: ShoppingCart },
+                { id: "users", label: "Khách hàng", icon: Users },
+                { id: "categories", label: "Danh mục", icon: Edit },
+              ].map((tab) => (
+                <TabsTrigger 
+                  key={tab.id} 
+                  value={tab.id} 
+                  className="rounded-xl px-5 py-2.5 text-sm font-bold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-primary data-[state=active]:shadow-md transition-all flex items-center gap-2"
+                >
+                  <tab.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
         </div>
 
-        <TabsContent value="products" className="space-y-4">
-          {productsLoading ? (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                  <Skeleton className="h-10 w-64" />
-                  <Skeleton className="h-10 w-64" />
-                </div>
-                <Skeleton className="h-10 w-32" />
-              </div>
-              <div className="space-y-4">
-                {[...new Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
+        {/* TỔNG QUAN */}
+        <TabsContent value="overview" className="mt-0 outline-none">
+          {loadingStats ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => <Card key={i} className="animate-pulse h-36 rounded-4xl" />)}
             </div>
           ) : (
-            <>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex-1 max-w-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard title="Tổng sản phẩm" value={stats.totalProducts} icon={Package} description="Đang được kinh doanh" />
+              <StatCard title="Tổng đơn hàng" value={stats.totalOrders} icon={ShoppingCart} description="Toàn thời gian" />
+              <StatCard title="Khách hàng" value={stats.totalUsers} icon={Users} description="Thành viên đã đăng ký" />
+              <StatCard title="Doanh thu" value={formatCurrency(stats.totalRevenue)} icon={DollarSign} description="Tổng thu nhập thực tế" />
+            </div>
+          )}
+        </TabsContent>
+
+        {/* SẢN PHẨM */}
+        <TabsContent value="products" className="space-y-6 mt-0 outline-none">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <h2 className="text-2xl font-black flex-1">Danh sách Sản phẩm <span className="text-muted-foreground text-lg font-medium">({products.length})</span></h2>
+            <div className="flex w-full lg:w-auto gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   placeholder="Tìm kiếm sản phẩm..."
                   value={productsSearch}
                   onChange={(e) => setProductsSearch(e.target.value)}
-                  className="w-full"
+                  className="pl-10 h-12 rounded-xl bg-white dark:bg-card border-border/50 shadow-sm"
                 />
               </div>
-              <div className="flex-1 max-w-sm">
-                <Select value={productsCategoryFilter} onValueChange={setProductsCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Lọc theo danh mục" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả danh mục</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Button disabled className="h-12 px-6 rounded-xl font-bold shadow-lg shadow-primary/20">
+                <Plus className="mr-2 h-5 w-5" /> Thêm mới
+              </Button>
             </div>
-            <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => {
-                  setSelectedProduct(null)
-                  setProductForm({
-                    name: "",
-                    description: "",
-                    price: "",
-                    original_price: "",
-                    discount_price: "",
-                    stock: "",
-                    brand: "",
-                    category_id: "",
-                    image_url: "",
-                    images: "",
-                    is_featured: false,
-                    is_deal: false,
-                    specs: "",
-                  })
-                }}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm sản phẩm
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{selectedProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleProductSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto">
-                  <div className="grid gap-4 md:grid-cols-2 mr-2.5">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Tên sản phẩm</Label>
-                      <Input
-                        id="name"
-                        value={productForm.name}
-                        onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="brand">Thương hiệu</Label>
-                      <Input
-                        id="brand"
-                        value={productForm.brand}
-                        onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Giá</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        value={productForm.price}
-                        onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="original_price">Giá gốc</Label>
-                      <Input
-                        id="original_price"
-                        type="number"
-                        value={productForm.original_price}
-                        onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })}
-                        placeholder="Không bắt buộc"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="discount_price">Giá khuyến mãi</Label>
-                      <Input
-                        id="discount_price"
-                        type="number"
-                        value={productForm.discount_price}
-                        onChange={(e) => setProductForm({ ...productForm, discount_price: e.target.value })}
-                        placeholder="Không bắt buộc"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="stock">Tồn kho</Label>
-                      <Input
-                        id="stock"
-                        type="number"
-                        value={productForm.stock}
-                        onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="category">Danh mục</Label>
-                      <Select value={productForm.category_id} onValueChange={(value) => setProductForm({ ...productForm, category_id: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn danh mục" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="image_url">URL ảnh chính</Label>
-                      <Input
-                        id="image_url"
-                        value={productForm.image_url}
-                        onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="images">URL ảnh phụ (cách nhau bằng dấu phẩy)</Label>
-                      <Textarea
-                        id="images"
-                        value={productForm.images}
-                        onChange={(e) => setProductForm({ ...productForm, images: e.target.value })}
-                        placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                        rows={2}
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="description">Mô tả</Label>
-                      <Textarea
-                        id="description"
-                        value={productForm.description}
-                        onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="specs">Thông số kỹ thuật (JSON)</Label>
-                      <Textarea
-                        id="specs"
-                        value={productForm.specs}
-                        onChange={(e) => setProductForm({ ...productForm, specs: e.target.value })}
-                        placeholder='{"Màn hình": "6.1 inch", "Camera": "12MP"}'
-                        rows={4}
-                      />
-                    </div>
-                    <div className="space-y-2 flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="is_featured"
-                        checked={productForm.is_featured}
-                        onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })}
-                        className="rounded"
-                      />
-                      <Label htmlFor="is_featured">Sản phẩm nổi bật</Label>
-                    </div>
-                    <div className="space-y-2 flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="is_deal"
-                        checked={productForm.is_deal}
-                        onChange={(e) => setProductForm({ ...productForm, is_deal: e.target.checked })}
-                        className="rounded"
-                      />
-                      <Label htmlFor="is_deal">Deal hot</Label>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-4 border-t">
-                    <Button type="button" variant="outline" onClick={() => setProductDialogOpen(false)}>
-                      Hủy
-                    </Button>
-                    <Button type="submit">
-                      {selectedProduct ? "Cập nhật" : "Thêm"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
           </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-50">Tên sản phẩm</TableHead>
-                  <TableHead className="min-w-50">Mô tả</TableHead>
-                  <TableHead className="min-w-30">Slug</TableHead>
-                  <TableHead className="min-w-25">Thương hiệu</TableHead>
-                  <TableHead className="min-w-25">Giá</TableHead>
-                  <TableHead className="min-w-25">Giá gốc</TableHead>
-                  <TableHead className="min-w-20">Tồn kho</TableHead>
-                  <TableHead className="min-w-20">Đã bán</TableHead>
-                  <TableHead className="min-w-25">Đánh giá</TableHead>
-                  <TableHead className="min-w-30">Danh mục</TableHead>
-                  <TableHead className="min-w-25">Đặc trưng</TableHead>
-                  <TableHead className="min-w-25">Deal hot</TableHead>
-                  <TableHead className="min-w-50">Hình ảnh</TableHead>
-                  <TableHead className="min-w-62.5">Thông số</TableHead>
-                  <TableHead className="min-w-25">Ngày tạo</TableHead>
-                  <TableHead className="min-w-30">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium max-w-50">
-                      <div className="truncate" title={product.name}>
-                        {product.name}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs max-w-50">
-                      <div className="truncate" title={product.description}>
-                        {product.description || "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs font-mono">{product.slug || "-"}</TableCell>
-                    <TableCell>{product.brand || "-"}</TableCell>
-                    <TableCell>{formatCurrency(product.price)}</TableCell>
-                    <TableCell>
-                      {product.original_price ? formatCurrency(product.original_price) : "-"}
-                    </TableCell>
-
-                    <TableCell>{product.stock}</TableCell>
-                    <TableCell>{product.sold_count || 0}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <span>{product.rating || 0}</span>
-                        <span className="text-muted-foreground">({product.review_count || 0})</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {product.category ? product.category.name : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={product.is_featured ? "default" : "secondary"}>
-                        {product.is_featured ? "Có" : "Không"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={product.is_deal ? "default" : "secondary"}>
-                        {product.is_deal ? "Có" : "Không"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {product.image_url || (product.images && product.images.length > 0) ? (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  const newExpanded = new Set(expandedImages)
-                                  if (newExpanded.has(product.id)) {
-                                    newExpanded.delete(product.id)
-                                  } else {
-                                    newExpanded.add(product.id)
-                                  }
-                                  setExpandedImages(newExpanded)
-                                }}
-                                className="h-6 px-2 text-xs"
-                              >
-                                {expandedImages.has(product.id) ? (
-                                  <>
-                                    <ChevronUp className="h-3 w-3 mr-1" />
-                                    Thu gọn
-                                  </>
-                                ) : (
-                                  <>
-                                    <ChevronDown className="h-3 w-3 mr-1" />
-                                    Chi tiết
-                                  </>
-                                )}
-                              </Button>
-                              <Badge variant="outline" className="text-xs">
-                                {product.image_url ? 1 : 0} + {product.images?.length || 0} ảnh
-                              </Badge>
-                            </div>
-                            {expandedImages.has(product.id) && (
-                              <div className="mt-2 border-t pt-2">
-                                <div className="flex flex-wrap gap-2">
-                                  {product.image_url && (
-                                    <div className="text-center">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-auto p-0 hover:bg-transparent"
-                                        onClick={() => window.open(product.image_url, '_blank')}
-                                      >
-                                        <img
-                                          src={product.image_url}
-                                          alt="Ảnh chính"
-                                          className="w-16 h-16 object-cover rounded border"
-                                        />
-                                      </Button>
-                                      <div className="text-xs text-muted-foreground mt-1">Ảnh chính</div>
-                                    </div>
-                                  )}
-                                  {product.images && product.images.map((image, index) => (
-                                    <div key={index} className="text-center">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-auto p-0 hover:bg-transparent"
-                                        onClick={() => window.open(image, '_blank')}
-                                      >
-                                        <img
-                                          src={image}
-                                          alt={`Ảnh phụ ${index + 1}`}
-                                          className="w-16 h-16 object-cover rounded border"
-                                        />
-                                      </Button>
-                                      <div className="text-xs text-muted-foreground mt-1">Ảnh phụ {index + 1}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">Không có ảnh</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-62.5">
-                        {product.specs ? (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  const newExpanded = new Set(expandedSpecs)
-                                  if (newExpanded.has(product.id)) {
-                                    newExpanded.delete(product.id)
-                                  } else {
-                                    newExpanded.add(product.id)
-                                  }
-                                  setExpandedSpecs(newExpanded)
-                                }}
-                                className="h-6 px-2 text-xs"
-                              >
-                                {expandedSpecs.has(product.id) ? (
-                                  <>
-                                    <ChevronUp className="h-3 w-3 mr-1" />
-                                    Thu gọn
-                                  </>
-                                ) : (
-                                  <>
-                                    <ChevronDown className="h-3 w-3 mr-1" />
-                                    Chi tiết
-                                  </>
-                                )}
-                              </Button>
-                              <Badge variant="outline" className="text-xs">
-                                {Object.keys(product.specs).length} thông số
-                              </Badge>
-                            </div>
-                            {expandedSpecs.has(product.id) ? (
-                              <div className="mt-2 space-y-1 border-t pt-2">
-                                {Object.entries(product.specs).map(([key, value]) => (
-                                  <div key={key} className="text-xs">
-                                    <span className="font-medium">{key}:</span> {String(value)}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-xs text-muted-foreground space-y-0.5">
-                                {Object.entries(product.specs).slice(0, 3).map(([key, value]) => (
-                                  <div key={key} className="truncate">
-                                    <span className="font-medium">{key}:</span> {String(value)}
-                                  </div>
-                                ))}
-                                {Object.keys(product.specs).length > 3 && (
-                                  <div className="text-blue-600">+ {Object.keys(product.specs).length - 3} thông số khác...</div>
-                                )}
-                              </div>
-                            )}
+          {loadingProducts ? (
+             <div className="h-64 flex items-center justify-center bg-white dark:bg-card rounded-4xl border border-border/50 shadow-sm"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : (
+            <Card className="border-border/50 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden rounded-4xl">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-slate-50 dark:bg-slate-900">
+                    <TableRow>
+                      <TableHead className="py-5 px-6 font-black uppercase tracking-widest text-xs">Thông tin sản phẩm</TableHead>
+                      <TableHead className="font-black uppercase tracking-widest text-xs">Giá bán</TableHead>
+                      <TableHead className="font-black uppercase tracking-widest text-xs">Tồn kho</TableHead>
+                      <TableHead className="text-right px-6 font-black uppercase tracking-widest text-xs">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {products.filter(p => p.name.toLowerCase().includes(productsSearch.toLowerCase())).map((product) => (
+                      <TableRow key={product.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors border-border/40">
+                        <TableCell className="py-4 px-6">
+                          <div className="flex flex-col">
+                             <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{product.name}</span>
+                             <span className="text-[11px] text-muted-foreground font-medium mt-1">Danh mục: {product.category?.name || 'Chưa phân loại'}</span>
                           </div>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">Không có thông số</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {product.created_at ? new Date(product.created_at).toLocaleDateString('vi-VN') : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedProduct(product)
-                            setProductForm({
-                              name: product.name,
-                              description: product.description || "",
-                              price: product.price.toString(),
-                              original_price: product.original_price?.toString() || "",
-                              discount_price: product.discount_price?.toString() || "",
-                              stock: product.stock.toString(),
-                              brand: product.brand || "",
-                              category_id: product.category_id || "",
-                              image_url: product.image_url || "",
-                              images: product.images?.join(", ") || "",
-                              is_featured: product.is_featured || false,
-                              is_deal: product.is_deal || false,
-                              specs: product.specs ? JSON.stringify(product.specs, null, 2) : "",
-                            })
-                            setProductDialogOpen(true)
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteProduct(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-            </>
+                        </TableCell>
+                        <TableCell><span className="font-black text-blue-600 dark:text-blue-400">{formatCurrency(product.price)}</span></TableCell>
+                        <TableCell>
+                          {product.stock <= 0 ? 
+                            <Badge variant="destructive" className="rounded-md text-[10px] uppercase font-bold tracking-widest">Hết hàng</Badge> : 
+                            <span className="font-bold">{product.stock}</span>
+                          }
+                        </TableCell>
+                        <TableCell className="text-right px-6">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="icon" className="rounded-xl h-9 w-9 border-border/60" disabled><Edit className="h-4 w-4" /></Button>
+                            <Button variant="outline" size="icon" className="rounded-xl h-9 w-9 border-border/60" disabled><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {products.filter(p => p.name.toLowerCase().includes(productsSearch.toLowerCase())).length === 0 && (
+                      <TableRow><TableCell colSpan={4} className="h-32 text-center text-muted-foreground font-medium">Không tìm thấy sản phẩm nào.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
           )}
         </TabsContent>
 
-        <TabsContent value="categories" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex-1 max-w-sm">
+        {/* ĐƠN HÀNG */}
+        <TabsContent value="orders" className="space-y-6 mt-0 outline-none">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <h2 className="text-2xl font-black flex-1">Danh sách Đơn hàng <span className="text-muted-foreground text-lg font-medium">({orders.length})</span></h2>
+            <div className="flex w-full lg:w-auto gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm danh mục..."
-                  value={categoriesSearch}
-                  onChange={(e) => setCategoriesSearch(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-            <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => {
-                  setSelectedCategory(null)
-                  setCategoryForm({ name: "", description: "", image_url: "" })
-                }}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm danh mục
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{selectedCategory ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleCategorySubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category-name">Tên danh mục</Label>
-                    <Input
-                      id="category-name"
-                      value={categoryForm.name}
-                      onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category-description">Mô tả</Label>
-                    <Textarea
-                      id="category-description"
-                      value={categoryForm.description}
-                      onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category-image_url">URL hình ảnh</Label>
-                    <Input
-                      id="category-image_url"
-                      value={categoryForm.image_url}
-                      onChange={(e) => setCategoryForm({ ...categoryForm, image_url: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setCategoryDialogOpen(false)}>
-                      Hủy
-                    </Button>
-                    <Button type="submit">
-                      {selectedCategory ? "Cập nhật" : "Thêm"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tên danh mục</TableHead>
-                <TableHead>Mô tả</TableHead>
-                <TableHead>Hình ảnh</TableHead>
-                <TableHead>Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories
-                .filter(category =>
-                  category.name.toLowerCase().includes(debouncedCategoriesSearch.toLowerCase()) ||
-                  (category.description && category.description.toLowerCase().includes(debouncedCategoriesSearch.toLowerCase()))
-                )
-                .map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>{category.name}</TableCell>
-                  <TableCell>{category.description}</TableCell>
-                  <TableCell>
-                    {category.image_url ? (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-0 hover:bg-transparent"
-                          onClick={() => window.open(category.image_url, '_blank')}
-                        >
-                          <img
-                            src={category.image_url}
-                            alt={category.name}
-                            className="w-12 h-12 object-cover rounded border"
-                          />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">Không có ảnh</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedCategory(category)
-                          setCategoryForm({
-                            name: category.name,
-                            description: category.description || "",
-                            image_url: category.image_url || "",
-                          })
-                          setCategoryDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteCategory(category.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TabsContent>
-
-        <TabsContent value="orders" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex-1 max-w-sm">
-                <Input
-                  placeholder="Tìm kiếm đơn hàng..."
+                  placeholder="Tìm mã đơn hàng..."
                   value={ordersSearch}
                   onChange={(e) => setOrdersSearch(e.target.value)}
-                  className="w-full"
+                  className="pl-10 h-12 rounded-xl bg-white dark:bg-card border-border/50 shadow-sm"
                 />
               </div>
-              <div className="flex-1 max-w-sm">
-                <Select value={ordersStatusFilter} onValueChange={setOrdersStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Lọc theo trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="pending">Đang chờ</SelectItem>
-                    <SelectItem value="processing">Đang xử lý</SelectItem>
-                    <SelectItem value="shipped">Đã giao hàng</SelectItem>
-                    <SelectItem value="delivered">Đã giao</SelectItem>
-                    <SelectItem value="cancelled">Đã hủy</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-            <h2 className="text-xl font-semibold">Quản lý đơn hàng</h2>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mã đơn hàng</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Tổng tiền</TableHead>
-                <TableHead>Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders
-                .filter(order => {
-                  const matchesSearch = order.order_number.toLowerCase().includes(debouncedOrdersSearch.toLowerCase()) ||
-                    order.status.toLowerCase().includes(debouncedOrdersSearch.toLowerCase())
-                  const matchesStatus = ordersStatusFilter === "all" || ordersStatusFilter === "" || order.status === ordersStatusFilter
-                  return matchesSearch && matchesStatus
-                })
-                .map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>{order.order_number}</TableCell>
-                  <TableCell>
-                    <Badge variant={order.status === "delivered" ? "default" : "secondary"}>
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatCurrency(order.total)}</TableCell>
-            <TableCell>
-              <div className="flex gap-1">
-                <Button size="sm" variant="outline">
-                  <Eye className="h-4 w-4" />
-                </Button>
-                {order.status === 'pending' && order.payment_method === 'online' && (
-                  <Button 
-                    size="sm" 
-                    onClick={async () => {
-                      if (confirm(`Xác nhận thanh toán cho đơn #${order.order_number}?`)) {
-                        const res = await fetch(`/api/admin/orders/${order.id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ payment_status: 'paid', status: 'processing' })
-                        })
-                        if (res.ok) {
-                          // Refresh orders
-                          fetchOrders()
-                          alert('Đã xác nhận thanh toán!')
-                        } else {
-                          alert('Lỗi cập nhật')
-                        }
-                      }
-                    }}
-                  >
-                    ✓ Thanh toán
-                  </Button>
-                )}
+          {loadingOrders ? (
+             <div className="h-64 flex items-center justify-center bg-white dark:bg-card rounded-4xl border border-border/50 shadow-sm"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : (
+            <Card className="border-border/50 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden rounded-4xl">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-slate-50 dark:bg-slate-900">
+                    <TableRow>
+                      <TableHead className="py-5 px-6 font-black uppercase tracking-widest text-xs">Mã đơn & Thời gian</TableHead>
+                      <TableHead className="font-black uppercase tracking-widest text-xs">Trạng thái</TableHead>
+                      <TableHead className="font-black uppercase tracking-widest text-xs">Tổng thanh toán</TableHead>
+                      <TableHead className="text-right px-6 font-black uppercase tracking-widest text-xs">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.filter(o => o.order_number.includes(ordersSearch) || o.status.includes(ordersSearch)).map((order) => (
+                      <TableRow key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors border-border/40">
+                        <TableCell className="py-4 px-6">
+                           <div className="flex flex-col">
+                             <span className="font-bold text-sm text-slate-900 dark:text-slate-100">#{order.order_number}</span>
+                             <span className="text-[11px] text-muted-foreground font-medium mt-1">{new Date(order.created_at).toLocaleString('vi-VN')}</span>
+                           </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(order.status)}</TableCell>
+                        <TableCell><span className="font-black text-blue-600 dark:text-blue-400">{formatCurrency(order.total)}</span></TableCell>
+                        <TableCell className="text-right px-6">
+                          <Button variant="outline" size="sm" className="rounded-xl h-9 border-border/60 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => handleViewOrder(order)}>
+                            <Eye className="h-4 w-4 mr-2" /> Xem chi tiết
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {orders.filter(o => o.order_number.includes(ordersSearch) || o.status.includes(ordersSearch)).length === 0 && (
+                      <TableRow><TableCell colSpan={4} className="h-32 text-center text-muted-foreground font-medium">Không tìm thấy đơn hàng nào.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
-            </TableCell>
-
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            </Card>
+          )}
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex-1 max-w-sm">
+        {/* KHÁCH HÀNG */}
+        <TabsContent value="users" className="space-y-6 mt-0 outline-none">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <h2 className="text-2xl font-black flex-1">Danh sách Khách hàng <span className="text-muted-foreground text-lg font-medium">({users.length})</span></h2>
+            <div className="flex w-full lg:w-auto gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm người dùng..."
+                  placeholder="Tìm tên hoặc email..."
                   value={usersSearch}
                   onChange={(e) => setUsersSearch(e.target.value)}
-                  className="w-full"
+                  className="pl-10 h-12 rounded-xl bg-white dark:bg-card border-border/50 shadow-sm"
                 />
               </div>
             </div>
-            <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{selectedUser ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleUserSubmit} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
+          </div>
+          {loadingUsers ? (
+             <div className="h-64 flex items-center justify-center bg-white dark:bg-card rounded-4xl border border-border/50 shadow-sm"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : (
+            <Card className="border-border/50 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden rounded-4xl">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-slate-50 dark:bg-slate-900">
+                    <TableRow>
+                      <TableHead className="py-5 px-6 font-black uppercase tracking-widest text-xs">Thông tin khách hàng</TableHead>
+                      <TableHead className="font-black uppercase tracking-widest text-xs">Liên hệ</TableHead>
+                      <TableHead className="text-right px-6 font-black uppercase tracking-widest text-xs">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.filter(u => u.full_name.toLowerCase().includes(usersSearch.toLowerCase()) || (u.email && u.email.toLowerCase().includes(usersSearch.toLowerCase()))).map((user) => (
+                      <TableRow key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors border-border/40">
+                        <TableCell className="py-4 px-6">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black">
+                              {user.full_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                               <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{user.full_name}</span>
+                               <span className="text-[11px] text-muted-foreground font-medium mt-0.5 flex items-center gap-1"><Mail className="h-3 w-3"/> {user.email || 'Không có email'}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-medium flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground"/> {user.phone || 'Chưa cập nhật'}</span>
+                        </TableCell>
+                        <TableCell className="text-right px-6">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="icon" className="rounded-xl h-9 w-9 border-border/60" disabled><Edit className="h-4 w-4" /></Button>
+                            <Button variant="outline" size="icon" className="rounded-xl h-9 w-9 border-border/60" disabled><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {users.filter(u => u.full_name.toLowerCase().includes(usersSearch.toLowerCase()) || (u.email && u.email.toLowerCase().includes(usersSearch.toLowerCase()))).length === 0 && (
+                      <TableRow><TableCell colSpan={3} className="h-32 text-center text-muted-foreground font-medium">Không có khách hàng phù hợp.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* DANH MỤC */}
+        <TabsContent value="categories" className="space-y-6 mt-0 outline-none">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <h2 className="text-2xl font-black flex-1">Danh mục sản phẩm <span className="text-muted-foreground text-lg font-medium">({categories.length})</span></h2>
+            <Dialog open={newCategoryOpen} onOpenChange={setNewCategoryOpen}>
+              <DialogTrigger asChild>
+                <Button className="h-12 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/20 w-full lg:w-auto">
+                  <Plus className="mr-2 h-5 w-5" /> Thêm danh mục
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="rounded-4xl">
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-2xl font-black">Thêm danh mục mới</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="user-full_name">Họ tên</Label>
-                    <Input
-                      id="user-full_name"
-                      value={userForm.full_name}
-                      onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })}
-                    />
+                    <Label className="font-bold" htmlFor="category-name">Tên danh mục</Label>
+                    <Input id="category-name" className="rounded-xl h-12" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Ví dụ: Laptop, Smartphone..." />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="user-phone">Số điện thoại</Label>
-                    <Input
-                      id="user-phone"
-                      value={userForm.phone}
-                      onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="user-address">Địa chỉ</Label>
-                    <Input
-                      id="user-address"
-                      value={userForm.address}
-                      onChange={(e) => setUserForm({ ...userForm, address: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="user-city">Thành phố</Label>
-                    <Input
-                      id="user-city"
-                      value={userForm.city}
-                      onChange={(e) => setUserForm({ ...userForm, city: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="user-country">Quốc gia</Label>
-                    <Input
-                      id="user-country"
-                      value={userForm.country}
-                      onChange={(e) => setUserForm({ ...userForm, country: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="user-postal_code">Mã bưu điện</Label>
-                    <Input
-                      id="user-postal_code"
-                      value={userForm.postal_code}
-                      onChange={(e) => setUserForm({ ...userForm, postal_code: e.target.value })}
-                    />
+                  <div className="flex justify-end gap-3 pt-4 border-t">
+                    <DialogClose asChild><Button type="button" variant="outline" className="rounded-xl h-11 px-6">Hủy</Button></DialogClose>
+                    <Button onClick={handleCreateCategory} className="rounded-xl h-11 px-8 bg-blue-600 hover:bg-blue-700">Tạo mới</Button>
                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setUserDialogOpen(false)}>
-                    Hủy
-                  </Button>
-                  <Button type="submit">
-                    {selectedUser ? "Cập nhật" : "Thêm"}
-                  </Button>
-                </div>
-              </form>
               </DialogContent>
             </Dialog>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Họ tên</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Số điện thoại</TableHead>
-                <TableHead>Địa chỉ</TableHead>
-                <TableHead>Thành phố</TableHead>
-                <TableHead>Quốc gia</TableHead>
-                <TableHead>Mã bưu điện</TableHead>
-                <TableHead>Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users
-                .filter(user =>
-                  (user.full_name && user.full_name.toLowerCase().includes(debouncedUsersSearch.toLowerCase())) ||
-                  (user.phone && user.phone.toLowerCase().includes(debouncedUsersSearch.toLowerCase()))
-                )
-                .map((user) => (
-                <TableRow key={user.id || '-'}>
-                  <TableCell>{user.full_name || '-'}</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>{user.phone || '-'}</TableCell>
-                  <TableCell>{user.address || '-'}</TableCell>
-                  <TableCell>{user.city || '-'}</TableCell>
-                  <TableCell>{user.country || '-'}</TableCell>
-                  <TableCell>{user.postal_code || '-'}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedUser(user)
-                          setUserForm({
-                            full_name: user.full_name || "",
-                            phone: user.phone || "",
-                            address: user.address || "",
-                            city: user.city || "",
-                            postal_code: user.postal_code || "",
-                            country: user.country || "",
-                          })
-                          setUserDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
+          
+          {loadingCategories ? (
+             <div className="h-64 flex items-center justify-center bg-white dark:bg-card rounded-4xl border border-border/50 shadow-sm"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories.map((category) => (
+                <Card key={category.id} className="rounded-4xl border-border/50 shadow-sm hover:shadow-lg hover:border-primary/30 transition-all bg-white dark:bg-slate-900 group">
+                  <CardContent className="p-6 flex flex-col justify-between h-full gap-4">
+                    <div>
+                      <h3 className="font-black text-xl mb-1 text-slate-900 dark:text-white">{category.name}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{category.description || "Chưa có mô tả chi tiết cho danh mục này."}</p>
+                    </div>
+                    <div className="flex gap-2 justify-end pt-4 border-t border-border/40 mt-auto">
+                      <Dialog open={editCategoryOpen && selectedCategory?.id === category.id} onOpenChange={(open) => {
+                        if (open) { setSelectedCategory(category); setNewCategoryName(category.name); setEditCategoryOpen(true) } 
+                        else { setEditCategoryOpen(false); setSelectedCategory(null) }
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="rounded-xl h-9 hover:text-blue-600 hover:border-blue-600 transition-colors">
+                            <Edit className="h-4 w-4 mr-2" /> Sửa
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="rounded-4xl">
+                          <DialogHeader className="mb-4">
+                            <DialogTitle className="text-2xl font-black">Chỉnh sửa danh mục</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-6">
+                            <div className="space-y-2">
+                              <Label className="font-bold" htmlFor="edit-category-name">Tên danh mục</Label>
+                              <Input id="edit-category-name" className="rounded-xl h-12" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t">
+                              <DialogClose asChild><Button type="button" variant="outline" className="rounded-xl h-11 px-6">Hủy</Button></DialogClose>
+                              <Button onClick={handleUpdateCategory} className="rounded-xl h-11 px-8 bg-blue-600 hover:bg-blue-700">Lưu cập nhật</Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button variant="outline" size="icon" className="rounded-xl h-9 w-9 text-destructive hover:bg-destructive hover:text-white transition-colors" onClick={() => handleDeleteCategory(category.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </CardContent>
+                </Card>
               ))}
-            </TableBody>
-          </Table>
+              {categories.length === 0 && (
+                <div className="col-span-full h-40 flex items-center justify-center border-2 border-dashed border-border/60 rounded-4xl text-muted-foreground font-medium">
+                  Chưa có danh mục nào. Hãy tạo danh mục đầu tiên!
+                </div>
+              )}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+
+      {/* DIALOG CHI TIẾT ĐƠN HÀNG */}
+      <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
+        <DialogContent className="rounded-4xl max-w-md">
+          <DialogHeader className="mb-2">
+            <DialogTitle className="text-2xl font-black">Chi tiết Đơn hàng</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-2">
+            {selectedOrder && (
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-border/50 space-y-5">
+                <div className="flex justify-between items-center pb-4 border-b border-border/60">
+                  <span className="font-bold text-muted-foreground">Mã đơn</span>
+                  <span className="font-mono text-lg font-black text-slate-900 dark:text-white">#{selectedOrder.order_number}</span>
+                </div>
+                <div className="flex justify-between items-center pb-4 border-b border-border/60">
+                  <span className="font-bold text-muted-foreground">Trạng thái</span>
+                  {getStatusBadge(selectedOrder.status)}
+                </div>
+                <div className="flex justify-between items-center pb-4 border-b border-border/60">
+                  <span className="font-bold text-muted-foreground">Ngày đặt hàng</span>
+                  <span className="font-medium text-sm">{new Date(selectedOrder.created_at).toLocaleString('vi-VN')}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <span className="font-bold text-muted-foreground">Tổng tiền</span>
+                  <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{formatCurrency(selectedOrder.total)}</span>
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end pt-2">
+              <DialogClose asChild>
+                <Button className="rounded-xl h-11 px-8 font-bold">Đóng lại</Button>
+              </DialogClose>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
-}
+  )}

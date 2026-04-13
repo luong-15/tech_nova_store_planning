@@ -3,7 +3,7 @@ import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
 
     // Fetch stats
     const [productsRes, ordersRes, usersRes, revenueRes] = await Promise.all([

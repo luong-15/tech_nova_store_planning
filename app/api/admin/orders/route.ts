@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("orders")
-      .select("*", { count: 'exact' })
+      .select("*, order_items(count)", { count: 'exact' })
 
     // Apply search filter
     if (search) {
@@ -32,8 +32,14 @@ export async function GET(request: Request) {
 
     if (error) throw error
 
+    const dataWithCounts = data?.map(order => ({
+      ...order,
+      order_items_count: order.order_items?.[0]?.count || 0,
+      customer_name: order.shipping_name || 'Khách lẻ'
+    })) || []
+
     return NextResponse.json({
-      data: data || [],
+      data: dataWithCounts,
       pagination: {
         page,
         limit,

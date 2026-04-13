@@ -53,6 +53,7 @@ export interface Review {
 }
 
 export interface Order {
+  order_items_count: number
   id: string
   order_number: string
   user_id: string
