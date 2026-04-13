@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { Header } from "@/components/header"
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
@@ -8,14 +9,15 @@ import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { User, Package, Heart, Settings, LogOut, ChevronRight, Menu, X, Zap, Home } from "lucide-react"
+import { User, Package, Heart, Settings, LogOut, ChevronRight, Menu, X } from "lucide-react"
 import type { UserProfile } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 const sidebarItems = [
-  { href: "/dashboard", label: "Hồ sơ", icon: User },
-  { href: "/dashboard/orders", label: "Đơn hàng", icon: Package },
-  { href: "/dashboard/wishlist", label: "Yêu thích", icon: Heart },
-  { href: "/dashboard/settings", label: "Cài đặt", icon: Settings },
+  { href: "/dashboard", label: "Hồ sơ cá nhân", icon: User },
+  { href: "/dashboard/orders", label: "Quản lý đơn hàng", icon: Package },
+  { href: "/dashboard/wishlist", label: "Sản phẩm yêu thích", icon: Heart },
+  { href: "/dashboard/settings", label: "Cài đặt tài khoản", icon: Settings },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -25,86 +27,54 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const supabase = createBrowserClient()
 
   useEffect(() => {
     let isMounted = true
-
     const checkAuth = async () => {
       try {
-        const supabase = createBrowserClient()
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-
-        if (!isMounted) return
-
-        if (authError || !authUser) {
-          console.log("No authenticated user, redirecting to login")
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (!authUser) {
           router.push("/auth/login")
           return
         }
-
-        // User is authenticated, set basic info
-        setEmail(authUser.email || null)
-
-        // Try to get profile, but don't block loading on this
-        const { data: profile, error } = await supabase.from("user_profiles").select("*").eq("id", authUser.id).single()
-
         if (isMounted) {
-          if (profile && !error) {
-            setUser(profile)
-          } else {
-            // Profile doesn't exist or error, set to null but don't create here
-            setUser(null)
-          }
+          setEmail(authUser.email || null)
+          const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", authUser.id).single()
+          if (profile) setUser(profile)
         }
       } catch (error) {
-        console.error("Auth check failed:", error)
-        if (isMounted) {
-          router.push("/auth/login")
-        }
-        return
+        console.error(error)
       } finally {
-        // Always set loading to false
-        if (isMounted) {
-          setLoading(false)
-        }
+        if (isMounted) setLoading(false)
       }
     }
 
     checkAuth()
-
-    // Simple auth state listener for redirects only
-    const supabase = createBrowserClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!isMounted) return
-
-      if (event === 'SIGNED_OUT' || !session?.user) {
-        router.push("/auth/login")
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') router.push("/auth/login")
     })
 
     return () => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [router])
+  }, [router, supabase])
 
   const handleLogout = async () => {
-    const supabase = createBrowserClient()
     await supabase.auth.signOut()
     router.push("/")
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex gap-8">
-            <div className="hidden w-64 lg:block">
-              <Skeleton className="h-[400px] w-full rounded-xl" />
-            </div>
-            <div className="flex-1">
-              <Skeleton className="h-[600px] w-full rounded-xl" />
-            </div>
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="container mx-auto px-4 py-8 flex gap-8 flex-1">
+          <Skeleton className="hidden lg:block w-64 h-100 rounded-3xl" />
+          <div className="flex-1 space-y-4">
+            <Skeleton className="h-8 w-48 rounded-lg" />
+            <Skeleton className="h-125 w-full rounded-3xl" />
           </div>
         </div>
       </div>
@@ -113,68 +83,57 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold">TechNova</span>
-          </Link>
+      <Header />
 
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                Trang chủ
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-primary">Trang chủ</Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">Tài khoản</span>
+      <main className="container mx-auto px-4 py-6 md:py-10">
+        {/* Breadcrumb */}
+        <div className="mb-8 flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 w-fit px-4 py-1.5 rounded-full border border-border/40">
+          <Link href="/" className="hover:text-primary transition-colors">Trang chủ</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground font-medium italic">Bảng điều khiển</span>
         </div>
 
-        <div className="flex flex-row gap-8 relative">
+        <div className="flex flex-col lg:flex-row gap-8 relative">
+          {/* Mobile Toggle FAB */}
           <Button
-            variant="outline"
+            variant="default"
             size="icon"
-            className="fixed bottom-6 right-6 z-[70] h-12 w-12 rounded-full shadow-lg lg:hidden bg-primary text-primary-foreground hover:bg-primary/90"
+            className="fixed bottom-6 right-6 z-70 h-14 w-14 rounded-full shadow-2xl lg:hidden flex items-center justify-center animate-in zoom-in"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </Button>
 
+          {/* Sidebar */}
           <aside
-            className={`
-              fixed inset-y-0 left-0 z-[60] w-72 bg-background border-r border-border/50 p-6 
-              transition-transform duration-300 ease-in-out
-              ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-              lg:relative lg:translate-x-0 lg:w-64 lg:p-0 lg:bg-transparent lg:border-none
-            `.replace(/\s+/g, ' ').trim()}
+            className={cn(
+              "fixed inset-y-0 left-0 z-60 w-80 bg-background/95 backdrop-blur-xl border-r p-6 transition-transform duration-500 ease-out lg:relative lg:translate-x-0 lg:w-72 lg:p-0 lg:bg-transparent lg:border-none",
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            )}
           >
-            <div className="sticky top-24 space-y-6">
-              <div className="rounded-xl border border-border/50 bg-card/50 p-5 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 border border-primary/10">
-                    <AvatarImage src={user?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary/5 text-primary">
-                      {user?.full_name?.charAt(0) || email?.charAt(0)?.toUpperCase() || "U"}
+            <div className="sticky top-28 space-y-6">
+              {/* Profile Card */}
+              <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/40 p-5 backdrop-blur-md shadow-sm group">
+                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <User size={60} />
+                </div>
+                <div className="flex items-center gap-4 relative">
+                  <Avatar className="h-14 w-14 border-2 border-primary/20 p-0.5">
+                    <AvatarImage src={user?.avatar_url || undefined} className="rounded-full object-cover" />
+                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                      {user?.full_name?.charAt(0) || email?.charAt(0)?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-semibold">{user?.full_name || "Người dùng"}</h3>
-                    <p className="truncate text-xs text-muted-foreground">{email}</p>
+                  <div className="min-w-0">
+                    <h3 className="truncate font-bold text-base tracking-tight">{user?.full_name || "Thành viên"}</h3>
+                    <p className="truncate text-xs text-muted-foreground font-medium">{email}</p>
                   </div>
                 </div>
               </div>
 
-              <nav className="space-y-1">
+              {/* Navigation Menu */}
+              <nav className="space-y-1.5">
+                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-2">Menu quản lý</p>
                 {sidebarItems.map((item) => {
                   const isActive = pathname === item.href
                   return (
@@ -182,24 +141,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
+                      className={cn(
+                        "group relative flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-all duration-300",
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 translate-x-1" 
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-1"
+                      )}
                     >
-                      <item.icon className={`h-4 w-4 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                      <item.icon className={cn("h-5 w-5", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary transition-colors")} />
                       {item.label}
+                      {isActive && (
+                        <div className="absolute left-0 w-1 h-6 bg-primary-foreground/40 rounded-full" />
+                      )}
                     </Link>
                   )
                 })}
 
-                <div className="pt-4 mt-4 border-t border-border/50">
+                <div className="pt-6 mt-6 border-t border-border/40">
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    className="flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-red-500/80 transition-all hover:bg-red-500/10 hover:text-red-500 group"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <div className="p-1 rounded-lg group-hover:bg-red-500/10 transition-colors">
+                        <LogOut className="h-5 w-5" />
+                    </div>
                     Đăng xuất
                   </button>
                 </div>
@@ -207,15 +172,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </aside>
 
+          {/* Overlay for Mobile Sidebar */}
           {sidebarOpen && (
             <div 
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden" 
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity duration-300" 
               onClick={() => setSidebarOpen(false)} 
             />
           )}
 
-          <div className="min-w-0 flex-1">
-            {children}
+          {/* Main Content Area */}
+          <div className="min-w-0 flex-1 lg:pl-4">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {children}
+            </div>
           </div>
         </div>
       </main>

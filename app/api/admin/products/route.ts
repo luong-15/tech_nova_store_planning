@@ -3,10 +3,10 @@ import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "50")
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const limit = Number.parseInt(searchParams.get("limit") || "50")
     const search = searchParams.get("search") || ""
     const categoryId = searchParams.get("category_id") || ""
 
@@ -14,10 +14,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("products")
-      .select(`
-        *,
-        category:categories(id, name)
-      `, { count: 'exact' })
+      .select("*", { count: 'exact' })
 
     // Apply search filter
     if (search) {
@@ -52,21 +49,35 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { id, ...productData } = await request.json()
 
-    const { data, error } = await supabase
+    // Filter optional fields to avoid schema cache errors (null/empty)
+    const safeData = {
+      name: productData.name,
+      description: productData.description || null,
+      price: Number(productData.price),
+      stock: Number(productData.stock),
+      brand: productData.brand || null,
+      category_id: productData.category_id || null,
+      image_url: productData.image_url || null,
+      is_featured: Boolean(productData.is_featured),
+      is_deal: Boolean(productData.is_deal),
+      ...(productData.original_price && { original_price: Number(productData.original_price) }),
+      ...(productData.discount_price && { discount_price: Number(productData.discount_price) }),
+      ...(productData.specs && { specs: productData.specs }),
+    }
+
+    // TODO: Re-enable \`category:category_id:categories(id, name)\` JOIN after Supabase cache refresh
+    const { error } = await supabase
       .from("products")
-      .update(productData)
+      .update(safeData)
       .eq("id", id)
-      .select(`
-        *,
-        category:categories(id, name)
-      `)
+      // No .select() to bypass schema cache validation
 
     if (error) throw error
 
-    return NextResponse.json(data[0])
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error updating product:", error)
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 })
@@ -75,16 +86,31 @@ export async function PUT(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const productData = await request.json()
 
+    const safeData = {
+      name: productData.name,
+      slug: productData.name.toLowerCase().replace(/ /g, '-'), // Auto slug
+      description: productData.description || null,
+      price: Number(productData.price),
+      stock: Number(productData.stock),
+      brand: productData.brand || null,
+      category_id: productData.category_id || null,
+      image_url: productData.image_url || null,
+      images: productData.images || [],
+      is_featured: Boolean(productData.is_featured),
+      is_deal: Boolean(productData.is_deal),
+      ...(productData.original_price && { original_price: Number(productData.original_price) }),
+      ...(productData.discount_price && { discount_price: Number(productData.discount_price) }),
+      ...(productData.specs && { specs: productData.specs }),
+    }
+
+    // TODO: Re-enable JOIN after cache refresh
     const { data, error } = await supabase
       .from("products")
-      .insert(productData)
-      .select(`
-        *,
-        category:categories(id, name)
-      `)
+      .insert(safeData)
+      .select("*") // Safe for new inserts
 
     if (error) throw error
 
@@ -97,7 +123,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 
@@ -118,3 +144,4 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 })
   }
 }
+

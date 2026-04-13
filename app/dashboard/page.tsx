@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -9,7 +8,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Camera, Save, Loader2 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { 
+  Camera, 
+  Save, 
+  Loader2, 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Globe, 
+  Building2,
+  Map,
+  ShieldCheck,
+  CheckCircle2
+} from "lucide-react"
 import type { UserProfile } from "@/lib/types"
 
 export default function ProfilePage() {
@@ -115,137 +129,215 @@ export default function ProfilePage() {
     setSaving(false)
   }
 
+  // Giao diện Loading Skeleton đồng bộ với layout mới
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[400px] w-full rounded-xl" />
+      <div className="space-y-8 max-w-5xl mx-auto">
+        <div>
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-5 w-72" />
+        </div>
+        <div className="flex flex-col md:flex-row gap-8">
+          <Skeleton className="h-75 w-full md:w-1/3 rounded-xl" />
+          <div className="w-full md:w-2/3 space-y-6">
+            <Skeleton className="h-87.5 w-full rounded-xl" />
+            <Skeleton className="h-87.5 w-full rounded-xl" />
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-5xl mx-auto pb-10">
+      {/* Tiêu đề trang */}
       <div>
-        <h1 className="text-2xl font-bold">Hồ sơ cá nhân</h1>
-        <p className="text-muted-foreground">Quản lý thông tin tài khoản của bạn</p>
+        <h1 className="text-3xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
+        <p className="text-muted-foreground mt-2">Quản lý thông tin tài khoản và địa chỉ giao hàng của bạn.</p>
       </div>
+      
+      <Separator />
 
-      <form onSubmit={handleSubmit}>
-        <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
-          {/* Avatar Section */}
-          <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row">
-            <div className="relative">
-              <Avatar className="h-24 w-24 border-4 border-primary/20">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary/10 text-2xl">
-                  {formData.full_name?.charAt(0) || email?.charAt(0)?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                type="button"
-                className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110"
-              >
-                <Camera className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="text-center sm:text-left">
-              <h3 className="font-semibold">{formData.full_name || "Chưa cập nhật"}</h3>
-              <p className="text-sm text-muted-foreground">{email}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Thành viên từ {new Date(profile?.created_at || Date.now()).toLocaleDateString("vi-VN")}
-              </p>
-            </div>
-          </div>
+      <div className="flex flex-col md:flex-row gap-8 items-start">
+        
+        {/* CỘT TRÁI: THÔNG TIN NHANH & AVATAR */}
+        <div className="w-full md:w-1/3 md:sticky md:top-24">
+          <Card className="overflow-hidden border-border/50 shadow-sm">
+            {/* Ảnh Cover nhỏ phía trên */}
+            <div className="h-24 bg-linear-to-r from-primary/10 via-primary/5 to-transparent w-full" />
+            
+            <CardContent className="px-6 pb-6 pt-0 flex flex-col items-center text-center -mt-12">
+              <div className="relative group rounded-full">
+                <Avatar className="h-24 w-24 border-4 border-background shadow-md">
+                  <AvatarImage src={profile?.avatar_url || undefined} className="object-cover" />
+                  <AvatarFallback className="bg-primary/5 text-3xl font-semibold text-primary">
+                    {formData.full_name?.charAt(0) || email?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                
+                {/* Nút Upload Avatar hiện khi Hover */}
+                <label className="absolute inset-0 flex items-center justify-center bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-200">
+                  <Camera className="w-6 h-6" />
+                  {/* Nếu sau này bạn làm tính năng upload ảnh, bắt file ở input này */}
+                  <input type="file" className="hidden" accept="image/*" />
+                </label>
+              </div>
 
-          {/* Form Fields */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Họ và tên</Label>
-              <Input
-                id="full_name"
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="Nguyễn Văn A"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" value={email} disabled className="bg-muted/50" />
-              <p className="text-xs text-muted-foreground">Email không thể thay đổi</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Số điện thoại</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="0901234567"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="country">Quốc gia</Label>
-              <Input
-                id="country"
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                placeholder="Việt Nam"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address">Địa chỉ</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="123 Đường ABC, Phường XYZ"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="city">Thành phố</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="Hồ Chí Minh"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="postal_code">Mã bưu điện</Label>
-              <Input
-                id="postal_code"
-                value={formData.postal_code}
-                onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                placeholder="700000"
-              />
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="mt-8 flex items-center gap-4">
-            <Button type="submit" disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Lưu thay đổi
-                </>
-              )}
-            </Button>
-            {success && <span className="text-sm text-green-500">Cập nhật thành công!</span>}
-          </div>
+              <h3 className="mt-4 text-xl font-semibold tracking-tight">{formData.full_name || "Thành viên mới"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{email}</p>
+              
+              <div className="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full">
+                <ShieldCheck className="w-4 h-4" />
+                Tham gia {new Date(profile?.created_at || Date.now()).toLocaleDateString("vi-VN")}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </form>
+
+        {/* CỘT PHẢI: FORM CẬP NHẬT */}
+        <div className="w-full md:w-2/3">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Thẻ 1: Thông tin cơ bản */}
+            <Card className="border-border/50 shadow-sm">
+              <CardHeader>
+                <CardTitle>Thông tin cơ bản</CardTitle>
+                <CardDescription>Tên và thông tin liên lạc chính của bạn.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name" className="flex items-center gap-2 text-muted-foreground">
+                    <User className="w-4 h-4" /> Họ và tên
+                  </Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                    placeholder="Nguyễn Văn A"
+                    className="bg-background/50 focus-visible:bg-background"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="w-4 h-4" /> Email
+                  </Label>
+                  <Input 
+                    id="email" 
+                    value={email} 
+                    disabled 
+                    className="bg-muted/50 cursor-not-allowed opacity-70" 
+                  />
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="phone" className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-4 h-4" /> Số điện thoại
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="Ví dụ: 0901234567"
+                    className="bg-background/50 focus-visible:bg-background max-w-md"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Thẻ 2: Địa chỉ giao hàng */}
+            <Card className="border-border/50 shadow-sm">
+              <CardHeader>
+                <CardTitle>Địa chỉ giao hàng</CardTitle>
+                <CardDescription>Nơi chúng tôi sẽ gửi đơn hàng đến cho bạn.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="address" className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4" /> Địa chỉ cụ thể
+                  </Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Số nhà, Tên đường, Phường/Xã..."
+                    className="bg-background/50 focus-visible:bg-background"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="city" className="flex items-center gap-2 text-muted-foreground">
+                    <Building2 className="w-4 h-4" /> Tỉnh / Thành phố
+                  </Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="Hồ Chí Minh"
+                    className="bg-background/50 focus-visible:bg-background"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="postal_code" className="flex items-center gap-2 text-muted-foreground">
+                    <Map className="w-4 h-4" /> Mã bưu điện (Zip)
+                  </Label>
+                  <Input
+                    id="postal_code"
+                    value={formData.postal_code}
+                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                    placeholder="700000"
+                    className="bg-background/50 focus-visible:bg-background"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="country" className="flex items-center gap-2 text-muted-foreground">
+                    <Globe className="w-4 h-4" /> Quốc gia
+                  </Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    placeholder="Việt Nam"
+                    className="bg-background/50 focus-visible:bg-background"
+                  />
+                </div>
+              </CardContent>
+              
+              {/* Khu vực Nút Lưu Tách Biệt */}
+              <CardFooter className="bg-muted/30 border-t border-border/50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm font-medium h-5">
+                  {success ? (
+                    <span className="text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2">
+                      <CheckCircle2 className="w-4 h-4" /> Đã lưu thay đổi thành công!
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground font-normal">
+                      Vui lòng kiểm tra lại thông tin trước khi lưu.
+                    </span>
+                  )}
+                </div>
+                
+                <Button type="submit" disabled={saving} className="w-full sm:w-auto min-w-35">
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Đang lưu...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Lưu thay đổi
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+
+          </form>
+        </div>
+      </div>
     </div>
   )
 }

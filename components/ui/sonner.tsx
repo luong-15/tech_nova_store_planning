@@ -3,23 +3,28 @@
 import { useTheme } from 'next-themes'
 import { Toaster as Sonner, ToasterProps } from 'sonner'
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme()
+/**
+ * UNUSED - Project uses shadcn/ui toast system.
+ * Sonner wrapper disabled to avoid conflicts.
+ */
 
-  return (
-    <Sonner
-      theme={theme as ToasterProps['theme']}
-      className="toaster group"
-      style={
-        {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
-          '--normal-border': 'var(--border)',
-        } as React.CSSProperties
-      }
-      {...props}
-    />
-  )
-}
+// const Toaster = ({ ...props }: ToasterProps) => {
+//   const { theme = 'system' } = useTheme()
 
-export { Toaster }
+//   return (
+//     <Sonner
+//       theme={theme as ToasterProps['theme']}
+//       className="toaster group"
+//       style={{
+//         '--normal-bg': 'var(--popover)',
+//         '--normal-text': 'var(--popover-foreground)',
+//         '--normal-border': 'var(--border)',
+//       } as React.CSSProperties
+//     }
+//       {...props}
+//     />
+//   )
+// }
+
+// export { Toaster }
+

@@ -3,7 +3,7 @@ import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
 
     const { data, error } = await supabase
       .from("categories")
@@ -21,14 +21,16 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { id, ...categoryData } = await request.json()
+
 
     const { data, error } = await supabase
       .from("categories")
       .update(categoryData)
       .eq("id", id)
-      .select()
+      .select('id, name, slug, description, image_url')
+
 
     if (error) throw error
 
@@ -41,13 +43,15 @@ export async function PUT(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const categoryData = await request.json()
+
 
     const { data, error } = await supabase
       .from("categories")
       .insert(categoryData)
-      .select()
+      .select('id, name, slug, description, image_url')
+
 
     if (error) throw error
 
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const supabase = createAdminServerClient()
+    const supabase = await createAdminServerClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 

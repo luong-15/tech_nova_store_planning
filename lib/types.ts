@@ -53,11 +53,12 @@ export interface Review {
 }
 
 export interface Order {
+  order_items_count: number
   id: string
   order_number: string
   user_id: string
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
-  payment_status: "pending" | "paid" | "failed"
+  payment_status: "pending" | "paid" | "failed" | "cancelled"
   payment_method: string
   subtotal: number
   shipping_fee: number
@@ -90,6 +91,7 @@ export interface UserProfile {
   id: string
   full_name: string
   phone?: string
+  email?: string
   avatar_url?: string
   address?: string
   city?: string

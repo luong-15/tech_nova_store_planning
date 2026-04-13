@@ -1,275 +1,204 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Phone, Mail, Shield, CheckCircle, AlertTriangle, Clock } from "lucide-react"
+import { Phone, Mail, Shield, CheckCircle, AlertTriangle, Clock, MapPin, Zap, ArrowRight, ShieldCheck, Wrench, RefreshCw } from "lucide-react"
+import Link from "next/link"
 
 export default function WarrantyPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-        <a href="/" className="hover:text-primary">
-          Trang chủ
-        </a>
-        <span>/</span>
-        <span className="text-foreground">Chính sách bảo hành</span>
-      </div>
+    <div className="relative min-h-screen bg-slate-50/50 dark:bg-[#020617] pb-20 overflow-hidden">
+      {/* Hiệu ứng nền */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-1/3 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="mb-12 text-center">
-        <h1 className="mb-4 text-3xl font-bold md:text-4xl">Chính sách bảo hành</h1>
-        <p className="text-muted-foreground">
-          TechNova cam kết bảo hành chính hãng với dịch vụ chuyên nghiệp và tận tâm.
-        </p>
-      </div>
+      <div className="container relative mx-auto px-4 py-12">
+        {/* Breadcrumb - Clean & Minimal */}
+        <nav className="mb-10 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
+          <Link href="/" className="transition-colors hover:text-primary">Trang chủ</Link>
+          <span className="h-1 w-1 rounded-full bg-border" />
+          <span className="text-primary/80">Chính sách bảo hành</span>
+        </nav>
 
-      {/* Warranty Overview */}
-      <div className="mb-12">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-primary" />
-              Chính sách bảo hành TechNova
-            </CardTitle>
-            <CardDescription>
-              Áp dụng cho tất cả sản phẩm mua tại TechNova Store
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                <div>
-                  <h4 className="font-medium">Bảo hành chính hãng</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Bảo hành theo tiêu chuẩn của nhà sản xuất với thời hạn 12-24 tháng
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                <div>
-                  <h4 className="font-medium">Hỗ trợ kỹ thuật 24/7</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Đội ngũ kỹ thuật chuyên nghiệp sẵn sàng hỗ trợ mọi lúc
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                <div>
-                  <h4 className="font-medium">Bảo hành tận nơi</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Miễn phí bảo hành tận nơi cho sản phẩm lớn tại TP.HCM
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                <div>
-                  <h4 className="font-medium">Đổi mới 100%</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Đổi sản phẩm mới nếu lỗi do nhà sản xuất trong 7 ngày đầu
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Warranty Conditions */}
-      <div className="mb-12">
-        <h2 className="mb-6 text-2xl font-bold">Điều kiện bảo hành</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-green-600">Được bảo hành</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                <span className="text-sm">Lỗi kỹ thuật do nhà sản xuất</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                <span className="text-sm">Sản phẩm còn trong thời hạn bảo hành</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                <span className="text-sm">Có tem bảo hành và hóa đơn mua hàng</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                <span className="text-sm">Sản phẩm chưa bị can thiệp sửa chữa</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-red-600">Không được bảo hành</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-                <span className="text-sm">Hư hỏng do sử dụng sai cách</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-                <span className="text-sm">Quá thời hạn bảo hành</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-                <span className="text-sm">Thiếu tem bảo hành hoặc hóa đơn</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-                <span className="text-sm">Đã tự ý sửa chữa hoặc can thiệp</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Header Section */}
+        <div className="mb-16 max-w-3xl text-center md:text-left">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-blue-600 border border-blue-500/20">
+            <ShieldCheck className="h-4 w-4" />
+            Bảo vệ toàn diện
+          </div>
+          <h1 className="mb-4 text-4xl font-black tracking-tighter md:text-5xl lg:text-6xl text-slate-900 dark:text-white">
+            Yên tâm trải nghiệm cùng <br className="hidden md:block" />
+            <span className="bg-linear-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent italic">TechNova Store</span>
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed md:max-w-2xl">
+            Chúng tôi cam kết mang đến dịch vụ bảo hành chính hãng, minh bạch và tận tâm nhất để đảm bảo quyền lợi tuyệt đối cho khách hàng.
+          </p>
         </div>
-      </div>
 
-      {/* Warranty Process */}
-      <div className="mb-12">
-        <h2 className="mb-6 text-2xl font-bold">Quy trình bảo hành</h2>
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <span className="font-bold">1</span>
-              </div>
-              <CardTitle className="text-center">Liên hệ</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Gọi hotline hoặc gửi email để được hướng dẫn
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <span className="font-bold">2</span>
-              </div>
-              <CardTitle className="text-center">Kiểm tra</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Đưa sản phẩm đến cửa hàng hoặc kỹ thuật viên đến tận nơi
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <span className="font-bold">3</span>
-              </div>
-              <CardTitle className="text-center">Sửa chữa</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Tiến hành sửa chữa hoặc thay thế linh kiện
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <span className="font-bold">4</span>
-              </div>
-              <CardTitle className="text-center">Hoàn thành</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Trả sản phẩm và hướng dẫn sử dụng
-              </p>
-            </CardContent>
-          </Card>
+        {/* 4 Cam kết cốt lõi - Dạng Grid */}
+        <div className="mb-20 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[
+            { icon: Shield, title: "Bảo hành chính hãng", desc: "Thời hạn 12-24 tháng theo đúng tiêu chuẩn NSX.", color: "text-blue-500", bg: "bg-blue-500/10" },
+            { icon: Clock, title: "Hỗ trợ 24/7", desc: "Đội ngũ chuyên gia luôn sẵn sàng giải đáp mọi lúc.", color: "text-indigo-500", bg: "bg-indigo-500/10" },
+            { icon: MapPin, title: "Bảo hành tận nơi", desc: "Miễn phí cho các sản phẩm lớn tại khu vực TP.HCM.", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+            { icon: RefreshCw, title: "Đổi mới 100%", desc: "Lỗi 1 đổi 1 trong 7 ngày đầu nếu do nhà sản xuất.", color: "text-rose-500", bg: "bg-rose-500/10" },
+          ].map((item, idx) => (
+            <Card key={idx} className="group overflow-hidden rounded-4xl border-border/50 bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20">
+              <CardContent className="p-6">
+                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl ${item.bg} ${item.color} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  <item.icon size={24} />
+                </div>
+                <h4 className="mb-2 font-black tracking-tight">{item.title}</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </div>
 
-      {/* Warranty Support */}
-      <div className="mb-12">
-        <Card>
-          <CardHeader>
-            <CardTitle>Hỗ trợ bảo hành</CardTitle>
-            <CardDescription>
-              Liên hệ với chúng tôi để được hỗ trợ nhanh nhất
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Phone className="h-6 w-6 text-primary" />
+        {/* Điều kiện bảo hành - Phân cực rõ ràng bằng màu sắc */}
+        <div className="mb-20">
+          <div className="mb-8 flex items-center justify-between">
+            <h2 className="text-3xl font-black tracking-tighter">Điều kiện áp dụng</h2>
+          </div>
+          <div className="grid gap-8 lg:grid-cols-2">
+            {/* Cột Xanh - Được bảo hành */}
+            <Card className="rounded-[2.5rem] border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/10 shadow-lg shadow-emerald-500/5 transition-all hover:border-emerald-500/40">
+              <CardHeader className="p-8 pb-4">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+                  <CheckCircle size={24} />
                 </div>
-                <div>
-                  <h4 className="font-medium">Hotline bảo hành</h4>
-                  <p className="text-2xl font-bold text-primary">1900 XXXX</p>
-                  <p className="text-sm text-muted-foreground">24/7 - Miễn phí cuộc gọi</p>
+                <CardTitle className="text-2xl font-black text-emerald-600 dark:text-emerald-400">Được bảo hành</CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 pt-0 space-y-4">
+                {[
+                  "Lỗi phần cứng hoặc kỹ thuật phát sinh do nhà sản xuất.",
+                  "Sản phẩm còn trong thời hạn bảo hành ghi trên hệ thống.",
+                  "Còn nguyên tem bảo hành của TechNova hoặc NSX (không rách, chắp vá).",
+                  "Sản phẩm giữ nguyên trạng, chưa bị can thiệp tháo lắp, sửa chữa ngoài."
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-3 group">
+                    <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600">
+                      <CheckCircle className="h-3 w-3" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{text}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Cột Đỏ - Từ chối bảo hành */}
+            <Card className="rounded-[2.5rem] border-rose-500/20 bg-rose-50/50 dark:bg-rose-950/10 shadow-lg shadow-rose-500/5 transition-all hover:border-rose-500/40">
+              <CardHeader className="p-8 pb-4">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-600">
+                  <AlertTriangle size={24} />
                 </div>
+                <CardTitle className="text-2xl font-black text-rose-600 dark:text-rose-400">Từ chối bảo hành</CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 pt-0 space-y-4">
+                {[
+                  "Hư hỏng do sử dụng sai hướng dẫn, sai điện áp, hoặc do thiên tai, rơi vỡ, vào nước.",
+                  "Sản phẩm đã hết thời hạn bảo hành quy định.",
+                  "Tem bảo hành bị rách, mờ, có dấu hiệu tẩy xóa hoặc không khớp với hệ thống.",
+                  "Sản phẩm có dấu hiệu đã bị tự ý tháo lắp, can thiệp phần cứng bởi bên thứ ba."
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-3 group">
+                    <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-500/20 text-rose-600">
+                      <AlertTriangle className="h-3 w-3" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">{text}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Quy trình bảo hành - Timeline ngang */}
+        <div className="mb-20">
+          <h2 className="mb-10 text-center text-3xl font-black tracking-tighter">4 Bước quy trình tinh gọn</h2>
+          <div className="grid gap-6 md:grid-cols-4 relative">
+            {/* Đường nối giữa các bước (chỉ hiện trên màn hình lớn) */}
+            <div className="hidden md:block absolute top-12 left-[10%] right-[10%] h-0.5 bg-border/60 z-0" />
+            
+            {[
+              { title: "Liên hệ", desc: "Gọi hotline hoặc gửi yêu cầu online.", icon: Phone },
+              { title: "Tiếp nhận", desc: "Kỹ thuật viên kiểm tra tình trạng máy.", icon: Wrench },
+              { title: "Xử lý", desc: "Tiến hành sửa chữa & thay thế chuẩn NSX.", icon: Zap },
+              { title: "Bàn giao", desc: "Hoàn trả thiết bị & cập nhật thời gian.", icon: CheckCircle },
+            ].map((step, idx) => (
+              <div key={idx} className="relative z-10 text-center group">
+                <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-4xl bg-white dark:bg-slate-900 border border-border/50 shadow-lg transition-transform duration-500 group-hover:-translate-y-2 group-hover:border-primary/50 group-hover:shadow-primary/20">
+                  <span className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-black text-white shadow-sm border-[3px] border-slate-50 dark:border-[#020617]">
+                    0{idx + 1}
+                  </span>
+                  <step.icon size={32} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <h4 className="text-lg font-black tracking-tight mb-2">{step.title}</h4>
+                <p className="text-sm text-muted-foreground px-4">{step.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Mail className="h-6 w-6 text-primary" />
+        {/* Support & Centers - Layout bất đối xứng */}
+        <div className="grid gap-8 lg:grid-cols-12">
+          {/* Hotline Card - Chiếm 5 cột */}
+          <Card className="lg:col-span-5 rounded-[2.5rem] border-transparent bg-primary p-1 text-primary-foreground overflow-hidden relative shadow-2xl shadow-primary/20">
+            <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
+              <Phone size={160} />
+            </div>
+            <div className="h-full w-full rounded-[2.25rem] bg-primary p-8 relative z-10 flex flex-col justify-between">
+              <div>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
+                  Hỗ trợ khẩn cấp
                 </div>
-                <div>
-                  <h4 className="font-medium">Email hỗ trợ</h4>
-                  <p className="font-medium">warranty@technova.vn</p>
-                  <p className="text-sm text-muted-foreground">Phản hồi trong 24 giờ</p>
+                <h3 className="text-4xl font-black tracking-tighter mb-2">1900 XXXX</h3>
+                <p className="text-primary-foreground/80 font-medium mb-8">
+                  Tổng đài hoạt động 24/7. Miễn phí cước gọi cho mọi thuê bao.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 border-t border-white/20 pt-4">
+                  <Mail className="h-5 w-5 opacity-80" />
+                  <span className="font-medium">warranty@technova.vn</span>
                 </div>
+                <Button className="w-full h-12 rounded-xl bg-white text-primary hover:bg-slate-100 font-bold tracking-tight mt-2 group">
+                  <Link href="/contact" className="flex items-center justify-center w-full">
+                    Gửi yêu cầu hỗ trợ ngay
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
               </div>
             </div>
-
-            <div className="mt-6">
-              <Button asChild>
-                <a href="/contact">
-                  <Phone className="mr-2 h-4 w-4" />
-                  Liên hệ ngay
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Warranty Centers */}
-      <div className="mb-12">
-        <h2 className="mb-6 text-2xl font-bold">Trung tâm bảo hành</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>TechNova TP.HCM</CardTitle>
-              <CardDescription>Trung tâm chính</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm">📍 123 Nguyễn Huệ, Quận 1, TP.HCM</p>
-                <p className="text-sm">🕒 8:00 - 18:00 (Thứ 2 - Thứ 6)</p>
-                <p className="text-sm">📞 1900 XXXX</p>
-              </div>
-            </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>TechNova Hà Nội</CardTitle>
-              <CardDescription>Chi nhánh miền Bắc</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm">📍 456 Trần Duy Hưng, Cầu Giấy, Hà Nội</p>
-                <p className="text-sm">🕒 8:00 - 17:00 (Thứ 2 - Thứ 6)</p>
-                <p className="text-sm">📞 1900 XXXX</p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Centers List - Chiếm 7 cột */}
+          <div className="lg:col-span-7 space-y-4">
+            <h3 className="text-2xl font-black tracking-tighter mb-6 flex items-center gap-2">
+              <MapPin className="text-primary" /> Điểm tiếp nhận trực tiếp
+            </h3>
+            {[
+              { name: "TechNova Center TP.HCM", badge: "Trụ sở chính", address: "123 Nguyễn Huệ, Quận 1, TP.HCM", time: "8:00 - 18:00 (T2 - T6)" },
+              { name: "TechNova Center Hà Nội", badge: "Chi nhánh", address: "456 Trần Duy Hưng, Cầu Giấy, Hà Nội", time: "8:00 - 17:00 (T2 - T6)" },
+            ].map((center, idx) => (
+              <Card key={idx} className="group rounded-4xl border-border/50 bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 transition-all hover:border-primary/30 hover:shadow-md">
+                <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="font-black text-lg">{center.name}</h4>
+                      <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{center.badge}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium flex items-center gap-2 text-muted-foreground"><MapPin size={14} /> {center.address}</p>
+                      <p className="text-sm font-medium flex items-center gap-2 text-muted-foreground"><Clock size={14} /> {center.time}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="rounded-xl border-border/60 hover:bg-primary/5 hover:text-primary transition-colors">
+                    Chỉ đường
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </div>

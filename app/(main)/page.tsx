@@ -21,7 +21,7 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-20 md:py-32">
+      <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 py-20 md:py-32">
         <div className="absolute inset-0 bg-[url('/tech-pattern.jpg')] opacity-10" />
 
         <div className="container relative mx-auto px-4">
@@ -32,7 +32,7 @@ export default async function HomePage() {
             </Badge>
 
             <h1 className="mb-6 text-balance text-4xl font-bold leading-tight text-white md:text-6xl">
-              Khám phá thế giới công nghệ
+              Khám phá thế giới công nghệ{' '}
               <span className="text-blue-400"> TechNova</span>
             </h1>
 
@@ -61,45 +61,59 @@ export default async function HomePage() {
         </div>
 
         {/* Decorative elements */}
-        <div className="absolute -bottom-1 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute -bottom-1 left-0 right-0 h-20 bg-linear-to-t from-background to-transparent" />
       </section>
 
       {/* Categories Section */}
-      <section className="py-16">
+      <section className="py-16 bg-slate-50/50 dark:bg-slate-900/20">
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold md:text-4xl">Danh mục sản phẩm</h2>
-            <p className="text-muted-foreground">Khám phá các dòng sản phẩm công nghệ hàng đầu</p>
+          <div className="mb-10 text-center">
+            <h2 className="mb-2 text-3xl font-black tracking-tight md:text-4xl">Danh mục sản phẩm</h2>
+            <p className="text-muted-foreground text-sm uppercase tracking-widest font-medium">Khám phá công nghệ đỉnh cao</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          {/* Thay đổi grid gap và cấu trúc thẻ */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {categories?.map((category: Category) => (
               <Link
                 key={category.id}
                 href={`/categories/${category.slug}`}
-                className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-xl"
+                className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/50 bg-card transition-all duration-300 hover:shadow-xl hover:border-primary/20"
               >
-                <div className="aspect-[16/9] overflow-hidden bg-muted">
+                {/* Tỉ lệ ảnh 16:9 để card không bị quá cao */}
+                <div className="aspect-video overflow-hidden bg-muted">
                   <div
-                    className="h-full w-full bg-cover bg-center transition-transform group-hover:scale-105"
+                    className="h-full w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
                     style={{
                       backgroundImage: `url(${category.image_url || "/placeholder.svg"})`,
                     }}
                   />
+                  {/* Overlay gradient nhẹ khi hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                 </div>
-                <div className="p-6">
-                  <h3 className="mb-2 text-xl font-bold group-hover:text-primary">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">{category.description}</p>
+                
+                <div className="p-5 flex flex-col flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-bold group-hover:text-primary transition-colors">
+                      {category.name}
+                    </h3>
+                    <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary transition-transform group-hover:translate-x-1">
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                    {category.description}
+                  </p>
                 </div>
               </Link>
             ))}
           </div>
         </div>
-      </section>
+</section>
 
       {/* Deal Products Section */}
       {dealProducts && dealProducts.length > 0 && (
-        <section className="bg-gradient-to-br from-blue-950/50 to-background py-16">
+        <section className="bg-linear-to-br from-blue-950/50 to-background py-16">
           <div className="container mx-auto px-4">
             <div className="mb-12 flex items-center justify-between">
               <div>

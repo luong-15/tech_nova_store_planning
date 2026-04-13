@@ -1,279 +1,166 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { Bell, Shield, Globe, Trash2, Loader2, AlertTriangle } from "lucide-react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { useRouter } from "next/navigation"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
+import { Heart, ShoppingBag, Trash2, Star, Loader2 } from "lucide-react"
+import { formatCurrency } from "@/lib/currency"
+import { useCartStore } from "@/lib/store/cart-store"
+import { notifyCartAdded } from "@/lib/notifications"
+import Image from "next/image"
+import Link from "next/link"
+import type { WishlistItem, Product } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
-export default function SettingsPage() {
-  const [changingPassword, setChangingPassword] = useState(false)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const router = useRouter()
+export default function WishlistPage() {
+  const [wishlistItems, setWishlistItems] = useState<(WishlistItem & { product: Product })[]>([])
+  const [loading, setLoading] = useState(true)
+  const [removingId, setRemovingId] = useState<string | null>(null)
+  const cartStore = useCartStore()
 
-  // Notification settings
-  const [notifications, setNotifications] = useState({
-    email: true,
-    orders: true,
-    promotions: false,
-    newsletter: false,
-  })
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setChangingPassword(true)
-    setPasswordError(null)
-    setPasswordSuccess(false)
-
-    if (newPassword !== confirmPassword) {
-      setPasswordError("Mật khẩu xác nhận không khớp")
-      setChangingPassword(false)
-      return
-    }
-
-    if (newPassword.length < 6) {
-      setPasswordError("Mật khẩu phải có ít nhất 6 ký tự")
-      setChangingPassword(false)
-      return
-    }
-
+  const fetchWishlist = async () => {
     const supabase = createBrowserClient()
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-
-    if (error) {
-      setPasswordError(error.message)
-    } else {
-      setPasswordSuccess(true)
-      setNewPassword("")
-      setConfirmPassword("")
-      setTimeout(() => setPasswordSuccess(false), 3000)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: wishlist } = await supabase.from("wishlist").select("*").eq("user_id", user.id)
+      if (wishlist?.length) {
+        const productIds = wishlist.map((w) => w.product_id)
+        const { data: products } = await supabase.from("products").select("*").in("id", productIds)
+        if (products) {
+          const combined = wishlist.map((w) => ({
+            ...w,
+            product: products.find((p) => p.id === w.product_id)!,
+          }))
+          setWishlistItems(combined.filter((item) => item.product))
+        }
+      }
     }
-    setChangingPassword(false)
+    setLoading(false)
   }
 
-  const handleDeleteAccount = async () => {
+  useEffect(() => { fetchWishlist() }, [])
+
+  const removeFromWishlist = async (wishlistId: string) => {
+    setRemovingId(wishlistId)
     const supabase = createBrowserClient()
-    await supabase.auth.signOut()
-    router.push("/")
+    await supabase.from("wishlist").delete().eq("id", wishlistId)
+    setWishlistItems((prev) => prev.filter((item) => item.id !== wishlistId))
+    setRemovingId(null)
   }
+
+  if (loading) return (
+    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+      <Skeleton className="h-10 w-64" />
+      <div className="grid gap-4 md:grid-cols-2">
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
+      </div>
+    </div>
+  )
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-8 max-w-6xl mx-auto pb-20">
       <div>
-        <h1 className="text-2xl font-bold">Cài đặt</h1>
-        <p className="text-muted-foreground">Quản lý tài khoản và tùy chọn</p>
+        <h1 className="text-3xl font-bold tracking-tight">Sản phẩm yêu thích</h1>
+        <p className="text-muted-foreground mt-1">Danh sách các sản phẩm bạn đã lưu.</p>
       </div>
 
-      {/* Change Password */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Shield className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Bảo mật</h3>
-            <p className="text-sm text-muted-foreground">Đổi mật khẩu tài khoản</p>
-          </div>
-        </div>
-
-        <form onSubmit={handleChangePassword} className="mt-6 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="new-password">Mật khẩu mới</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Tối thiểu 6 ký tự"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Xác nhận mật khẩu</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Nhập lại mật khẩu"
-              />
-            </div>
-          </div>
-
-          {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
-          {passwordSuccess && <p className="text-sm text-green-500">Đổi mật khẩu thành công!</p>}
-
-          <Button type="submit" disabled={changingPassword || !newPassword || !confirmPassword}>
-            {changingPassword ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang xử lý...
-              </>
-            ) : (
-              "Đổi mật khẩu"
-            )}
+      {wishlistItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed py-20 bg-muted/10">
+          <Heart className="h-12 w-12 text-muted-foreground/40 mb-4" />
+          <p className="text-muted-foreground">Danh sách của bạn đang trống.</p>
+          <Button asChild className="mt-4 rounded-full px-6">
+            <Link href="/products">Tiếp tục mua sắm</Link>
           </Button>
-        </form>
-      </div>
-
-      {/* Notifications */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Bell className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Thông báo</h3>
-            <p className="text-sm text-muted-foreground">Quản lý cách nhận thông báo</p>
-          </div>
         </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {wishlistItems.map((item) => {
+            const hasDiscount = item.product.original_price && item.product.original_price > item.product.price;
+            
+            return (
+              <div
+                key={item.id}
+                className="group relative flex gap-4 rounded-2xl border bg-card p-3 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20"
+              >
+                {/* Image Section */}
+                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-50 dark:bg-zinc-900/50">
+                  <Image
+                    src={item.product.image_url || "/placeholder.svg"}
+                    alt={item.product.name}
+                    fill
+                    className="object-contain p-2 mix-blend-multiply dark:mix-blend-normal transition-transform group-hover:scale-110"
+                  />
+                  {hasDiscount && (
+                    <Badge className="absolute top-1.5 left-1.5 bg-red-500 hover:bg-red-500 border-none px-1 h-5 text-[10px] font-bold">
+                      -{Math.round((1 - item.product.price / item.product.original_price!) * 100)}%
+                    </Badge>
+                  )}
+                </div>
 
-        <div className="mt-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Thông báo qua Email</p>
-              <p className="text-sm text-muted-foreground">Nhận thông báo qua email</p>
-            </div>
-            <Switch
-              checked={notifications.email}
-              onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
-            />
-          </div>
+                {/* Content Section */}
+                <div className="flex flex-1 flex-col justify-between min-w-0 pr-2">
+                  <div className="relative">
+                    <Link href={`/products/${item.product.slug}`} className="block pr-8">
+                      <h3 className="line-clamp-1 font-semibold text-foreground hover:text-primary transition-colors">
+                        {item.product.name}
+                      </h3>
+                    </Link>
+                    
+                    {/* Trash button positioned Top-Right */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute -top-1 -right-1 h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => removeFromWishlist(item.id)}
+                      disabled={removingId === item.id}
+                    >
+                      {removingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    </Button>
 
-          <Separator />
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className="text-[10px] font-normal py-0 px-1.5 bg-muted/50 border-none">
+                        {item.product.brand || "TechNova"}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500 border-none" />
+                        <span>{item.product.rating || "5.0"}</span>
+                      </div>
+                    </div>
+                  </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Cập nhật đơn hàng</p>
-              <p className="text-sm text-muted-foreground">Thông báo khi đơn hàng thay đổi trạng thái</p>
-            </div>
-            <Switch
-              checked={notifications.orders}
-              onCheckedChange={(checked) => setNotifications({ ...notifications, orders: checked })}
-            />
-          </div>
+                  {/* Price & Action Button */}
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex flex-col">
+                      {hasDiscount && (
+                        <span className="text-[11px] text-muted-foreground line-through decoration-muted-foreground/50">
+                          {formatCurrency(item.product.original_price!)}
+                        </span>
+                      )}
+                      <span className="text-base font-bold text-primary">
+                        {formatCurrency(item.product.price)}
+                      </span>
+                    </div>
 
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Khuyến mãi</p>
-              <p className="text-sm text-muted-foreground">Nhận thông tin về các chương trình khuyến mãi</p>
-            </div>
-            <Switch
-              checked={notifications.promotions}
-              onCheckedChange={(checked) => setNotifications({ ...notifications, promotions: checked })}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Bản tin</p>
-              <p className="text-sm text-muted-foreground">Nhận tin tức về sản phẩm mới</p>
-            </div>
-            <Switch
-              checked={notifications.newsletter}
-              onCheckedChange={(checked) => setNotifications({ ...notifications, newsletter: checked })}
-            />
-          </div>
+                    <Button 
+                      size="sm" 
+                      className="h-9 rounded-xl px-4 gap-2 bg-primary hover:bg-primary/90 shadow-md shadow-primary/20 transition-all active:scale-95"
+                      onClick={() => {
+                        cartStore.addToCart(item.product);
+                        notifyCartAdded(item.product.name);
+                      }}
+                    >
+                      <ShoppingBag className="h-4 w-4" />
+                      <span className="text-xs font-medium">Thêm vào giỏ</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </div>
-
-      {/* Language & Region */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Globe className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Ngôn ngữ & Khu vực</h3>
-            <p className="text-sm text-muted-foreground">Cài đặt hiển thị</p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Ngôn ngữ</Label>
-            <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option value="vi">Tiếng Việt</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label>Đơn vị tiền tệ</Label>
-            <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option value="VND">VND - Việt Nam Đồng</option>
-              <option value="USD">USD - US Dollar</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Danger Zone */}
-      <div className="rounded-xl border border-destructive/50 bg-destructive/5 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
-            <Trash2 className="h-5 w-5 text-destructive" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-destructive">Vùng nguy hiểm</h3>
-            <p className="text-sm text-muted-foreground">Các thao tác không thể hoàn tác</p>
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Xóa tài khoản
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                  Xác nhận xóa tài khoản?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteAccount}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Xóa tài khoản
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

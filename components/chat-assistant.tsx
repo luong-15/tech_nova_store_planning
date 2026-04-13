@@ -1,362 +1,275 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { MessageCircle, Send, X, Bot, User, Camera, Sparkles } from 'lucide-react'
-import type { Product } from '@/lib/types'
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  MessageCircle,
+  Send,
+  X,
+  Bot,
+  User,
+  Camera,
+  Sparkles,
+  Paperclip,
+} from "lucide-react";
+import type { Product } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
-  images?: string[]
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  images?: string[];
 }
 
 interface ChatAssistantProps {
-  products: Product[]
+  products: Product[];
 }
 
-// Hàm xử lý inline markdown
-const parseInlineMarkdown = (text: string): React.ReactNode => {
-  if (!text) return null
-
-  const patterns = [
-    { regex: /\*\*\*(.+?)\*\*\*/g, style: 'font-bold italic' },
-    { regex: /\*\*(.+?)\*\*/g, style: 'font-bold' },
-    { regex: /\*(.+?)\*/g, style: 'italic' },
-    { regex: /__(.+?)__/g, style: 'underline' },
-    { regex: /`([^`]+)`/g, isCode: true },
-  ]
-
-  let result: React.ReactNode[] = [text]
-  
-  patterns.forEach(({ regex, style, isCode }) => {
-    const newResult: React.ReactNode[] = []
-    result.forEach(part => {
-      if (typeof part !== 'string') {
-        newResult.push(part)
-        return
-      }
-      
-      let lastIndex = 0
-      const matches = [...part.matchAll(regex)]
-      
-      if (matches.length === 0) {
-        newResult.push(part)
-        return
-      }
-
-      matches.forEach((match) => {
-        if (match.index !== undefined) {
-          if (match.index > lastIndex) {
-            newResult.push(part.substring(lastIndex, match.index))
-          }
-          newResult.push(
-            isCode 
-              ? <code key={Math.random()} className="bg-slate-200 dark:bg-slate-700 px-1 rounded text-xs font-mono">{match[1]}</code>
-              : <span key={Math.random()} className={style}>{match[1]}</span>
-          )
-          lastIndex = match.index + match[0].length
-        }
-      })
-      
-      if (lastIndex < part.length) {
-        newResult.push(part.substring(lastIndex))
-      }
-    })
-    result = newResult
-  })
-
-  return result
-}
-
-// Hàm xử lý markdown
-const parseMarkdown = (text: string): React.ReactNode => {
-  if (!text) return null
-
-  const lines = text.split('\n')
-  
-  return lines.map((line, lineIndex) => {
-    // Table row
-    if (line.includes('|') && line.includes('---')) {
-      return null
-    }
-    if (line.includes('|')) {
-      const cells = line.split('|').filter(cell => cell.trim() !== '')
-      if (cells.length > 1) {
+// Helper: Xử lý hiển thị Markdown đơn giản cho Chatbot
+const MessageContent = ({ content }: { content: string }) => {
+  const parseMarkdown = (text: string) => {
+    return text.split("\n").map((line, i) => {
+      // Bold text
+      let processed = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary">$1</strong>');
+      // Italic
+      processed = processed.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+      // Bullet points
+      if (line.trim().startsWith("-") || line.trim().startsWith("•")) {
         return (
-          <div key={lineIndex} className="flex flex-wrap gap-1 py-0.5 text-xs">
-            {cells.map((cell, cellIndex) => (
-              <span key={cellIndex} className="px-1">{parseInlineMarkdown(cell.trim())}</span>
-            ))}
-          </div>
-        )
+          <li key={i} className="ml-4 list-disc marker:text-blue-500 py-0.5">
+            <span dangerouslySetInnerHTML={{ __html: processed.replace(/^[-•]\s*/, "") }} />
+          </li>
+        );
       }
-    }
+      return <p key={i} className="min-h-[1.2em]" dangerouslySetInnerHTML={{ __html: processed }} />;
+    });
+  };
 
-    // Box format
-    if (line.includes('┌') || line.includes('│') || line.includes('└') || line.includes('─')) {
-      return <div key={lineIndex} className="font-mono text-xs my-1">{line}</div>
-    }
-
-    // Separator
-    if (line.trim() === '---') {
-      return <div key={lineIndex} className="border-t my-2"></div>
-    }
-
-    // List items
-    if (line.trim().startsWith('•') || line.trim().startsWith('- ')) {
-      const content = line.replace(/^[•\-]\s*/, '')
-      return (
-        <div key={lineIndex} className="flex gap-2 py-0.5 pl-2">
-          <span>•</span>
-          <span>{parseInlineMarkdown(content)}</span>
-        </div>
-      )
-    }
-
-    // Numbered list
-    if (line.trim().match(/^\d+\./)) {
-      const content = line.replace(/^\d+\.\s*/, '')
-      const num = line.trim().charAt(0)
-      return (
-        <div key={lineIndex} className="flex gap-2 py-0.5 pl-2">
-          <span>{num}.</span>
-          <span>{parseInlineMarkdown(content)}</span>
-        </div>
-      )
-    }
-
-    // Regular line
-    return lineIndex > 0 ? <div key={lineIndex} className="my-1">{parseInlineMarkdown(line)}</div> : parseInlineMarkdown(line)
-  })
-}
+  return <div className="space-y-1 text-sm leading-relaxed">{parseMarkdown(content)}</div>;
+};
 
 export function ChatAssistant({ products }: ChatAssistantProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      role: 'assistant',
-      content: 'Xin chào! Tôi là trợ lý thông minh của TechNova. Tôi có thể giúp gì cho bạn hôm nay?',
+      id: "1",
+      role: "assistant",
+      content: "Xin chào! 👋 Tôi là trợ lý TechNova. Tôi có thể giúp bạn tìm kiếm linh kiện hoặc giải đáp thắc mắc kỹ thuật đấy!",
       timestamp: new Date(),
     },
-  ])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedImages, setSelectedImages] = useState<File[]>([])
-  
-  // Ref để cuộn xuống cuối tin nhắn
-  const scrollEndRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  ]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
 
-  // Hàm tự động cuộn mượt mà
+  const scrollEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const scrollToBottom = () => {
-    scrollEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+    scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    if (isOpen) {
-      scrollToBottom()
-    }
-  }, [messages, isLoading, isOpen])
+    if (isOpen) scrollToBottom();
+  }, [messages, isLoading, isOpen]);
 
   const handleSendMessage = async () => {
-    if ((!input.trim() && selectedImages.length === 0) || isLoading) return
+    if ((!input.trim() && selectedImages.length === 0) || isLoading) return;
 
-    const userImages = selectedImages.map(file => URL.createObjectURL(file))
+    const userImages = selectedImages.map((file) => URL.createObjectURL(file));
     const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
+      id: crypto.randomUUID(),
+      role: "user",
       content: input.trim(),
       timestamp: new Date(),
       images: userImages.length > 0 ? userImages : undefined,
-    }
+    };
 
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
-    setSelectedImages([])
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setSelectedImages([]);
+    setIsLoading(true);
 
     try {
-      const formData = new FormData()
-      formData.append('messages', JSON.stringify([
-        ...messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-        { role: 'user', content: userMessage.content },
-      ]))
-      formData.append('products', JSON.stringify(products))
+      const formData = new FormData();
+      formData.append("messages", JSON.stringify([
+        ...messages.map((msg) => ({ role: msg.role, content: msg.content })),
+        { role: "user", content: userMessage.content },
+      ]));
+      formData.append("products", JSON.stringify(products));
+      selectedImages.forEach((file) => formData.append("images", file));
 
-      selectedImages.forEach((file) => {
-        formData.append('images', file)
-      })
+      const response = await fetch("/api/chat", { method: "POST", body: formData });
+      if (!response.ok) throw new Error();
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) throw new Error('Failed to get response')
-
-      const data = await response.json()
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
+      const data = await response.json();
+      setMessages((prev) => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant",
         content: data.response,
         timestamp: new Date(),
-      }
-      setMessages(prev => [...prev, assistantMessage])
+      }]);
     } catch (error) {
-      console.error('Error:', error)
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Xin lỗi, tôi gặp chút sự cố kết nối. Thử lại sau nhé!',
+      setMessages((prev) => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "Hệ thống đang bận một chút, bạn thử lại sau giây lát nhé! 🛠️",
         timestamp: new Date(),
-      }
-      setMessages(prev => [...prev, errorMessage])
+      }]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    setSelectedImages(prev => [...prev, ...files].slice(0, 5))
-    e.target.value = ''
-  }
+  };
 
   return (
     <>
-      {/* Floating Button */}
-      <Button
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 transition-all z-50 ${isOpen ? 'scale-0' : 'scale-100'}`}
-      >
-        <MessageCircle className="h-6 w-6 text-white" />
-      </Button>
+      {/* Floating Toggle Button */}
+      {!isOpen && (
+        <motion.div 
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            className="fixed bottom-6 right-6 z-100"
+        >
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-14 w-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] bg-primary hover:bg-primary/90 text-primary-foreground group"
+          >
+            <MessageCircle className="h-6 w-6 transition-transform group-hover:scale-110" />
+            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 border-2 border-white"></span>
+            </span>
+          </Button>
+        </motion.div>
+      )}
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-0 right-0 z-50 w-full sm:bottom-6 sm:right-6 sm:w-100 h-dvh sm:h-150 p-0 sm:p-0"
+            initial={{ opacity: 0, y: 100, scale: 0.8, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: 100, scale: 0.8 }}
+            className="fixed bottom-0 right-0 z-100 w-full sm:bottom-6 sm:right-6 sm:w-105 h-dvh sm:h-162.5"
           >
-            <Card className="w-full h-full shadow-2xl flex flex-col border-none overflow-hidden bg-background/95 backdrop-blur-md sm:rounded-2xl">
-              {/* Header - Fixed Height */}
-              <CardHeader className="bg-linear-to-r from-blue-600 to-indigo-600 text-white p-4 shrink-0">
+            <Card className="w-full h-full shadow-2xl flex flex-col border-border/50 bg-background/95 backdrop-blur-xl sm:rounded-4xl overflow-hidden">
+              {/* Header */}
+              <CardHeader className="bg-primary/5 border-b p-5 shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-lg">
-                      <Bot className="h-5 w-5 text-white" />
+                    <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20">
+                      <Bot size={22} />
                     </div>
                     <div>
-                      <CardTitle className="text-sm font-bold">TechNova AI</CardTitle>
-                      <p className="text-[10px] text-blue-100 flex items-center gap-1">
-                        <Sparkles className="h-2 w-2" /> Đang trực tuyến
-                      </p>
+                      <CardTitle className="text-base font-bold tracking-tight">TechNova Assistant</CardTitle>
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-500 font-medium uppercase tracking-wider">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            AI Ready
+                      </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8 text-white hover:bg-white/10">
-                    <X className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="rounded-full hover:bg-destructive/10 hover:text-destructive">
+                    <X size={20} />
                   </Button>
                 </div>
               </CardHeader>
 
-              {/* Chat Content - Flexible and Scrollable */}
-              <CardContent className="flex-1 overflow-hidden p-0 flex flex-col bg-slate-50/50 dark:bg-slate-900/50">
-                <ScrollArea className="flex-1 w-full h-full">
-                  <div className="p-4 space-y-4">
+              {/* Chat View */}
+              <CardContent className="flex-1 overflow-hidden p-0 flex flex-col bg-muted/20">
+                <ScrollArea className="flex-1">
+                  <div className="p-5 space-y-6">
                     {messages.map((message) => (
-                      <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`flex gap-2 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${message.role === 'assistant' ? 'bg-blue-600' : 'bg-slate-200'}`}>
-                            {message.role === 'assistant' ? <Bot className="h-4 w-4 text-white" /> : <User className="h-4 w-4 text-slate-600" />}
+                      <div key={message.id} className={cn("flex flex-col", message.role === "user" ? "items-end" : "items-start")}>
+                        <div className={cn("flex gap-3 max-w-[85%]", message.role === "user" && "flex-row-reverse")}>
+                          <div className={cn(
+                            "h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border shadow-sm",
+                            message.role === "assistant" ? "bg-white text-primary border-primary/10" : "bg-primary text-primary-foreground border-transparent"
+                          )}>
+                            {message.role === "assistant" ? <Sparkles size={14} /> : <User size={14} />}
                           </div>
-                          <div className="flex flex-col gap-1">
-                            <div className={`px-4 py-2 shadow-sm text-sm ${message.role === 'user' ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none' : 'bg-white dark:bg-slate-800 rounded-2xl rounded-tl-none border'}`}>
+                          
+                          <div className="flex flex-col gap-1.5">
+                            <div className={cn(
+                              "px-4 py-3 shadow-sm",
+                              message.role === "user" 
+                                ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none" 
+                                : "bg-background border rounded-2xl rounded-tl-none"
+                            )}>
                               {message.images && (
-                                <div className="flex flex-wrap gap-1 mb-2">
-                                  {message.images.map((img, i) => <img key={i} src={img} alt="upload" className="max-w-30 rounded-lg border" />)}
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                  {message.images.map((img, i) => (
+                                    <img key={i} src={img} alt="attached" className="w-24 h-24 object-cover rounded-xl border border-white/20" />
+                                  ))}
                                 </div>
                               )}
-                              <div className="whitespace-pre-wrap">
-                                {parseMarkdown(message.content)}
-                              </div>
+                              <MessageContent content={message.content} />
                             </div>
-                            <span className="text-[10px] text-muted-foreground px-1">{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-[10px] text-muted-foreground font-medium px-1">
+                              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                           </div>
                         </div>
                       </div>
                     ))}
                     {isLoading && (
-                      <div className="flex justify-start gap-2">
-                        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center"><Bot className="h-4 w-4 text-white" /></div>
-                        <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl rounded-tl-none shadow-sm flex gap-1 items-center">
-                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
-                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                      <div className="flex items-center gap-2 text-muted-foreground px-12">
+                        <div className="flex gap-1">
+                          <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
+                          <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                          <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
                         </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Đang phân tích</span>
                       </div>
                     )}
-                    {/* Element dùng để scroll tới */}
-                    <div ref={scrollEndRef} className="h-2" />
+                    <div ref={scrollEndRef} />
                   </div>
                 </ScrollArea>
 
-                {/* Image Previews */}
-                <AnimatePresence>
-                  {selectedImages.length > 0 && (
-                    <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="px-4 py-2 border-t bg-background flex gap-2 overflow-x-auto">
-                      {selectedImages.map((file, index) => (
-                        <div key={index} className="relative shrink-0">
-                          <img src={URL.createObjectURL(file)} className="w-12 h-12 object-cover rounded-md border" />
-                          <button onClick={() => setSelectedImages(p => p.filter((_, i) => i !== index))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X className="h-3 w-3" /></button>
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Input Area */}
+                <div className="p-4 bg-background border-t">
+                  <AnimatePresence>
+                    {selectedImages.length > 0 && (
+                      <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="flex gap-2 overflow-x-auto pb-3">
+                        {selectedImages.map((file, i) => (
+                          <div key={i} className="relative group shrink-0">
+                            <img src={URL.createObjectURL(file)} className="w-14 h-14 object-cover rounded-xl border" alt="preview" />
+                            <button onClick={() => setSelectedImages(p => p.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 shadow-lg scale-0 group-hover:scale-100 transition-transform">
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                {/* Input Area - Fixed at Bottom */}
-                <div className="p-3 bg-background border-t shrink-0">
-                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl p-1.5">
-                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-8 w-8 shrink-0">
-                      <Camera className="h-4 w-4 text-slate-500" />
+                  <div className="relative flex items-center bg-muted/50 rounded-3xl border border-border/50 focus-within:border-primary/50 focus-within:bg-background transition-all p-2 pr-3">
+                    <input type="file" ref={fileInputRef} hidden accept="image/*" multiple onChange={(e) => setSelectedImages(Array.from(e.target.files || []))} />
+                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="rounded-full h-10 w-10 text-muted-foreground hover:text-primary shrink-0">
+                      <Camera size={20} />
                     </Button>
-                    <input type="file" ref={fileInputRef} hidden accept="image/*" multiple onChange={handleImageSelect} />
                     
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      placeholder="Nhập tin nhắn..."
-                      className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-1 resize-none max-h-24 outline-none"
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }}}
+                      placeholder="Hỏi TechNova..."
+                      className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 resize-none max-h-32 min-h-10 outline-none"
                       rows={1}
                     />
 
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
-                      className="h-8 w-8 bg-blue-600 shrink-0 rounded-lg"
-                      size="icon"
+                    <Button 
+                        onClick={handleSendMessage} 
+                        disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
+                        className="rounded-full h-10 w-10 p-0 shrink-0 shadow-lg shadow-primary/20"
                     >
-                      <Send className="h-4 w-4 text-white" />
+                      <Send size={18} />
                     </Button>
                   </div>
+                  <p className="text-[9px] text-center text-muted-foreground mt-3 font-medium uppercase tracking-tighter opacity-50">AI có thể nhầm lẫn. Hãy kiểm tra lại thông tin quan trọng.</p>
                 </div>
               </CardContent>
             </Card>
@@ -364,5 +277,5 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
         )}
       </AnimatePresence>
     </>
-  )
+  );
 }
