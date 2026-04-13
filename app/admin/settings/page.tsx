@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Save, Mail, Phone, MapPin, Globe, Palette, DollarSign, Package, Shield, Clock, Users, Settings2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 
 
 export default function AdminSettingsPage() {
@@ -28,7 +29,8 @@ export default function AdminSettingsPage() {
     logo_url: '',
     favicon_url: '',
   })
-
+  
+  const { toast } = useToast()
   const [tabs, setTabs] = useState('general')
 
   const handleSave = async () => {
@@ -39,14 +41,21 @@ export default function AdminSettingsPage() {
         body: JSON.stringify(settings)
       })
       if (response.ok) {
-        alert('Đã lưu cài đặt thành công!')
+        toast({
+          title: "Thành công",
+          description: "Đã lưu cài đặt thành công!",
+        })
       } else {
-        alert('Lỗi lưu cài đặt')
+        toast({
+          title: "Lỗi",
+          description: "Lỗi lưu cài đặt",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       toast({
         title: "Lỗi",
-        description: "Lỗi kết nối",
+        description: "Không thể lưu cài đặt",
         variant: "destructive",
       })
     }

@@ -21,9 +21,8 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-  const { slug } = resolvedParams;
+  const { slug } = await params;
+  const resolvedSearchParams = searchParams;
   if (!slug) {
     notFound()
   }

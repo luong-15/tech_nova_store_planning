@@ -60,13 +60,13 @@ export default function CategoriesPage() {
   }, [categoriesSearch])
 
   // Gửi Form (Tạo mới hoặc Cập nhật)
-const generateSlug = (name: string): string => {
+  const generateSlug = (name: string): string => {
     return name
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '') // Remove special chars
-      .replace(/[\s_-]+/g, '-') // Replace spaces/_ with single -
-      .replace(/^-+|-+$/g, ''); // Trim leading/trailing -
+      .replace(/[ ^\w\s-]/g, '') // Remove special chars (simple char class)
+      .replace(/\\s+|[ _-]+/g, '-') // Replace spaces/_ with single -
+      .replace(/^-|-$/g, ''); // Trim leading/trailing -
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
