@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/hooks/use-toast"
+import { notifyLoginSuccess, notifySignupSuccess, notifyLoginError, notifySignupError } from "@/lib/notifications"
 import { Eye, EyeOff, Mail, Lock, User, Loader2, Zap, Check, X } from "lucide-react"
 
 export default function LoginPage() {
@@ -20,7 +20,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const router = useRouter()
-  const { toast } = useToast()
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("")
@@ -60,22 +59,18 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setError(error.message)
+        notifyLoginError(error.message)
         setLoading(false)
       } else if (data.user) {
-        // Show success toast and redirect to dashboard immediately
-        toast({
-          title: "Đăng nhập thành công!",
-          description: "Chào mừng bạn quay trở lại TechNova.",
-        })
+        notifyLoginSuccess()
         router.push("/")
       } else {
-        setError("Đăng nhập thất bại. Vui lòng thử lại.")
+        notifyLoginError("Đăng nhập thất bại. Vui lòng thử lại.")
         setLoading(false)
       }
     } catch (err) {
       console.error("Login error:", err)
-      setError("Có lỗi xảy ra. Vui lòng thử lại.")
+      notifyLoginError("Có lỗi xảy ra. Vui lòng thử lại.")
       setLoading(false)
     }
   }
@@ -103,9 +98,10 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError(error.message)
+      notifySignupError(error.message)
       setLoading(false)
     } else {
+      notifySignupSuccess()
       setSuccess("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.")
       setLoading(false)
     }

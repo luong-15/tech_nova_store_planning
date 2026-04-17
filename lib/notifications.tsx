@@ -29,7 +29,11 @@ const MESSAGES = {
   paymentSuccess: 'Thanh toán thành công!',
   stockLow: 'Sản phẩm sắp hết hàng!',
   outOfStock: 'Sản phẩm đã hết hàng!',
-  checkoutStarted: 'Bắt đầu thanh toán...'
+  checkoutStarted: 'Bắt đầu thanh toán...',
+  loginSuccess: 'Đăng nhập thành công! Chào mừng bạn quay trở lại TechNova.',
+  signupSuccess: 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.',
+  loginError: (error: string) => `Đăng nhập thất bại: ${error}`,
+  signupError: (error: string) => `Đăng ký thất bại: ${error}`
 } as const
 
 type NotifyOptions = {
@@ -130,3 +134,9 @@ export const notifyOrderPlaced = (orderNumber: string) => notifySuccess(`Đơn h
 export const notifyPaymentSuccess = () => notifySuccess(MESSAGES.paymentSuccess, { duration: 3000 })
 export const notifyOutOfStock = (name: string) => notifyError(`${name}: ${MESSAGES.outOfStock}`, { duration: 3000 })
 export const notifyStockLow = (name: string) => notifyWarning(`${name}: ${MESSAGES.stockLow}`, { duration: 3500 })
+
+// Authentication notifications
+export const notifyLoginSuccess = () => notifySuccess(MESSAGES.loginSuccess, { duration: 3000 })
+export const notifySignupSuccess = () => notifySuccess(MESSAGES.signupSuccess, { duration: 3500 })
+export const notifyLoginError = (error: string) => notifyError(MESSAGES.loginError(error), { duration: 3500 })
+export const notifySignupError = (error: string) => notifyError(MESSAGES.signupError(error), { duration: 3500 })
