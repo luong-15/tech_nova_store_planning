@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -29,6 +29,18 @@ export default function AdminSettingsPage() {
     logo_url: '',
     favicon_url: '',
   })
+
+  // Fetch settings on mount
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && Object.keys(data).length > 0) {
+          setSettings(data)
+        }
+      })
+      .catch(console.error)
+  }, [])
   
   const { toast } = useToast()
   const [tabs, setTabs] = useState('general')

@@ -1,16 +1,7 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
-import https from "https"
 
-const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
-  return fetch(url, {
-    ...options,
-    agent: new https.Agent({
-      rejectUnauthorized: false,
-    }),
-  } as any)
-}
 
 // Server client WITHOUT cookies - for read-only operations (fetching data)
 // This allows routes to be statically rendered
@@ -20,11 +11,12 @@ export function createReadOnlyServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       global: {
-        fetch: customFetch,
+        fetch: (url: RequestInfo | URL, options: RequestInit = {}) => 
+          fetch(url, { ...options, agent: { rejectUnauthorized: false } } as any)
       },
       auth: {
         persistSession: false,
-        autoRefreshToken: false,
+        autoRefreshToken: false
       },
     }
   )
@@ -49,8 +41,9 @@ export async function createServerClient() {
       },
     },
     global: {
-      fetch: customFetch,
-    },
+      fetch: (url: RequestInfo | URL, options: RequestInit = {}) => 
+        fetch(url, { ...options, agent: { rejectUnauthorized: false } } as any)
+    }
   })
 }
 
@@ -71,8 +64,9 @@ export async function createAdminServerClient() {
       },
     },
     global: {
-      fetch: customFetch,
-    },
+      fetch: (url: RequestInfo | URL, options: RequestInit = {}) => 
+        fetch(url, { ...options, agent: { rejectUnauthorized: false } } as any)
+    }
   })
 }
 

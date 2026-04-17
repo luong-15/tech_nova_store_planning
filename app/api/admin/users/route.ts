@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const supabase = await createAdminServerClient()
-    const { id, ...userData } = await request.json()
+    const { id, email, ...userData } = await request.json()
 
     const { data, error } = await supabase
       .from("user_profiles")

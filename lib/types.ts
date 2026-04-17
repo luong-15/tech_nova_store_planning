@@ -90,6 +90,7 @@ export interface OrderItem {
 export interface UserProfile {
   id: string
   full_name: string
+  role?: 'admin' | 'user'
   phone?: string
   email?: string
   avatar_url?: string
@@ -108,3 +109,20 @@ export interface WishlistItem {
   created_at: string
   product?: Product
 }
+
+export interface Settings {
+  id: string
+  store_name: string
+  store_description: string
+  email: string
+  phone: string
+  address: string
+  currency: string
+  timezone: string
+  maintenance_mode: boolean
+  auto_approve_orders: boolean
+  default_tax_rate: number
+  logo_url: string
+  favicon_url: string
+}
+

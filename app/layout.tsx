@@ -2,8 +2,10 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { createReadOnlyServerClient } from "@/lib/supabase/server"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { MaintenanceScreen } from "@/components/maintenance-screen"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -34,11 +36,31 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+async function getMaintenanceMode() {
+  try {
+    const supabase = createReadOnlyServerClient()
+    const { data } = await supabase
+      .from('settings')
+      .select('maintenance_mode')
+      .eq('id', 'global')
+      .single()
+    return data?.maintenance_mode || false
+  } catch {
+    return false
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const maintenanceMode = await getMaintenanceMode()
+
+  if (maintenanceMode) {
+    return <MaintenanceScreen />
+  }
+
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>

@@ -63,14 +63,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         setEmail(authUser.email || null)
         const { data: profile } = await supabase
-          .from("user_profiles")
+          .from("users")
           .select("*")
           .eq("id", authUser.id)
           .single()
 
         if (isMounted) {
-          if (profile) setUser(profile)
-          setLoading(false)
+          if (profile && profile.role === 'admin') {
+            setUser(profile)
+            setLoading(false)
+          } else {
+            router.push('/unauthorized')
+          }
         }
       } catch (error) {
         if (isMounted) router.push("/auth/login")

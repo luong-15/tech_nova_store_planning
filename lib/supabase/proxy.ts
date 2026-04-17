@@ -11,7 +11,7 @@ const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
   } as any)
 }
 
-export async function updateSession(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })

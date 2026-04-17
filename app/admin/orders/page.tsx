@@ -232,20 +232,28 @@ export default function OrdersPage() {
                     <User className="h-4 w-4 text-primary" /> Khách hàng
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tên:</span>
-                    <span className="font-semibold">{selectedOrder?.shipping_name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">SĐT:</span>
-                    <span className="font-semibold">{selectedOrder?.shipping_phone}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Email:</span>
-                    <span className="font-semibold truncate max-w-30">{selectedOrder?.shipping_email || '-'}</span>
-                  </div>
-                </CardContent>
+                  <CardContent className="space-y-3 text-sm">
+                    <div className="flex justify-between items-start">
+                      <span className="text-muted-foreground whitespace-nowrap">Tên:</span>
+                      <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_name}>
+                        {selectedOrder?.shipping_name}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-start">
+                      <span className="text-muted-foreground whitespace-nowrap">SĐT:</span>
+                      <span className="font-semibold truncate ml-2 text-right">
+                        {selectedOrder?.shipping_phone}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-start">
+                      <span className="text-muted-foreground whitespace-nowrap">Email:</span>
+                      <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_email}>
+                        {selectedOrder?.shipping_email || '-'}
+                      </span>
+                    </div>
+                  </CardContent>
               </Card>
 
               {/* Cột 2: Giao hàng */}
@@ -256,8 +264,9 @@ export default function OrdersPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
-                  <p className="font-semibold leading-relaxed">{selectedOrder?.shipping_address}</p>
-                  <p className="text-muted-foreground">{selectedOrder?.shipping_city}, {selectedOrder?.shipping_postal_code}</p>
+                  <p className="font-semibold leading-relaxed">Địa chỉ: {selectedOrder?.shipping_address}</p>
+                  <p className="text-muted-foreground">Thành phố: {selectedOrder?.shipping_city}</p>
+                  <p className="text-muted-foreground">Mã bưu điện: {selectedOrder?.shipping_postal_code}</p>
                 </CardContent>
               </Card>
 

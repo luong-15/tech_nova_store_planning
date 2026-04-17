@@ -189,11 +189,12 @@ export default function UsersPage() {
                     onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
+                <div className="space-y-2 md:col-span-2">
+                <Label>Email</Label>
                   <Input
                     value={userForm.email}
-                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                    readOnly
+                    className="bg-muted/50 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
