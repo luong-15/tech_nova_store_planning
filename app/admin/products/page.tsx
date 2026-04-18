@@ -126,28 +126,36 @@ export default function ProductsPage() {
 
       if (!response.ok) throw new Error("Failed to save")
       
-      // Clear cache by adding timestamp
-      const timestamp = Date.now()
-      const cacheParams = new URLSearchParams({
-        page: productsPagination.page.toString(),
-        limit: productsPagination.limit.toString(),
-        _t: timestamp.toString()
-      })
-      if (debouncedProductsSearch) cacheParams.append("search", debouncedProductsSearch)
-      if (productsCategoryFilter !== "all") cacheParams.append("category_id", productsCategoryFilter)
-
-      const refreshResponse = await fetch(`/api/admin/products?${cacheParams}`, { cache: 'no-store' })
-      const refreshData = await refreshResponse.json()
-      setProducts(refreshData.data || [])
-      setProductsPagination(prev => ({
-        ...prev,
-        total: refreshData.pagination?.total || 0,
-        totalPages: refreshData.pagination?.totalPages || 0
-      }))
-      
       notifySuccess("Lưu thành công!")
       setProductDialogOpen(false)
       setSelectedProduct(null)
+      
+      // Wait a bit then refresh data with fresh fetch
+      setTimeout(async () => {
+        try {
+          const params = new URLSearchParams({
+            page: productsPagination.page.toString(),
+            limit: productsPagination.limit.toString(),
+            _t: Date.now().toString()
+          })
+          if (debouncedProductsSearch) params.append("search", debouncedProductsSearch)
+          if (productsCategoryFilter !== "all") params.append("category_id", productsCategoryFilter)
+
+          const refreshResponse = await fetch(`/api/admin/products?${params}`)
+          if (!refreshResponse.ok) throw new Error("Failed to refresh")
+          
+          const refreshData = await refreshResponse.json()
+          console.log("[v0] Refreshed products data:", refreshData.data)
+          setProducts(refreshData.data || [])
+          setProductsPagination(prev => ({
+            ...prev,
+            total: refreshData.pagination?.total || 0,
+            totalPages: refreshData.pagination?.totalPages || 0
+          }))
+        } catch (error) {
+          console.error("[v0] Failed to refresh products:", error)
+        }
+      }, 500)
     } catch (error) {
       notifyError("Lỗi khi lưu sản phẩm: " + (error as Error).message)
     }

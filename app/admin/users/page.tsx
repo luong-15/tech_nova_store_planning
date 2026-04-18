@@ -77,6 +77,7 @@ export default function UsersPage() {
     try {
       const response = await fetch("/api/admin/users", {
         method: "PUT",
+        cache: 'no-store',
         headers: {
           "Content-Type": "application/json",
         },
@@ -88,13 +89,9 @@ export default function UsersPage() {
 
       if (!response.ok) {
         throw new Error("Failed to update user")
-        notifySuccess("Lưu thành công!")
       }
 
-      const updatedUser = await response.json()
-
-      setUsers(prev => prev.map(u => u.id === selectedUser?.id ? { ...u, ...updatedUser } : u))
-
+      notifySuccess("Lưu thành công!")
       setUserDialogOpen(false)
       setSelectedUser(null)
       setUserForm({
@@ -107,7 +104,33 @@ export default function UsersPage() {
         country: "",
       })
 
-      fetchUsers() // Refresh
+      // Wait then refresh with cache busting
+      setTimeout(async () => {
+        try {
+          const params = new URLSearchParams({
+            page: usersPagination.page.toString(),
+            limit: usersPagination.limit.toString(),
+            _t: Date.now().toString()
+          })
+          if (debouncedUsersSearch) {
+            params.append("search", debouncedUsersSearch)
+          }
+
+          const refreshResponse = await fetch(`/api/admin/users?${params}`)
+          if (!refreshResponse.ok) throw new Error("Failed to refresh")
+          
+          const refreshData = await refreshResponse.json()
+          console.log("[v0] Refreshed users data:", refreshData.data)
+          setUsers(refreshData.data || [])
+          setUsersPagination(prev => ({
+            ...prev,
+            total: refreshData.pagination?.total || 0,
+            totalPages: refreshData.pagination?.totalPages || 0
+          }))
+        } catch (error) {
+          console.error("[v0] Failed to refresh users:", error)
+        }
+      }, 500)
     } catch (error) {
       toast({
         title: "Lỗi",

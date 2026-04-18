@@ -106,19 +106,27 @@ export default function CategoriesPage() {
         throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: Failed to save category`);
       }
 
-      // Clear cache by fetching fresh data with timestamp
-      const timestamp = Date.now()
-      const cacheParams = new URLSearchParams({ _t: timestamp.toString() })
-      if (debouncedCategoriesSearch) cacheParams.append("search", debouncedCategoriesSearch)
-
-      const refreshResponse = await fetch(`/api/admin/categories?${cacheParams}`, { cache: 'no-store' })
-      const refreshData = await refreshResponse.json()
-      setCategories(Array.isArray(refreshData) ? refreshData : refreshData?.data || [])
-      
+      notifySuccess(isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.")
       setCategoryDialogOpen(false)
       setSelectedCategory(null)
       setCategoryForm({ name: "", description: "", image_url: "" })
-      notifySuccess(isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.")
+      
+      // Wait then refresh data with cache busting
+      setTimeout(async () => {
+        try {
+          const cacheParams = new URLSearchParams({ _t: Date.now().toString() })
+          if (debouncedCategoriesSearch) cacheParams.append("search", debouncedCategoriesSearch)
+
+          const refreshResponse = await fetch(`/api/admin/categories?${cacheParams}`)
+          if (!refreshResponse.ok) throw new Error("Failed to refresh")
+          
+          const refreshData = await refreshResponse.json()
+          console.log("[v0] Refreshed categories data:", refreshData)
+          setCategories(Array.isArray(refreshData) ? refreshData : refreshData?.data || [])
+        } catch (error) {
+          console.error("[v0] Failed to refresh categories:", error)
+        }
+      }, 500)
     } catch (error) {
       notifyError(error instanceof Error ? error.message : "Lỗi khi lưu danh mục. Vui lòng thử lại.")
       console.error(error)

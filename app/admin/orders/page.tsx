@@ -87,14 +87,41 @@ export default function OrdersPage() {
     try {
       const response = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
         method: 'PATCH',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       })
       if (response.ok) {
-        const data = await response.json()
         notifySuccess("Lưu thành công! Đã cập nhật trạng thái đơn hàng.")
         setOrderDialogOpen(false)
-        fetchOrders()
+        setSelectedOrder(null)
+        
+        // Wait then refresh with cache busting
+        setTimeout(async () => {
+          try {
+            const params = new URLSearchParams({ 
+              page: ordersPagination.page.toString(), 
+              limit: ordersPagination.limit.toString(),
+              _t: Date.now().toString()
+            })
+            if (debouncedOrdersSearch) params.append("search", debouncedOrdersSearch)
+            if (ordersStatusFilter && ordersStatusFilter !== "all") params.append("status", ordersStatusFilter)
+            
+            const refreshResponse = await fetch(`/api/admin/orders?${params}`)
+            if (!refreshResponse.ok) throw new Error("Failed to refresh")
+            
+            const refreshData = await refreshResponse.json()
+            console.log("[v0] Refreshed orders data:", refreshData.data)
+            setOrders(refreshData.data || [])
+            setOrdersPagination(prev => ({ 
+              ...prev, 
+              total: refreshData.pagination?.total || 0, 
+              totalPages: refreshData.pagination?.totalPages || 0 
+            }))
+          } catch (error) {
+            console.error("[v0] Failed to refresh orders:", error)
+          }
+        }, 500)
 
       }
 
