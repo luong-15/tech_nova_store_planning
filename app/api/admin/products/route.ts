@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
@@ -68,14 +69,16 @@ export async function PUT(request: Request) {
       ...(productData.specs && { specs: productData.specs }),
     }
 
-    // TODO: Re-enable \`category:category_id:categories(id, name)\` JOIN after Supabase cache refresh
     const { error } = await supabase
       .from("products")
       .update(safeData)
       .eq("id", id)
-      // No .select() to bypass schema cache validation
 
     if (error) throw error
+
+    revalidatePath('/admin/products')
+    revalidatePath('/api/admin/products')
+    revalidatePath('/')
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -106,18 +109,21 @@ export async function POST(request: Request) {
       ...(productData.specs && { specs: productData.specs }),
     }
 
-    // TODO: Re-enable JOIN after cache refresh
     const { data, error } = await supabase
       .from("products")
       .insert(safeData)
-      .select("*") // Safe for new inserts
+      .select("*")
 
     if (error) throw error
+
+    revalidatePath('/admin/products')
+    revalidatePath('/api/admin/products')
+    revalidatePath('/')
 
     return NextResponse.json(data[0])
   } catch (error) {
     console.error("Error creating product:", error)
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to update product" }, { status: 500 })
   }
 }
 
@@ -138,10 +144,13 @@ export async function DELETE(request: Request) {
 
     if (error) throw error
 
+    revalidatePath('/admin/products')
+    revalidatePath('/api/admin/products')
+    revalidatePath('/')
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error deleting product:", error)
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 })
   }
 }
-

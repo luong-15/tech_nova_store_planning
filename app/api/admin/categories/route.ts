@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { createAdminServerClient } from "@/lib/supabase/server"
+
+function serialize(data: any): any {
+  return JSON.parse(JSON.stringify(data, (key, value) => 
+    value instanceof Date ? value.toISOString() : value
+  ))
+}
 
 export async function GET() {
   try {
@@ -22,22 +29,57 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const supabase = await createAdminServerClient()
-    const { id, ...categoryData } = await request.json()
+    const body = await request.json()
+    const id = body.id
+    const { name, description, image_url, slug } = body
 
+    if (!id || !name) {
+      return NextResponse.json({ error: "ID and name are required" }, { status: 400 })
+    }
 
-    const { data, error } = await supabase
+    console.log('[API UPDATE CATEGORY]', { id, name, description: description?.substring(0, 50) + '...' })
+
+    // First check if category exists
+    const { data: existing } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    }
+
+    const { error } = await supabase
       .from("categories")
-      .update(categoryData)
+      .update({ 
+        name, 
+        description: description || null, 
+        image_url: image_url || null,
+        slug: slug || name.toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      })
       .eq("id", id)
+
+    if (error) {
+      console.error('[UPDATE ERROR]', error)
+      return NextResponse.json({ error: error.message || 'Update failed' }, { status: 500 })
+    }
+
+    revalidatePath('/admin/categories')
+    revalidatePath('/api/admin/categories')
+
+    // Return updated category
+    const { data: updatedCategory } = await supabase
+      .from("categories")
       .select('id, name, slug, description, image_url')
+      .eq("id", id)
+      .single()
 
+    return NextResponse.json(serialize(updatedCategory))
 
-    if (error) throw error
-
-    return NextResponse.json(data[0])
   } catch (error) {
     console.error("Error updating category:", error)
-    return NextResponse.json({ error: "Failed to update category" }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -46,16 +88,18 @@ export async function POST(request: Request) {
     const supabase = await createAdminServerClient()
     const categoryData = await request.json()
 
-
-    const { data, error } = await supabase
+    const { data: newCategory, error } = await supabase
       .from("categories")
       .insert(categoryData)
       .select('id, name, slug, description, image_url')
-
+      .single()
 
     if (error) throw error
 
-    return NextResponse.json(data[0])
+    revalidatePath('/admin/categories')
+    revalidatePath('/api/admin/categories')
+
+    return NextResponse.json(serialize(newCategory))
   } catch (error) {
     console.error("Error creating category:", error)
     return NextResponse.json({ error: "Failed to create category" }, { status: 500 })
@@ -78,6 +122,9 @@ export async function DELETE(request: Request) {
       .eq("id", id)
 
     if (error) throw error
+
+    revalidatePath('/admin/categories')
+    revalidatePath('/api/admin/categories')
 
     return NextResponse.json({ success: true })
   } catch (error) {

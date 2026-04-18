@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
@@ -52,3 +53,66 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 })
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const supabase = await createAdminServerClient()
+    const body = await request.json()
+    const orderId = body.id
+    const { status, payment_status, notes } = body
+
+    if (!orderId) {
+      return NextResponse.json({ error: "Order ID required" }, { status: 400 })
+    }
+
+    const updateData = {
+        ...(status && { status }),
+        ...(payment_status && { payment_status }),
+        ...(notes && { admin_notes: notes }),
+        updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', orderId)
+
+    if (error) throw error
+
+    revalidatePath('/admin/orders')
+    revalidatePath('/api/admin/orders')
+    revalidatePath('/dashboard')
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error updating order:", error)
+    return NextResponse.json({ error: "Failed to update order" }, { status: 500 })
+  }
+}
+
+// export async function DELETE(request: Request) {
+//   try {
+//     const supabase = await createAdminServerClient()
+//     const { searchParams } = new URL(request.url)
+//     const id = searchParams.get("id")
+
+//     if (!id) {
+//       return NextResponse.json({ error: "Order ID is required" }, { status: 400 })
+//     }
+
+//     const { error } = await supabase
+//       .from("orders")
+//       .delete()
+//       .eq("id", id)
+
+//     if (error) throw error
+
+//     revalidatePath('/admin/orders')
+//     revalidatePath('/api/admin/orders')
+
+//     return NextResponse.json({ success: true })
+//   } catch (error) {
+//     console.error("Error deleting order:", error)
+//     return NextResponse.json({ error: "Failed to delete order" }, { status: 500 })
+//   }
+// }

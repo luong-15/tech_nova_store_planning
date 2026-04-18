@@ -55,8 +55,7 @@ export async function PATCH(
 
     const supabaseAdmin = await createAdminServerClient()
 
-    // TODO: Re-enable joins after DB schema fix. Current fix: plain update to avoid schema cache issues
-const updateData = { 
+    const updateData = { 
         ...(status && { status }),
         ...(payment_status && { payment_status }),
         updated_at: new Date().toISOString()

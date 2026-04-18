@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
-import { 
-  Eye, Printer, Search, Package, MapPin, User, 
+import {
+  Eye, Printer, Search, Package, MapPin, User,
   Calendar, Save, CreditCard, Truck, CheckCircle2, Clock
 } from "lucide-react"
 import { formatCurrency } from "@/lib/currency"
@@ -71,7 +71,7 @@ export default function OrdersPage() {
       const params = new URLSearchParams({ page: ordersPagination.page.toString(), limit: ordersPagination.limit.toString() })
       if (debouncedOrdersSearch) params.append("search", debouncedOrdersSearch)
       if (ordersStatusFilter && ordersStatusFilter !== "all") params.append("status", ordersStatusFilter)
-      const response = await fetch(`/api/admin/orders?${params}`)
+      const response = await fetch(`/api/admin/orders?${params}`, { cache: 'no-store' })
       const data = await response.json()
       setOrders(data.data || [])
       setOrdersPagination(prev => ({ ...prev, total: data.pagination?.total || 0, totalPages: data.pagination?.totalPages || 0 }))
@@ -115,28 +115,28 @@ export default function OrdersPage() {
           <p className="text-muted-foreground text-sm">Quản lý vòng đời đơn hàng và vận chuyển.</p>
         </div>
         <div className="flex items-center gap-3">
-            <div className="relative w-full md:w-80 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input
-                placeholder="Tìm mã đơn, tên khách..."
-                className="pl-10 bg-muted/50 border-none focus-visible:ring-1"
-                value={ordersSearch}
-                onChange={(e) => setOrdersSearch(e.target.value)}
-              />
-            </div>
-            <Select value={ordersStatusFilter} onValueChange={setOrdersStatusFilter}>
-              <SelectTrigger className="w-45 bg-muted/50 border-none">
-                <SelectValue placeholder="Lọc trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="pending">Chờ xử lý</SelectItem>
-                <SelectItem value="processing">Đang xử lý</SelectItem>
-                <SelectItem value="shipped">Đang giao</SelectItem>
-                <SelectItem value="delivered">Hoàn thành</SelectItem>
-                <SelectItem value="cancelled">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="relative w-full md:w-80 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder="Tìm mã đơn, tên khách..."
+              className="pl-10 bg-muted/50 border-none focus-visible:ring-1"
+              value={ordersSearch}
+              onChange={(e) => setOrdersSearch(e.target.value)}
+            />
+          </div>
+          <Select value={ordersStatusFilter} onValueChange={setOrdersStatusFilter}>
+            <SelectTrigger className="w-45 bg-muted/50 border-none">
+              <SelectValue placeholder="Lọc trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="pending">Chờ xử lý</SelectItem>
+              <SelectItem value="processing">Đang xử lý</SelectItem>
+              <SelectItem value="shipped">Đang giao</SelectItem>
+              <SelectItem value="delivered">Hoàn thành</SelectItem>
+              <SelectItem value="cancelled">Đã hủy</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -184,7 +184,7 @@ export default function OrdersPage() {
                       variant="ghost"
                       className="rounded-full hover:bg-primary hover:text-white transition-all shadow-none"
                       onClick={async () => {
-                        const res = await fetch(`/api/admin/orders/${order.id}`)
+                        const res = await fetch(`/api/admin/orders/${order.id}`, { cache: 'no-store' })
                         if (res.ok) {
                           const details = await res.json()
                           setSelectedOrder(details)
@@ -211,7 +211,7 @@ export default function OrdersPage() {
               <div className="space-y-1">
                 <DialogTitle className="text-2xl font-black">CHI TIẾT ĐƠN #{selectedOrder?.order_number}</DialogTitle>
                 <div className="text-xs text-muted-foreground flex items-center gap-2">
-                   <Clock className="h-3 w-3" /> Khởi tạo lúc: {selectedOrder && new Date(selectedOrder.created_at).toLocaleString('vi-VN')}
+                  <Clock className="h-3 w-3" /> Khởi tạo lúc: {selectedOrder && new Date(selectedOrder.created_at).toLocaleString('vi-VN')}
                 </div>
               </div>
               <Button variant="secondary" className="mr-10 rounded-full shadow-sm" onClick={() => window.print()}>
@@ -229,28 +229,28 @@ export default function OrdersPage() {
                     <User className="h-4 w-4 text-primary" /> Khách hàng
                   </CardTitle>
                 </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <div className="flex justify-between items-start">
-                      <span className="text-muted-foreground whitespace-nowrap">Tên:</span>
-                      <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_name}>
-                        {selectedOrder?.shipping_name}
-                      </span>
-                    </div>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground whitespace-nowrap">Tên:</span>
+                    <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_name}>
+                      {selectedOrder?.shipping_name}
+                    </span>
+                  </div>
 
-                    <div className="flex justify-between items-start">
-                      <span className="text-muted-foreground whitespace-nowrap">SĐT:</span>
-                      <span className="font-semibold truncate ml-2 text-right">
-                        {selectedOrder?.shipping_phone}
-                      </span>
-                    </div>
+                  <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground whitespace-nowrap">SĐT:</span>
+                    <span className="font-semibold truncate ml-2 text-right">
+                      {selectedOrder?.shipping_phone}
+                    </span>
+                  </div>
 
-                    <div className="flex justify-between items-start">
-                      <span className="text-muted-foreground whitespace-nowrap">Email:</span>
-                      <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_email}>
-                        {selectedOrder?.shipping_email || '-'}
-                      </span>
-                    </div>
-                  </CardContent>
+                  <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground whitespace-nowrap">Email:</span>
+                    <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_email}>
+                      {selectedOrder?.shipping_email || '-'}
+                    </span>
+                  </div>
+                </CardContent>
               </Card>
 
               {/* Cột 2: Giao hàng */}
@@ -332,7 +332,7 @@ export default function OrdersPage() {
                             {item.product_image ? (
                               <img src={item.product_image} alt="" className="w-14 h-14 object-cover rounded-2xl shadow-sm border border-border/50" />
                             ) : (
-                               <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center"><Package className="h-6 w-6 opacity-20" /></div>
+                              <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center"><Package className="h-6 w-6 opacity-20" /></div>
                             )}
                             <div className="space-y-0.5">
                               <div className="font-bold text-sm leading-tight line-clamp-2">{item.product_name || item.products?.name}</div>
@@ -351,32 +351,32 @@ export default function OrdersPage() {
             </div>
 
             <div className="flex justify-end">
-                <div className="w-full max-w-sm space-y-4 bg-muted/20 p-6 rounded-4xl border border-border/40">
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-muted-foreground font-medium">
-                            <span>Tạm tính</span>
-                            <span>{formatCurrency(selectedOrder?.subtotal || selectedOrder?.total)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-muted-foreground font-medium">
-                            <span>Phí vận chuyển</span>
-                            <span>{formatCurrency(selectedOrder?.shipping_fee || 0)}</span>
-                        </div>
-                    </div>
-                    <Separator className="bg-border/60" />
-                    <div className="flex justify-between items-end">
-                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tổng thanh toán</span>
-                        <span className="text-3xl font-black text-primary leading-none">{selectedOrder && formatCurrency(selectedOrder.total)}</span>
-                    </div>
+              <div className="w-full max-w-sm space-y-4 bg-muted/20 p-6 rounded-4xl border border-border/40">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-muted-foreground font-medium">
+                    <span>Tạm tính</span>
+                    <span>{formatCurrency(selectedOrder?.subtotal || selectedOrder?.total)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground font-medium">
+                    <span>Phí vận chuyển</span>
+                    <span>{formatCurrency(selectedOrder?.shipping_fee || 0)}</span>
+                  </div>
                 </div>
+                <Separator className="bg-border/60" />
+                <div className="flex justify-between items-end">
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tổng thanh toán</span>
+                  <span className="text-3xl font-black text-primary leading-none">{selectedOrder && formatCurrency(selectedOrder.total)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="p-4 bg-muted/30 border-t flex justify-end gap-3 px-6">
             <Button variant="ghost" className="rounded-full px-6" onClick={() => setOrderDialogOpen(false)}>Đóng</Button>
-            <Button 
-                className="rounded-full px-8 shadow-lg shadow-primary/20" 
-                onClick={saveAllChanges}
-                disabled={(!newOrderStatus || newOrderStatus === selectedOrder?.status) && (!newPaymentStatus || newPaymentStatus === selectedOrder?.payment_status)}
+            <Button
+              className="rounded-full px-8 shadow-lg shadow-primary/20"
+              onClick={saveAllChanges}
+              disabled={(!newOrderStatus || newOrderStatus === selectedOrder?.status) && (!newPaymentStatus || newPaymentStatus === selectedOrder?.payment_status)}
             >
               Cập nhật đơn hàng
             </Button>

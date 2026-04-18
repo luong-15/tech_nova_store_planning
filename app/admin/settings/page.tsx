@@ -41,7 +41,7 @@ export default function AdminSettingsPage() {
       })
       .catch(console.error)
   }, [])
-  
+
   const { toast } = useToast()
   const [tabs, setTabs] = useState('general')
 
@@ -131,17 +131,17 @@ export default function AdminSettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <Label>Tên cửa hàng</Label>
-                    <Input 
+                    <Input
                       value={settings.store_name}
-                      onChange={(e) => setSettings({...settings, store_name: e.target.value})}
+                      onChange={(e) => setSettings({ ...settings, store_name: e.target.value })}
                       className="h-12"
                     />
                   </div>
                   <div className="space-y-3">
                     <Label>Mô tả cửa hàng</Label>
-                    <Input 
+                    <Input
                       value={settings.store_description}
-                      onChange={(e) => setSettings({...settings, store_description: e.target.value})}
+                      onChange={(e) => setSettings({ ...settings, store_description: e.target.value })}
                       className="h-12"
                     />
                   </div>
@@ -150,7 +150,7 @@ export default function AdminSettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <Label>Tiền tệ mặc định</Label>
-                    <Select value={settings.currency} onValueChange={(v) => setSettings({...settings, currency: v})}>
+                    <Select value={settings.currency} onValueChange={(v) => setSettings({ ...settings, currency: v })}>
                       <SelectTrigger className="h-12">
                         <SelectValue />
                       </SelectTrigger>
@@ -163,7 +163,7 @@ export default function AdminSettingsPage() {
                   </div>
                   <div className="space-y-3">
                     <Label>Múi giờ</Label>
-                    <Select value={settings.timezone} onValueChange={(v) => setSettings({...settings, timezone: v})}>
+                    <Select value={settings.timezone} onValueChange={(v) => setSettings({ ...settings, timezone: v })}>
                       <SelectTrigger className="h-12">
                         <SelectValue />
                       </SelectTrigger>
@@ -195,18 +195,18 @@ export default function AdminSettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-3">
                   <Label>Logo cửa hàng (URL)</Label>
-                  <Input 
+                  <Input
                     value={settings.logo_url}
-                    onChange={(e) => setSettings({...settings, logo_url: e.target.value})}
+                    onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
                     placeholder="https://your-logo.png"
                     className="h-12"
                   />
                 </div>
                 <div className="space-y-3">
                   <Label>Favicon (URL)</Label>
-                  <Input 
+                  <Input
                     value={settings.favicon_url}
-                    onChange={(e) => setSettings({...settings, favicon_url: e.target.value})}
+                    onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
                     placeholder="https://favicon.ico"
                     className="h-12"
                   />
@@ -231,26 +231,26 @@ export default function AdminSettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-3">
                   <Label>Email liên hệ</Label>
-                  <Input 
+                  <Input
                     type="email"
                     value={settings.email}
-                    onChange={(e) => setSettings({...settings, email: e.target.value})}
+                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
                     className="h-12"
                   />
                 </div>
                 <div className="space-y-3">
                   <Label>Số điện thoại</Label>
-                  <Input 
+                  <Input
                     value={settings.phone}
-                    onChange={(e) => setSettings({...settings, phone: e.target.value})}
+                    onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
                     className="h-12"
                   />
                 </div>
                 <div className="space-y-3">
                   <Label>Địa chỉ cửa hàng</Label>
-                  <Textarea 
+                  <Textarea
                     value={settings.address}
-                    onChange={(e) => setSettings({...settings, address: e.target.value})}
+                    onChange={(e) => setSettings({ ...settings, address: e.target.value })}
                     rows={3}
                     className="resize-none"
                   />
@@ -281,9 +281,9 @@ export default function AdminSettingsPage() {
                     <h3 className="font-bold text-lg">Chế độ bảo trì</h3>
                     <p className="text-sm text-muted-foreground">Tạm khóa website khi bảo trì</p>
                   </div>
-                  <Switch 
-                    checked={settings.maintenance_mode} 
-                    onCheckedChange={(checked) => setSettings({...settings, maintenance_mode: checked})}
+                  <Switch
+                    checked={settings.maintenance_mode}
+                    onCheckedChange={(checked) => setSettings({ ...settings, maintenance_mode: checked })}
                     className="ml-auto"
                   />
                 </div>
@@ -296,9 +296,9 @@ export default function AdminSettingsPage() {
                     <h3 className="font-bold text-lg">Tự động duyệt đơn</h3>
                     <p className="text-sm text-muted-foreground">Approve đơn hàng COD ngay lập tức</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.auto_approve_orders}
-                    onCheckedChange={(checked) => setSettings({...settings, auto_approve_orders: checked})}
+                    onCheckedChange={(checked) => setSettings({ ...settings, auto_approve_orders: checked })}
                     className="ml-auto"
                   />
                 </div>
@@ -322,10 +322,10 @@ export default function AdminSettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-3">
                   <Label>Thuế mặc định (%)</Label>
-                  <Input 
+                  <Input
                     type="number"
                     value={settings.default_tax_rate}
-                    onChange={(e) => setSettings({...settings, default_tax_rate: Number(e.target.value)})}
+                    onChange={(e) => setSettings({ ...settings, default_tax_rate: Number(e.target.value) })}
                     className="h-12 max-w-xs"
                   />
                 </div>

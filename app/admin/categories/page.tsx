@@ -35,7 +35,7 @@ export default function CategoriesPage() {
   const fetchCategories = useCallback(async () => {
     try {
       setCategoriesLoading(true)
-      const response = await fetch("/api/admin/categories")
+      const response = await fetch("/api/admin/categories", { cache: 'no-store' })
       const data = await response.json()
       // Đảm bảo data là một mảng
       setCategories(Array.isArray(data) ? data : data?.data || [])
@@ -79,7 +79,7 @@ export default function CategoriesPage() {
     try {
       const isEdit = !!selectedCategory;
       const slug = isEdit ? selectedCategory.slug : generateSlug(categoryForm.name);
-      
+
       const payload: any = {
         name: categoryForm.name,
         description: categoryForm.description || null,

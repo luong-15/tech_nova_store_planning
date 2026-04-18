@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { createAdminServerClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
@@ -72,6 +73,9 @@ export async function PUT(request: Request) {
 
     if (error) throw error
 
+    revalidatePath('/admin/users')
+    revalidatePath('/api/admin/users')
+
     return NextResponse.json(data[0])
   } catch (error) {
     console.error("Error updating user:", error)
@@ -101,6 +105,10 @@ export async function DELETE(request: Request) {
     const { error: authError } = await supabase.auth.admin.deleteUser(id)
 
     if (authError) throw authError
+
+    revalidatePath('/admin/users')
+    revalidatePath('/api/admin/users')
+    revalidatePath('/dashboard')
 
     return NextResponse.json({ success: true })
   } catch (error) {

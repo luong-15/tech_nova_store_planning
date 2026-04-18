@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Edit, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { notifyError, notifySuccess } from "@/lib/notifications"
 import type { UserProfile } from "@/lib/types"
 
 
@@ -87,6 +88,7 @@ export default function UsersPage() {
 
       if (!response.ok) {
         throw new Error("Failed to update user")
+        notifySuccess("Lưu thành công!")
       }
 
       const updatedUser = await response.json()
@@ -190,7 +192,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                <Label>Email</Label>
+                  <Label>Email</Label>
                   <Input
                     value={userForm.email}
                     readOnly
