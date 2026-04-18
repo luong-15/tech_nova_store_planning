@@ -98,9 +98,24 @@ export default function OrdersPage() {
         setNewOrderStatus(null)
         setNewPaymentStatus(null)
         
-        // Wait then refresh
-        setTimeout(() => {
-          fetchOrders()
+        // Wait then refresh data directly
+        setTimeout(async () => {
+          try {
+            console.log("[v0] Orders setTimeout - direct fetch")
+            const params = new URLSearchParams({ page: "1", limit: "50" })
+            const freshResponse = await fetch(`/api/admin/orders?${params}`, { cache: 'no-store' })
+            const freshData = await freshResponse.json()
+            
+            console.log("[v0] Orders direct fetch received:", freshData)
+            setOrders(freshData.data || [])
+            setOrdersPagination(prev => ({ 
+              ...prev, 
+              total: freshData.pagination?.total || 0, 
+              totalPages: freshData.pagination?.totalPages || 0 
+            }))
+          } catch (error) {
+            console.error("[v0] Orders direct fetch error:", error)
+          }
         }, 500)
       }
 

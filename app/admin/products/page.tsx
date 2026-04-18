@@ -149,10 +149,28 @@ export default function ProductsPage() {
         specs: ""
       })
       
-      // Wait a bit then call fetchProducts directly
-      setTimeout(() => {
-        console.log("[v0] setTimeout triggering fetchProducts()")
-        fetchProducts()
+      // Wait a bit then refresh data directly with fresh fetch
+      setTimeout(async () => {
+        try {
+          console.log("[v0] setTimeout triggering direct fetch")
+          const params = new URLSearchParams({
+            page: "1",
+            limit: "50",
+          })
+          
+          const freshResponse = await fetch(`/api/admin/products?${params}`, { cache: 'no-store' })
+          const freshData = await freshResponse.json()
+          
+          console.log("[v0] Direct fetch received:", freshData)
+          setProducts(freshData.data || [])
+          setProductsPagination(prev => ({
+            ...prev,
+            total: freshData.pagination?.total || 0,
+            totalPages: freshData.pagination?.totalPages || 0
+          }))
+        } catch (error) {
+          console.error("[v0] Direct fetch error:", error)
+        }
       }, 500)
     } catch (error) {
       notifyError("Lỗi khi lưu sản phẩm: " + (error as Error).message)
