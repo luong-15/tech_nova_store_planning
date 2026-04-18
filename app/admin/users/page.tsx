@@ -77,6 +77,7 @@ export default function UsersPage() {
     try {
       const response = await fetch("/api/admin/users", {
         method: "PUT",
+        cache: 'no-store',
         headers: {
           "Content-Type": "application/json",
         },
@@ -88,13 +89,9 @@ export default function UsersPage() {
 
       if (!response.ok) {
         throw new Error("Failed to update user")
-        notifySuccess("Lưu thành công!")
       }
 
-      const updatedUser = await response.json()
-
-      setUsers(prev => prev.map(u => u.id === selectedUser?.id ? { ...u, ...updatedUser } : u))
-
+      notifySuccess("Lưu thành công!")
       setUserDialogOpen(false)
       setSelectedUser(null)
       setUserForm({
@@ -107,7 +104,10 @@ export default function UsersPage() {
         country: "",
       })
 
-      fetchUsers() // Refresh
+      // Wait then refresh
+      setTimeout(() => {
+        fetchUsers()
+      }, 500)
     } catch (error) {
       toast({
         title: "Lỗi",

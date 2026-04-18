@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminServerClient } from '@/lib/supabase/server'
 
 export async function GET(
@@ -72,9 +73,19 @@ export async function PATCH(
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ 
+    revalidatePath('/admin/orders')
+    revalidatePath('/api/admin/orders')
+
+    return new NextResponse(JSON.stringify({ 
       success: true, 
       order: data[0] || null
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
     })
   } catch (error) {
     console.error('Admin orders PATCH error:', error)

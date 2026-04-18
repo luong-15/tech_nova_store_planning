@@ -19,7 +19,15 @@ export async function GET() {
 
     if (error) throw error
 
-    return NextResponse.json(data || [])
+    return new NextResponse(JSON.stringify(data || []), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
   } catch (error) {
     console.error("Error fetching categories:", error)
     return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 })
@@ -75,7 +83,14 @@ export async function PUT(request: Request) {
       .eq("id", id)
       .single()
 
-    return NextResponse.json(serialize(updatedCategory))
+    return new NextResponse(JSON.stringify(serialize(updatedCategory)), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
 
   } catch (error) {
     console.error("Error updating category:", error)
@@ -99,7 +114,14 @@ export async function POST(request: Request) {
     revalidatePath('/admin/categories')
     revalidatePath('/api/admin/categories')
 
-    return NextResponse.json(serialize(newCategory))
+    return new NextResponse(JSON.stringify(serialize(newCategory)), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error("Error creating category:", error)
     return NextResponse.json({ error: "Failed to create category" }, { status: 500 })

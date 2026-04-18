@@ -80,9 +80,11 @@ export default function ProductsPage() {
       if (debouncedProductsSearch) params.append("search", debouncedProductsSearch)
       if (productsCategoryFilter !== "all") params.append("category_id", productsCategoryFilter)
 
+      console.log("[v0] Fetching products with params:", params.toString())
       const response = await fetch(`/api/admin/products?${params}`, { cache: 'no-store' })
       const data = await response.json()
 
+      console.log("[v0] Received products data:", data)
       setProducts(data.data || [])
       setProductsPagination(prev => ({
         ...prev,
@@ -117,6 +119,7 @@ export default function ProductsPage() {
       }
 
       const method = selectedProduct ? "PUT" : "POST"
+      console.log("[v0] Saving product with method:", method)
       const response = await fetch("/api/admin/products", {
         cache: 'no-store',
         method,
@@ -124,10 +127,51 @@ export default function ProductsPage() {
         body: JSON.stringify(selectedProduct ? { id: selectedProduct.id, ...productData } : productData),
       })
 
+      console.log("[v0] Save response status:", response.status)
       if (!response.ok) throw new Error("Failed to save")
+      
       notifySuccess("Lưu thành công!")
       setProductDialogOpen(false)
-      fetchProducts()
+      setSelectedProduct(null)
+      setProductForm({
+        name: "",
+        description: "",
+        price: "",
+        original_price: "",
+        discount_price: "",
+        stock: "",
+        brand: "",
+        category_id: "",
+        image_url: "",
+        is_featured: false,
+        is_deal: false,
+        images: "",
+        specs: ""
+      })
+      
+      // Wait a bit then refresh data directly with fresh fetch
+      setTimeout(async () => {
+        try {
+          console.log("[v0] setTimeout triggering direct fetch")
+          const params = new URLSearchParams({
+            page: "1",
+            limit: "50",
+          })
+          
+          const freshResponse = await fetch(`/api/admin/products?${params}`, { cache: 'no-store' })
+          const freshData = await freshResponse.json()
+          
+          console.log("[v0] Direct fetch received:", freshData)
+          setProducts(freshData.data || [])
+          setProductsPagination(prev => ({
+            ...prev,
+            total: freshData.pagination?.total || 0,
+            totalPages: freshData.pagination?.totalPages || 0
+          }))
+        } catch (error) {
+          console.error("[v0] Direct fetch error:", error)
+        }
+      }, 500)
     } catch (error) {
       notifyError("Lỗi khi lưu sản phẩm: " + (error as Error).message)
     }

@@ -94,9 +94,8 @@ export default function CategoriesPage() {
       const method = isEdit ? "PUT" : "POST"
       const url = "/api/admin/categories"
 
-      console.log('Submitting:', { method, payload }); // Debug
-
       const response = await fetch(url, {
+        cache: 'no-store',
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -104,15 +103,27 @@ export default function CategoriesPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', errorData); // Debug
         throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: Failed to save category`);
       }
 
+      notifySuccess(isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.")
       setCategoryDialogOpen(false)
       setSelectedCategory(null)
       setCategoryForm({ name: "", description: "", image_url: "" })
-      notifySuccess(isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.")
-      fetchCategories()
+      
+      // Wait then refresh data directly
+      setTimeout(async () => {
+        try {
+          console.log("[v0] Categories setTimeout - direct fetch")
+          const freshResponse = await fetch(`/api/admin/categories`, { cache: 'no-store' })
+          const freshData = await freshResponse.json()
+          
+          console.log("[v0] Categories direct fetch received:", freshData)
+          setCategories(Array.isArray(freshData) ? freshData : freshData?.data || [])
+        } catch (error) {
+          console.error("[v0] Categories direct fetch error:", error)
+        }
+      }, 500)
     } catch (error) {
       notifyError(error instanceof Error ? error.message : "Lỗi khi lưu danh mục. Vui lòng thử lại.")
       console.error(error)

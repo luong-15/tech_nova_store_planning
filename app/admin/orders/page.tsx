@@ -87,15 +87,36 @@ export default function OrdersPage() {
     try {
       const response = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
         method: 'PATCH',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       })
       if (response.ok) {
-        const data = await response.json()
         notifySuccess("Lưu thành công! Đã cập nhật trạng thái đơn hàng.")
         setOrderDialogOpen(false)
-        fetchOrders()
-
+        setSelectedOrder(null)
+        setNewOrderStatus(null)
+        setNewPaymentStatus(null)
+        
+        // Wait then refresh data directly
+        setTimeout(async () => {
+          try {
+            console.log("[v0] Orders setTimeout - direct fetch")
+            const params = new URLSearchParams({ page: "1", limit: "50" })
+            const freshResponse = await fetch(`/api/admin/orders?${params}`, { cache: 'no-store' })
+            const freshData = await freshResponse.json()
+            
+            console.log("[v0] Orders direct fetch received:", freshData)
+            setOrders(freshData.data || [])
+            setOrdersPagination(prev => ({ 
+              ...prev, 
+              total: freshData.pagination?.total || 0, 
+              totalPages: freshData.pagination?.totalPages || 0 
+            }))
+          } catch (error) {
+            console.error("[v0] Orders direct fetch error:", error)
+          }
+        }, 500)
       }
 
     } catch (error) { console.error(error) }
@@ -262,7 +283,7 @@ export default function OrdersPage() {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   <p className="font-semibold leading-relaxed">Địa chỉ: {selectedOrder?.shipping_address}</p>
-                  <p className="text-muted-foreground">Thành phố: {selectedOrder?.shipping_city}</p>
+                  <p className="text-muted-foreground">Thành ph��: {selectedOrder?.shipping_city}</p>
                   <p className="text-muted-foreground">Mã bưu điện: {selectedOrder?.shipping_postal_code}</p>
                 </CardContent>
               </Card>

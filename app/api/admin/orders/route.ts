@@ -39,13 +39,21 @@ export async function GET(request: Request) {
       customer_name: order.shipping_name || 'Khách lẻ'
     })) || []
 
-    return NextResponse.json({
+    return new NextResponse(JSON.stringify({
       data: dataWithCounts,
       pagination: {
         page,
         limit,
         total: count || 0,
         totalPages: Math.ceil((count || 0) / limit)
+      }
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       }
     })
   } catch (error) {
@@ -83,7 +91,14 @@ export async function PUT(request: Request) {
     revalidatePath('/api/admin/orders')
     revalidatePath('/dashboard')
 
-    return NextResponse.json({ success: true })
+    return new NextResponse(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error("Error updating order:", error)
     return NextResponse.json({ error: "Failed to update order" }, { status: 500 })
