@@ -19,7 +19,15 @@ export async function GET() {
 
     if (error) throw error
 
-    return NextResponse.json(data || [])
+    return new NextResponse(JSON.stringify(data || []), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
   } catch (error) {
     console.error("Error fetching categories:", error)
     return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 })

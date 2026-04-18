@@ -39,13 +39,21 @@ export async function GET(request: Request) {
       customer_name: order.shipping_name || 'Khách lẻ'
     })) || []
 
-    return NextResponse.json({
+    return new NextResponse(JSON.stringify({
       data: dataWithCounts,
       pagination: {
         page,
         limit,
         total: count || 0,
         totalPages: Math.ceil((count || 0) / limit)
+      }
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       }
     })
   } catch (error) {
