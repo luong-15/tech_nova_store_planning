@@ -94,9 +94,8 @@ export default function CategoriesPage() {
       const method = isEdit ? "PUT" : "POST"
       const url = "/api/admin/categories"
 
-      console.log('Submitting:', { method, payload }); // Debug
-
       const response = await fetch(url, {
+        cache: 'no-store',
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -104,15 +103,22 @@ export default function CategoriesPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', errorData); // Debug
         throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: Failed to save category`);
       }
 
+      // Clear cache by fetching fresh data with timestamp
+      const timestamp = Date.now()
+      const cacheParams = new URLSearchParams({ _t: timestamp.toString() })
+      if (debouncedCategoriesSearch) cacheParams.append("search", debouncedCategoriesSearch)
+
+      const refreshResponse = await fetch(`/api/admin/categories?${cacheParams}`, { cache: 'no-store' })
+      const refreshData = await refreshResponse.json()
+      setCategories(Array.isArray(refreshData) ? refreshData : refreshData?.data || [])
+      
       setCategoryDialogOpen(false)
       setSelectedCategory(null)
       setCategoryForm({ name: "", description: "", image_url: "" })
       notifySuccess(isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.")
-      fetchCategories()
     } catch (error) {
       notifyError(error instanceof Error ? error.message : "Lỗi khi lưu danh mục. Vui lòng thử lại.")
       console.error(error)

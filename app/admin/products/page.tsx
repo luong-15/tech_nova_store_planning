@@ -125,9 +125,29 @@ export default function ProductsPage() {
       })
 
       if (!response.ok) throw new Error("Failed to save")
+      
+      // Clear cache by adding timestamp
+      const timestamp = Date.now()
+      const cacheParams = new URLSearchParams({
+        page: productsPagination.page.toString(),
+        limit: productsPagination.limit.toString(),
+        _t: timestamp.toString()
+      })
+      if (debouncedProductsSearch) cacheParams.append("search", debouncedProductsSearch)
+      if (productsCategoryFilter !== "all") cacheParams.append("category_id", productsCategoryFilter)
+
+      const refreshResponse = await fetch(`/api/admin/products?${cacheParams}`, { cache: 'no-store' })
+      const refreshData = await refreshResponse.json()
+      setProducts(refreshData.data || [])
+      setProductsPagination(prev => ({
+        ...prev,
+        total: refreshData.pagination?.total || 0,
+        totalPages: refreshData.pagination?.totalPages || 0
+      }))
+      
       notifySuccess("Lưu thành công!")
       setProductDialogOpen(false)
-      fetchProducts()
+      setSelectedProduct(null)
     } catch (error) {
       notifyError("Lỗi khi lưu sản phẩm: " + (error as Error).message)
     }
