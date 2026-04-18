@@ -8,9 +8,9 @@ export async function GET() {
       .from('settings')
       .select('*')
       .eq('id', 'global')
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') throw error // Not found ok for defaults
+    if (error) throw error
 
     return NextResponse.json(data || {})
   } catch (error) {

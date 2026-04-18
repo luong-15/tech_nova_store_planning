@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/hooks/use-toast"
+import { notifySuccess } from "@/lib/notifications"
 import { Eye, EyeOff, Mail, Lock, User, Loader2, Zap, Check, X } from "lucide-react"
 
 export default function LoginPage() {
@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const router = useRouter()
-  const { toast } = useToast()
+
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("")
@@ -64,10 +64,7 @@ export default function LoginPage() {
         setLoading(false)
       } else if (data.user) {
         // Show success toast and redirect to dashboard immediately
-        toast({
-          title: "Đăng nhập thành công!",
-          description: "Chào mừng bạn quay trở lại TechNova.",
-        })
+        notifySuccess("Đăng nhập thành công! Chào mừng bạn quay trở lại TechNova.")
         router.push("/")
       } else {
         setError("Đăng nhập thất bại. Vui lòng thử lại.")

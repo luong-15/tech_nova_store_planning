@@ -3,8 +3,29 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ComparisonDrawer } from "@/components/comparison-drawer"
 import { ChatAssistant } from "@/components/chat-assistant"
+import { MaintenanceScreen } from "@/components/maintenance-screen"
+import { createAdminServerClient } from "@/lib/supabase/server"
+import { Toaster } from "@/components/ui/toaster"
 import { createReadOnlyServerClient } from "@/lib/supabase/server"
 import type { Product } from "@/lib/types"
+
+async function getMaintenanceMode() {
+  try {
+    const supabase = await createAdminServerClient()
+    const { data, error } = await supabase
+      .from('settings')
+      .select('maintenance_mode')
+      .eq('id', 'global')
+      .maybeSingle()
+    
+    console.log('[MAINTENANCE] DB data:', data, 'Error:', error, '(service role)')
+    
+    return data?.maintenance_mode || false
+  } catch (error) {
+    console.error('[MAINTENANCE] Query error:', error)
+    return false
+  }
+}
 
 async function getProducts(): Promise<Product[]> {
   try {
@@ -142,6 +163,15 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode
 }) {
+  const maintenanceMode = await getMaintenanceMode()
+  
+  console.log('[MAINTENANCE] Mode:', maintenanceMode)
+
+  if (maintenanceMode) {
+    console.log('[MAINTENANCE] Showing screen')
+    return <MaintenanceScreen />
+  }
+
   const products = await getProducts()
 
   return (

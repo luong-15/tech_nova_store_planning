@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
 import { formatCurrency } from "@/lib/currency"
 import type { Product, Category } from "@/lib/types"
-import { useToast } from "@/hooks/use-toast"
+import { notifyError, notifySuccess } from "@/lib/notifications"
 import { 
   Plus, Package, ShoppingCart, Users, DollarSign, Edit, 
   Trash2, Eye, ChevronDown, ChevronUp, Info, Box, 
@@ -25,7 +25,7 @@ import {
 
 
 export default function ProductsPage() {
-  const { toast } = useToast()
+
   const [products, setProducts] = useState<Product[]>([])
 
   const [categories, setCategories] = useState<Category[]>([])
@@ -127,11 +127,7 @@ export default function ProductsPage() {
       setProductDialogOpen(false)
       fetchProducts()
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Lỗi khi lưu sản phẩm: " + (error as Error).message,
-        variant: "destructive",
-      })
+      notifyError("Lỗi khi lưu sản phẩm: " + (error as Error).message)
     }
   }
 

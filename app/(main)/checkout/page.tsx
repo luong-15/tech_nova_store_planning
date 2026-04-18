@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -40,7 +41,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge"
 import { Loader2 } from "lucide-react"
-import { toast } from "sonner";
+import { notifySuccess, notifyError, notifyInfo } from "@/lib/notifications";
 
 const checkoutSchema = z.object({
   shipping_name: z.string().min(2, "Tên người nhận phải có ít nhất 2 ký tự"),
@@ -87,7 +88,7 @@ export default function CheckoutPage() {
           clearCart(); // NOW safe to clear cart after payment confirmed
           clearInterval(interval);
           setIsPolling(false);
-          toast.success("Thanh toán thành công!");
+          notifySuccess("Thanh toán thành công!");
           router.push(`/order-success?order_id=${qrData.order_id}`); 
         }
       } catch (error) {
@@ -158,7 +159,7 @@ export default function CheckoutPage() {
 
     if (!session?.user) {
       router.push("/auth/login");
-      toast.error("Vui lòng đăng nhập để thanh toán");
+      notifyError("Vui lòng đăng nhập để thanh toán");
       return;
     }
 
@@ -194,8 +195,8 @@ export default function CheckoutPage() {
   const total = subtotal + shipping;
 
   const onSubmit = async (data: CheckoutForm) => {
-    if (items.length === 0) {
-      toast.error("Giỏ hàng trống");
+      if (items.length === 0) {
+      notifyError("Giỏ hàng trống");
       return;
     }
 
@@ -235,14 +236,14 @@ export default function CheckoutPage() {
 
       if (!response.ok || !result.success) {
         console.error("Order API error:", result);
-        toast.error(result.error || "Lỗi tạo đơn hàng: " + response.status);
+        notifyError(result.error || "Lỗi tạo đơn hàng: " + response.status);
         return;
       }
 
       // Clear cart ONLY for COD. For online payments, clear after confirmation
       if (data.payment_method === "cod") {
         clearCart();
-        toast.success("Đặt hàng thành công!");
+        notifySuccess("Đặt hàng thành công!");
         router.push(`/order-success?order_id=${result.order_id}`);
         return;
       }
@@ -262,20 +263,21 @@ export default function CheckoutPage() {
       console.log("QR response:", qrResult);
 
       if (!qrRes.ok || !qrResult.success) {
-        toast.error(qrResult.error || "Lỗi tạo QR code");
+        notifyError(qrResult.error || "Lỗi tạo QR code");
         return;
       }
 
       setQrData(qrResult);
-      toast.success("QR code sẵn sàng! Quét để thanh toán.");
+      notifySuccess("QR code sẵn sàng! Quét để thanh toán.");
       startPolling();
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.");
+      notifyError("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   if (items.length === 0) {
     return (
@@ -527,7 +529,7 @@ export default function CheckoutPage() {
                           onError={(e) => {
                             console.error('QR image load failed:', qrData.qr_url);
                             (e.target as any).style.display = 'none';
-                            toast.error('Không tải được QR. Kiểm tra mạng!');
+                            notifyError('Không tải được QR. Kiểm tra mạng!');
                           }}
                         />
                       </div>
@@ -562,14 +564,14 @@ export default function CheckoutPage() {
                           console.log('Copying text:', text);
                           try {
                             await navigator.clipboard.writeText(text);
-                            toast.success("✅ Đã copy số tiền & nội dung!");
+                            notifySuccess("✅ Đã copy số tiền & nội dung!");
                           } catch (err) {
                             console.error('Clipboard failed:', err);
                             const fallback = window.prompt('Copy manually:', text);
                             if (fallback !== null) {
-                              toast.success("✅ Đã copy thành công!");
+                              notifySuccess("✅ Đã copy thành công!");
                             } else {
-                              toast.info("Đã hủy copy");
+                              notifyInfo("Đã hủy copy");
                             }
                           }
                         }}
@@ -583,7 +585,7 @@ export default function CheckoutPage() {
                         className="flex-1"
                         onClick={async () => {
                           if (!qrData?.order_id) {
-                            toast.error('Không có ID đơn hàng để kiểm tra');
+                            notifyError('Không có ID đơn hàng để kiểm tra');
                             return;
                           }
                           if (isPolling) return;
@@ -595,14 +597,14 @@ export default function CheckoutPage() {
                             console.log('Manual check:', statusData);
                             if (statusData.isPaid) {
                               clearCart();
-                              toast.success("Thanh toán thành công!");
+                              notifySuccess("Thanh toán thành công!");
                               router.push(`/order-success?order_id=${qrData.order_id}`);
                             } else {
-                              toast.info(`Chưa thanh toán (status: ${statusData.status})`);
+                              notifyInfo(`Chưa thanh toán (status: ${statusData.status})`);
                             }
                           } catch (error) {
                             console.error('Manual check error:', error);
-                            toast.error('Lỗi kiểm tra');
+                            notifyError('Lỗi kiểm tra');
                           } finally {
                             setIsPolling(false);
                           }
@@ -618,7 +620,7 @@ export default function CheckoutPage() {
                         onClick={() => {
                           stopPolling();
                           setQrData(null);
-                          toast.success('Đã hủy thanh toán QR');
+                          notifySuccess('Đã hủy thanh toán QR');
                         }}
                       >
                         Hủy thanh toán

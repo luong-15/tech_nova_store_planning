@@ -18,11 +18,11 @@ import {
 import { formatCurrency } from "@/lib/currency"
 import type { Order } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
+import { notifyError, notifySuccess } from "@/lib/notifications"
 
 
 export default function OrdersPage() {
-  const { toast } = useToast()
+
   const [orders, setOrders] = useState<Order[]>([])
 
   const [ordersPagination, setOrdersPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 })
@@ -92,10 +92,7 @@ export default function OrdersPage() {
       })
       if (response.ok) {
         const data = await response.json()
-        toast({
-          title: "Lưu thành công!",
-          description: "Đã cập nhật trạng thái đơn hàng.",
-        })
+        notifySuccess("Lưu thành công! Đã cập nhật trạng thái đơn hàng.")
         setOrderDialogOpen(false)
         fetchOrders()
 

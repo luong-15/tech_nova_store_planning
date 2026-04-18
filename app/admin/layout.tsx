@@ -103,7 +103,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-black">
-      <Toaster />
+
       
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/60 backdrop-blur-xl">

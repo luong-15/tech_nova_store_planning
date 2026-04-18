@@ -12,12 +12,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Plus, Edit, Trash2, Search, ImageIcon, FolderTree, ExternalLink } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { notifyError, notifySuccess } from "@/lib/notifications"
 import type { Category } from "@/lib/types"
 
 
 export default function CategoriesPage() {
-  const { toast } = useToast()
+
   const [categories, setCategories] = useState<Category[]>([])
 
   const [categoriesSearch, setCategoriesSearch] = useState("")
@@ -72,11 +72,7 @@ export default function CategoriesPage() {
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!categoryForm.name.trim()) {
-      toast({
-        title: "Lỗi",
-        description: "Tên danh mục không được để trống.",
-        variant: "destructive",
-      })
+      notifyError("Tên danh mục không được để trống.")
       return
     }
 
@@ -115,17 +111,10 @@ export default function CategoriesPage() {
       setCategoryDialogOpen(false)
       setSelectedCategory(null)
       setCategoryForm({ name: "", description: "", image_url: "" })
-      toast({
-        title: "Thành công",
-        description: isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.",
-      })
+      notifySuccess(isEdit ? "Đã cập nhật danh mục." : "Đã tạo danh mục mới.")
       fetchCategories()
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Lỗi khi lưu danh mục. Vui lòng thử lại.",
-        variant: "destructive",
-      })
+      notifyError(error instanceof Error ? error.message : "Lỗi khi lưu danh mục. Vui lòng thử lại.")
       console.error(error)
     }
   }

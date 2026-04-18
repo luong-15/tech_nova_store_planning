@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function proxy(request: NextRequest) {
   // Only protect admin routes
+  console.log('[PROXY] Admin route access:', request.nextUrl.pathname)
   if (!request.nextUrl.pathname.startsWith('/admin')) {
     return NextResponse.next()
   }
@@ -11,6 +12,7 @@ export async function proxy(request: NextRequest) {
   try {
     const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
+    console.log('[PROXY] User:', user ? `${user.id} role:${user.app_metadata?.role}` : 'NO USER')
 
     if (!user) {
       const redirectUrl = new URL('/auth/login', request.url)
@@ -26,9 +28,11 @@ export async function proxy(request: NextRequest) {
     // Allow access
     return NextResponse.next()
   } catch (error) {
-    console.error('[ADMIN_MIDDLEWARE_ERROR]:', error)
+    console.error('[PROXY ADMIN ERROR FULL]:', error)
+    console.error('[PROXY] Error details:', (error as Error).message, (error as Error).stack)
     const redirectUrl = new URL('/auth/login', request.url)
     return NextResponse.redirect(redirectUrl)
+
   }
 }
 

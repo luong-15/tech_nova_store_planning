@@ -7,7 +7,7 @@ export function MaintenanceScreen() {
       <div className="max-w-md w-full text-center space-y-8">
         <div className="w-32 h-32 mx-auto bg-destructive/10 rounded-3xl flex items-center justify-center">
           <svg className="w-20 h-20 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
           </svg>
         </div>
         <div className="space-y-4">
@@ -22,9 +22,6 @@ export function MaintenanceScreen() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 pt-4">
-          <Button variant="outline" asChild className="flex-1">
-            <Link href="/auth/login">Admin Panel</Link>
-          </Button>
           <Button asChild className="flex-1 bg-destructive hover:bg-destructive/90">
             <Link href="mailto:contact@techstore.vn">Liên hệ hỗ trợ</Link>
           </Button>
