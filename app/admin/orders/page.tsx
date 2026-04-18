@@ -95,34 +95,13 @@ export default function OrdersPage() {
         notifySuccess("Lưu thành công! Đã cập nhật trạng thái đơn hàng.")
         setOrderDialogOpen(false)
         setSelectedOrder(null)
+        setNewOrderStatus(null)
+        setNewPaymentStatus(null)
         
-        // Wait then refresh with cache busting
-        setTimeout(async () => {
-          try {
-            const params = new URLSearchParams({ 
-              page: ordersPagination.page.toString(), 
-              limit: ordersPagination.limit.toString(),
-              _t: Date.now().toString()
-            })
-            if (debouncedOrdersSearch) params.append("search", debouncedOrdersSearch)
-            if (ordersStatusFilter && ordersStatusFilter !== "all") params.append("status", ordersStatusFilter)
-            
-            const refreshResponse = await fetch(`/api/admin/orders?${params}`)
-            if (!refreshResponse.ok) throw new Error("Failed to refresh")
-            
-            const refreshData = await refreshResponse.json()
-            console.log("[v0] Refreshed orders data:", refreshData.data)
-            setOrders(refreshData.data || [])
-            setOrdersPagination(prev => ({ 
-              ...prev, 
-              total: refreshData.pagination?.total || 0, 
-              totalPages: refreshData.pagination?.totalPages || 0 
-            }))
-          } catch (error) {
-            console.error("[v0] Failed to refresh orders:", error)
-          }
+        // Wait then refresh
+        setTimeout(() => {
+          fetchOrders()
         }, 500)
-
       }
 
     } catch (error) { console.error(error) }
@@ -289,7 +268,7 @@ export default function OrdersPage() {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   <p className="font-semibold leading-relaxed">Địa chỉ: {selectedOrder?.shipping_address}</p>
-                  <p className="text-muted-foreground">Thành phố: {selectedOrder?.shipping_city}</p>
+                  <p className="text-muted-foreground">Thành ph��: {selectedOrder?.shipping_city}</p>
                   <p className="text-muted-foreground">Mã bưu điện: {selectedOrder?.shipping_postal_code}</p>
                 </CardContent>
               </Card>

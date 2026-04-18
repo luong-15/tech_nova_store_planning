@@ -80,7 +80,14 @@ export async function PUT(request: Request) {
     revalidatePath('/api/admin/products')
     revalidatePath('/')
 
-    return NextResponse.json({ success: true })
+    return new NextResponse(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error("Error updating product:", error)
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 })
@@ -94,14 +101,13 @@ export async function POST(request: Request) {
 
     const safeData = {
       name: productData.name,
-      slug: productData.name.toLowerCase().replace(/ /g, '-'), // Auto slug
+      slug: productData.name.toLowerCase().replace(/ /g, '-'),
       description: productData.description || null,
       price: Number(productData.price),
       stock: Number(productData.stock),
       brand: productData.brand || null,
       category_id: productData.category_id || null,
       image_url: productData.image_url || null,
-      images: productData.images || [],
       is_featured: Boolean(productData.is_featured),
       is_deal: Boolean(productData.is_deal),
       ...(productData.original_price && { original_price: Number(productData.original_price) }),
@@ -109,10 +115,11 @@ export async function POST(request: Request) {
       ...(productData.specs && { specs: productData.specs }),
     }
 
-    const { data, error } = await supabase
+    const { data: newProduct, error } = await supabase
       .from("products")
       .insert(safeData)
-      .select("*")
+      .select()
+      .single()
 
     if (error) throw error
 
@@ -120,10 +127,17 @@ export async function POST(request: Request) {
     revalidatePath('/api/admin/products')
     revalidatePath('/')
 
-    return NextResponse.json(data[0])
+    return new NextResponse(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error("Error creating product:", error)
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to create product" }, { status: 500 })
   }
 }
 
@@ -148,7 +162,14 @@ export async function DELETE(request: Request) {
     revalidatePath('/api/admin/products')
     revalidatePath('/')
 
-    return NextResponse.json({ success: true })
+    return new NextResponse(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error("Error deleting product:", error)
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 })

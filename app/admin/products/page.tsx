@@ -129,32 +129,25 @@ export default function ProductsPage() {
       notifySuccess("Lưu thành công!")
       setProductDialogOpen(false)
       setSelectedProduct(null)
+      setProductForm({
+        name: "",
+        description: "",
+        price: "",
+        original_price: "",
+        discount_price: "",
+        stock: "",
+        brand: "",
+        category_id: "",
+        image_url: "",
+        is_featured: false,
+        is_deal: false,
+        images: "",
+        specs: ""
+      })
       
-      // Wait a bit then refresh data with fresh fetch
-      setTimeout(async () => {
-        try {
-          const params = new URLSearchParams({
-            page: productsPagination.page.toString(),
-            limit: productsPagination.limit.toString(),
-            _t: Date.now().toString()
-          })
-          if (debouncedProductsSearch) params.append("search", debouncedProductsSearch)
-          if (productsCategoryFilter !== "all") params.append("category_id", productsCategoryFilter)
-
-          const refreshResponse = await fetch(`/api/admin/products?${params}`)
-          if (!refreshResponse.ok) throw new Error("Failed to refresh")
-          
-          const refreshData = await refreshResponse.json()
-          console.log("[v0] Refreshed products data:", refreshData.data)
-          setProducts(refreshData.data || [])
-          setProductsPagination(prev => ({
-            ...prev,
-            total: refreshData.pagination?.total || 0,
-            totalPages: refreshData.pagination?.totalPages || 0
-          }))
-        } catch (error) {
-          console.error("[v0] Failed to refresh products:", error)
-        }
+      // Wait a bit then call fetchProducts directly
+      setTimeout(() => {
+        fetchProducts()
       }, 500)
     } catch (error) {
       notifyError("Lỗi khi lưu sản phẩm: " + (error as Error).message)

@@ -76,7 +76,14 @@ export async function PUT(request: Request) {
     revalidatePath('/admin/users')
     revalidatePath('/api/admin/users')
 
-    return NextResponse.json(data[0])
+    return new NextResponse(JSON.stringify(data[0]), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error("Error updating user:", error)
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 })

@@ -104,32 +104,9 @@ export default function UsersPage() {
         country: "",
       })
 
-      // Wait then refresh with cache busting
-      setTimeout(async () => {
-        try {
-          const params = new URLSearchParams({
-            page: usersPagination.page.toString(),
-            limit: usersPagination.limit.toString(),
-            _t: Date.now().toString()
-          })
-          if (debouncedUsersSearch) {
-            params.append("search", debouncedUsersSearch)
-          }
-
-          const refreshResponse = await fetch(`/api/admin/users?${params}`)
-          if (!refreshResponse.ok) throw new Error("Failed to refresh")
-          
-          const refreshData = await refreshResponse.json()
-          console.log("[v0] Refreshed users data:", refreshData.data)
-          setUsers(refreshData.data || [])
-          setUsersPagination(prev => ({
-            ...prev,
-            total: refreshData.pagination?.total || 0,
-            totalPages: refreshData.pagination?.totalPages || 0
-          }))
-        } catch (error) {
-          console.error("[v0] Failed to refresh users:", error)
-        }
+      // Wait then refresh
+      setTimeout(() => {
+        fetchUsers()
       }, 500)
     } catch (error) {
       toast({

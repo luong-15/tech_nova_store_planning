@@ -111,21 +111,9 @@ export default function CategoriesPage() {
       setSelectedCategory(null)
       setCategoryForm({ name: "", description: "", image_url: "" })
       
-      // Wait then refresh data with cache busting
-      setTimeout(async () => {
-        try {
-          const cacheParams = new URLSearchParams({ _t: Date.now().toString() })
-          if (debouncedCategoriesSearch) cacheParams.append("search", debouncedCategoriesSearch)
-
-          const refreshResponse = await fetch(`/api/admin/categories?${cacheParams}`)
-          if (!refreshResponse.ok) throw new Error("Failed to refresh")
-          
-          const refreshData = await refreshResponse.json()
-          console.log("[v0] Refreshed categories data:", refreshData)
-          setCategories(Array.isArray(refreshData) ? refreshData : refreshData?.data || [])
-        } catch (error) {
-          console.error("[v0] Failed to refresh categories:", error)
-        }
+      // Wait then refresh data
+      setTimeout(() => {
+        fetchCategories()
       }, 500)
     } catch (error) {
       notifyError(error instanceof Error ? error.message : "Lỗi khi lưu danh mục. Vui lòng thử lại.")

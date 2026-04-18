@@ -83,7 +83,14 @@ export async function PUT(request: Request) {
     revalidatePath('/api/admin/orders')
     revalidatePath('/dashboard')
 
-    return NextResponse.json({ success: true })
+    return new NextResponse(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error("Error updating order:", error)
     return NextResponse.json({ error: "Failed to update order" }, { status: 500 })
