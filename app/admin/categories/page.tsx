@@ -114,14 +114,11 @@ export default function CategoriesPage() {
       // Wait then refresh data directly
       setTimeout(async () => {
         try {
-          console.log("[v0] Categories setTimeout - direct fetch")
           const freshResponse = await fetch(`/api/admin/categories`, { cache: 'no-store' })
           const freshData = await freshResponse.json()
           
-          console.log("[v0] Categories direct fetch received:", freshData)
           setCategories(Array.isArray(freshData) ? freshData : freshData?.data || [])
         } catch (error) {
-          console.error("[v0] Categories direct fetch error:", error)
         }
       }, 500)
     } catch (error) {

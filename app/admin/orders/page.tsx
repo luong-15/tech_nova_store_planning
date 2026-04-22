@@ -95,18 +95,16 @@ export default function OrdersPage() {
         notifySuccess("Lưu thành công! Đã cập nhật trạng thái đơn hàng.")
         setOrderDialogOpen(false)
         setSelectedOrder(null)
-        setNewOrderStatus(null)
-        setNewPaymentStatus(null)
+        setNewOrderStatus("")
+        setNewPaymentStatus("")
         
         // Wait then refresh data directly
         setTimeout(async () => {
           try {
-            console.log("[v0] Orders setTimeout - direct fetch")
             const params = new URLSearchParams({ page: "1", limit: "50" })
             const freshResponse = await fetch(`/api/admin/orders?${params}`, { cache: 'no-store' })
             const freshData = await freshResponse.json()
             
-            console.log("[v0] Orders direct fetch received:", freshData)
             setOrders(freshData.data || [])
             setOrdersPagination(prev => ({ 
               ...prev, 
@@ -114,7 +112,6 @@ export default function OrdersPage() {
               totalPages: freshData.pagination?.totalPages || 0 
             }))
           } catch (error) {
-            console.error("[v0] Orders direct fetch error:", error)
           }
         }, 500)
       }

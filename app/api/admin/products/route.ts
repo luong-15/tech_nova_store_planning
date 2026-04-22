@@ -61,9 +61,6 @@ export async function PUT(request: Request) {
     const supabase = await createAdminServerClient()
     const { id, ...productData } = await request.json()
 
-    console.log("[v0] API PUT - Received ID:", id)
-    console.log("[v0] API PUT - Product data:", productData)
-
     // Filter optional fields to avoid schema cache errors (null/empty)
     const safeData = {
       name: productData.name,
@@ -80,16 +77,11 @@ export async function PUT(request: Request) {
       ...(productData.specs && { specs: productData.specs }),
     }
 
-    console.log("[v0] API PUT - Safe data to update:", safeData)
-
     const { error, data } = await supabase
       .from("products")
       .update(safeData)
       .eq("id", id)
       .select()
-
-    console.log("[v0] API PUT - Update error:", error)
-    console.log("[v0] API PUT - Updated data:", data)
 
     if (error) throw error
 
