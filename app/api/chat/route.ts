@@ -85,30 +85,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if API key is available
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
-    console.log('=== API Key Debug Info ===')
-    console.log('GOOGLE_GENERATIVE_AI_API_KEY exists:', !!apiKey)
-    console.log('API Key length:', apiKey?.length || 0)
-    console.log('API Key starts with:', apiKey?.substring(0, 10) + '...')
-    console.log('All env vars with GOOGLE/AI/GENERATIVE:', Object.keys(process.env).filter(key =>
-      key.includes('GOOGLE') || key.includes('AI') || key.includes('GENERATIVE')
-    ))
-    console.log('All env vars starting with G:', Object.keys(process.env).filter(key => key.startsWith('G')))
-    console.log('Current working directory:', process.cwd())
-    console.log('===========================')
+    // const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    // console.log('=== API Key Debug Info ===')
+    // console.log('GOOGLE_GENERATIVE_AI_API_KEY exists:', !!apiKey)
+    // console.log('API Key length:', apiKey?.length || 0)
+    // console.log('API Key starts with:', apiKey?.substring(0, 10) + '...')
+    // console.log('All env vars with GOOGLE/AI/GENERATIVE:', Object.keys(process.env).filter(key =>
+    //   key.includes('GOOGLE') || key.includes('AI') || key.includes('GENERATIVE')
+    // ))
+    // console.log('All env vars starting with G:', Object.keys(process.env).filter(key => key.startsWith('G')))
+    // console.log('Current working directory:', process.cwd())
+    // console.log('===========================')
 
-    if (!apiKey || apiKey.trim() === '') {
-      console.error('GOOGLE_GENERATIVE_AI_API_KEY not found or empty')
-      return NextResponse.json({
-        error: 'API key not configured',
-        message: 'Please add GOOGLE_GENERATIVE_AI_API_KEY to your .env.local file. Make sure the file is in the project root and the key is not empty.',
-        debug: {
-          envFileExists: true,
-          keyLength: apiKey?.length || 0,
-          availableKeys: Object.keys(process.env).filter(key => key.includes('GOOGLE') || key.includes('AI'))
-        }
-      }, { status: 500 })
-    }
+    // if (!apiKey || apiKey.trim() === '') {
+    //   console.error('GOOGLE_GENERATIVE_AI_API_KEY not found or empty')
+    //   return NextResponse.json({
+    //     error: 'API key not configured',
+    //     message: 'Please add GOOGLE_GENERATIVE_AI_API_KEY to your .env.local file. Make sure the file is in the project root and the key is not empty.',
+    //     debug: {
+    //       envFileExists: true,
+    //       keyLength: apiKey?.length || 0,
+    //       availableKeys: Object.keys(process.env).filter(key => key.includes('GOOGLE') || key.includes('AI'))
+    //     }
+    //   }, { status: 500 })
+    // }
 
     // Create a system prompt with product information - Optimized for Clean Chat UI
 const systemPrompt = `You are a professional shopping assistant for TechNova Store. 

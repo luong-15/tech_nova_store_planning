@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, X, RotateCw, Filter } from "lucide-react"
@@ -31,84 +32,26 @@ export interface FilterState {
   categories: string[]
 }
 
+interface ApiFilters {
+  brands: {value: string, label: string, count: number}[]
+  categories: {value: string, label: string, count: number}[]
+  ram: {value: string, label: string, count: number}[]
+  storage: {value: string, label: string, count: number}[]
+  cpu: {value: string, label: string, count: number}[]
+  screenSize: {value: string, label: string, count: number}[]
+}
+
 interface SidebarFilterProps {
   onFilterChange?: (filters: FilterState) => void
   initialFilters?: Partial<FilterState>
 }
 
-const FILTER_SECTIONS: FilterSection[] = [
-  {
-    id: "brands",
-    label: "Hãng sản xuất",
-    options: [
-      { value: "apple", label: "Apple", count: 24 },
-      { value: "samsung", label: "Samsung", count: 18 },
-      { value: "dell", label: "Dell", count: 15 },
-      { value: "hp", label: "HP", count: 12 },
-      { value: "lenovo", label: "Lenovo", count: 10 },
-      { value: "asus", label: "Asus", count: 8 },
-      { value: "acer", label: "Acer", count: 6 },
-    ],
-  },
-  {
-    id: "ram",
-    label: "RAM",
-    options: [
-      { value: "8gb", label: "8GB", count: 32 },
-      { value: "16gb", label: "16GB", count: 28 },
-      { value: "32gb", label: "32GB", count: 15 },
-      { value: "64gb", label: "64GB", count: 8 },
-    ],
-  },
-  {
-    id: "storage",
-    label: "Bộ nhớ trong",
-    options: [
-      { value: "256gb", label: "256GB", count: 25 },
-      { value: "512gb", label: "512GB", count: 30 },
-      { value: "1tb", label: "1TB", count: 20 },
-      { value: "2tb", label: "2TB", count: 10 },
-    ],
-  },
-  {
-    id: "cpu",
-    label: "CPU",
-    options: [
-      { value: "intel-i5", label: "Intel Core i5", count: 18 },
-      { value: "intel-i7", label: "Intel Core i7", count: 22 },
-      { value: "intel-i9", label: "Intel Core i9", count: 12 },
-      { value: "amd-ryzen5", label: "AMD Ryzen 5", count: 10 },
-      { value: "amd-ryzen7", label: "AMD Ryzen 7", count: 14 },
-      { value: "m1", label: "Apple M1", count: 8 },
-      { value: "m2", label: "Apple M2", count: 10 },
-      { value: "m3", label: "Apple M3", count: 6 },
-    ],
-  },
-  {
-    id: "screenSize",
-    label: "Kích thước màn hình",
-    options: [
-      { value: "13-14", label: '13" - 14"', count: 20 },
-      { value: "15-16", label: '15" - 16"', count: 25 },
-      { value: "17-18", label: '17" - 18"', count: 10 },
-    ],
-  },
-  {
-    id: "categories",
-    label: "Danh mục",
-    options: [
-      { value: "laptop", label: "Laptop", count: 45 },
-      { value: "smartphone", label: "Smartphone", count: 38 },
-      { value: "accessories", label: "Phụ kiện", count: 62 },
-    ],
-  },
-]
-
 const PRICE_MIN = 0
 const PRICE_MAX = 100000000
 
 export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["brands", "ram", "storage"]))
+  const [dynamicSections, setDynamicSections] = useState<FilterSection[]>([])
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["brands"]))
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -121,6 +64,53 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
     screenSize: initialFilters?.screenSize || [],
     categories: initialFilters?.categories || [],
   })
+
+  // Fetch dynamic filters
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        const searchParams = new URLSearchParams(window.location.search)
+        const search = searchParams.get('search') || ''
+        const url = `/api/products/filters${search ? `?search=${encodeURIComponent(search)}` : ''}`
+        const response = await fetch(url)
+        if (response.ok) {
+          const apiData: ApiFilters = await response.json()
+          const sections: FilterSection[] = [
+            {
+              id: "brands",
+              label: "Hãng sản xuất",
+              options: apiData.brands,
+            },
+            {
+              id: "ram",
+              label: "RAM",
+              options: apiData.ram,
+            },
+            {
+              id: "storage",
+              label: "Bộ nhớ trong",
+              options: apiData.storage,
+            },
+            {
+              id: "cpu",
+              label: "CPU",
+              options: apiData.cpu,
+            },
+            {
+              id: "categories",
+              label: "Danh mục",
+              options: apiData.categories,
+            },
+          ]
+          setDynamicSections(sections)
+        }
+      } catch (error) {
+        console.error('Failed to fetch filters:', error)
+      }
+    }
+
+    fetchFilters()
+  }, [])
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
@@ -139,7 +129,7 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
         onFilterChange?.(newFilters)
-      }, 250) // Tăng slight delay để filter mượt hơn
+      }, 250)
     },
     [onFilterChange],
   )
@@ -220,7 +210,6 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
 
   const activeCount = getActiveFilterCount()
 
-  // CSS classes cho custom scrollbar dùng Tailwind arbitrary variants
   const scrollbarClasses = "scrollbar-thin [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/60 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary/50 transition-colors"
 
   return (
@@ -312,7 +301,7 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
 
         {/* Filter Sections */}
         <div className={cn("space-y-1 max-h-[calc(100vh-320px)] overflow-y-auto pr-2", scrollbarClasses)}>
-          {FILTER_SECTIONS.map((section) => {
+          {dynamicSections.map((section) => {
             const isExpanded = expandedSections.has(section.id)
             const sectionKey = section.id as keyof FilterState
             const selectedValues = (filters[sectionKey] as string[]) || []
@@ -446,3 +435,4 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
     </aside>
   )
 }
+

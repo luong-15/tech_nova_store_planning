@@ -168,7 +168,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
                       <CardTitle className="text-base font-bold tracking-tight">TechNova Assistant</CardTitle>
                       <div className="flex items-center gap-1.5 text-[11px] text-emerald-500 font-medium uppercase tracking-wider">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            AI Ready
+                          AI Ready
                       </div>
                     </div>
                   </div>
