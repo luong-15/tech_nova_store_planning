@@ -3,12 +3,14 @@
 import { useCartStore } from "@/lib/store/cart-store"
 import { useComparisonStore } from "@/lib/store/comparison-store"
 import { notifyCartAdded, notifyComparisonAdded, notifyError } from "@/lib/notifications"
-import { useCallback, useState } from "react"
+import { useCallback, useState, useRef } from "react"
 import { formatPrice } from "@/lib/currency"
 import Link from "next/link"
 import type { Product } from "@/lib/types"
 import { ShoppingCart, GitCompare, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
+import { triggerFlyToCart } from "@/components/animations/fly-to-cart"
 
 interface ProductCardProps {
   product: Product;
@@ -21,20 +23,31 @@ export function ProductCard({ product }: ProductCardProps) {
   const canAddProduct = useComparisonStore((state) => state.canAddProduct);
   const [isInCart, setIsInCart] = useState(false);
   const cartItems = useCartStore((state) => state.cartItems);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const cartButtonRef = useRef<HTMLButtonElement>(null);
 
-  const handleAddToCart = useCallback(() => {
+  const handleAddToCart = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     const wasEmpty = cartItems.length === 0;
-    addToCart(product);
-    setIsInCart(true);
     
-    notifyCartAdded(product.name, async () => {
-      const freshCartStore = useCartStore.getState()
-      freshCartStore.removeFromCart(product.id)
-      setIsInCart(false)
-      if (wasEmpty) {
-        notifyError("Giỏ hàng đã được hoàn tác")
-      }
-    });
+    // Trigger fly-to-cart animation
+    triggerFlyToCart(product.image_url, product.id, e);
+    setIsAnimating(true);
+    
+    // Add to cart after a brief delay
+    setTimeout(() => {
+      addToCart(product);
+      setIsInCart(true);
+      setIsAnimating(false);
+      
+      notifyCartAdded(product.name, async () => {
+        const freshCartStore = useCartStore.getState()
+        freshCartStore.removeFromCart(product.id)
+        setIsInCart(false)
+        if (wasEmpty) {
+          notifyError("Giỏ hàng đã được hoàn tác")
+        }
+      });
+    }, 200);
   }, [product, addToCart, cartItems.length]);
 
   const handleAddToComparison = () => {
@@ -49,7 +62,21 @@ export function ProductCard({ product }: ProductCardProps) {
   const inComparison = isProductInComparison(product.id);
 
   return (
-    <div className="group relative bg-background border border-border/50 rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-primary/30">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-100px' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="group relative bg-background border border-border/50 rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-primary/30"
+    >
+      {/* Border glow effect on hover */}
+      <motion.div
+        className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100"
+        style={{
+          background: 'radial-gradient(600px at 50% 50%, rgba(147, 51, 234, 0.1), transparent 80%)',
+        }}
+        transition={{ duration: 0.3 }}
+      />
       
       {/* Nút so sánh - Thêm hiệu ứng trượt từ phải sang (slide-in) */}
       <button
@@ -96,30 +123,45 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Nút hành động - Nâng cấp hiệu ứng hover bên trong (Group-hover cho Icon) */}
-        <button
+        <motion.button
+          ref={cartButtonRef}
           onClick={handleAddToCart}
-          disabled={isInCart}
+          disabled={isInCart || isAnimating}
+          data-cart-button
           className={cn(
             "group/btn w-full h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all duration-300 active:scale-95 overflow-hidden relative",
             isInCart 
               ? "bg-emerald-500 text-white" 
-              : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md"
+              : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md",
+            isAnimating && "opacity-75"
           )}
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: isInCart ? 1 : 1.02 }}
         >
           {isInCart ? (
             <>
-              <Check size={14} className="animate-in zoom-in" />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+              >
+                <Check size={14} />
+              </motion.div>
               <span>Đã thêm</span>
             </>
           ) : (
             <>
               {/* Hiệu ứng xe đẩy nhích lên phía trước khi hover nút */}
-              <ShoppingCart size={14} className="transition-transform duration-300 group-hover/btn:-rotate-12 group-hover/btn:-translate-x-0.5" />
+              <motion.div
+                animate={isAnimating ? { y: -20, opacity: 0 } : { y: 0, opacity: 1 }}
+              >
+                <ShoppingCart size={14} className="transition-transform duration-300 group-hover/btn:-rotate-12 group-hover/btn:-translate-x-0.5" />
+              </motion.div>
               <span>Thêm giỏ hàng</span>
             </>
           )}
-        </button>
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 }

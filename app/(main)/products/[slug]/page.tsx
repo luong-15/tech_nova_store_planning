@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, notFound } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useCartStore } from "@/lib/store/cart-store"
@@ -18,6 +18,8 @@ import { ShoppingCart, Heart, Share2, Shield, Truck, RotateCcw, Star, Clock, Che
 import { notifyCartAdded, notifyWishlistAdded, notifyWishlistRemoved, notifyError, notifyInfo } from "@/lib/notifications"
 import Link from "next/link"
 import type { Product, Review, UserProfile } from "@/lib/types"
+import { motion } from "framer-motion"
+import { triggerFlyToCart } from "@/components/animations/fly-to-cart"
 
 export default function ProductPage() {
   const params = useParams()
@@ -103,10 +105,15 @@ export default function ProductPage() {
     fetchProductData()
   }, [slug])
 
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart(product)
-      notifyCartAdded(product.name, () => useCartStore.getState().removeFromCart(product.id))
+  const cartButtonRef = useRef<HTMLButtonElement>(null)
+
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (product && cartButtonRef.current) {
+      triggerFlyToCart(product.image_url, product.id, e as any)
+      setTimeout(() => {
+        addToCart(product)
+        notifyCartAdded(product.name, () => useCartStore.getState().removeFromCart(product.id))
+      }, 200)
     }
   }
 
@@ -198,7 +205,12 @@ export default function ProductPage() {
   const images = (product.images as string[]) || [product.image_url]
 
   return (
-    <div className="min-h-screen bg-slate-50/30 dark:bg-transparent animate-in fade-in duration-700">
+    <motion.div 
+      className="min-h-screen bg-slate-50/30 dark:bg-transparent"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Breadcrumb - Sticky Glass */}
       <div className="sticky top-16 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto px-4 py-3">
@@ -214,15 +226,30 @@ export default function ProductPage() {
 
       <div className="container mx-auto px-4 py-10 lg:py-16">
         {/* Main Grid: Gallery + Info */}
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-start">
+        <motion.div 
+          className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-start"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
           
           {/* Left Column: Gallery */}
-          <div className="rounded-3xl p-1 bg-white dark:bg-background/50 border border-border/40 shadow-2xl shadow-black/5">
+          <motion.div 
+            className="rounded-3xl p-1 bg-white dark:bg-background/50 border border-border/40 shadow-2xl shadow-black/5"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             <ProductGallery images={images} productName={product.name} />
-          </div>
+          </motion.div>
 
           {/* Right Column: Sticky Info */}
-          <div className="sticky top-32 flex flex-col gap-8">
+          <motion.div 
+            className="sticky top-32 flex flex-col gap-8"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
             
             {/* Header: Brand, Title, Rating */}
             <div className="space-y-4">
@@ -287,36 +314,52 @@ export default function ProductPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4">
+            <motion.div 
+              className="flex gap-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
               <Button
+                ref={cartButtonRef}
                 size="lg"
                 className="flex-1 h-14 text-base font-bold rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300"
                 disabled={!product.stock || product.stock <= 0}
                 onClick={handleAddToCart}
+                data-cart-button
+                asChild
               >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Thêm vào giỏ hàng
+                <motion.button whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }}>
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Thêm vào giỏ hàng
+                </motion.button>
               </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className={cn(
-                  "h-14 w-14 rounded-2xl border-border/50 transition-all duration-300",
-                  isInWishlist ? "bg-red-50 border-red-200 text-red-500 dark:bg-red-500/10 dark:border-red-500/30" : "hover:bg-muted"
-                )}
-                onClick={handleAddToWishlist}
-              >
-                <Heart className={cn("h-6 w-6 transition-transform", isInWishlist ? "fill-current scale-110" : "scale-100")} />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-14 w-14 rounded-2xl border-border/50 hover:bg-muted transition-all duration-300"
-                onClick={handleShare}
-              >
-                <Share2 className="h-6 w-6 text-muted-foreground" />
-              </Button>
-            </div>
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className={cn(
+                    "h-14 w-14 rounded-2xl border-border/50 transition-all duration-300",
+                    isInWishlist ? "bg-red-50 border-red-200 text-red-500 dark:bg-red-500/10 dark:border-red-500/30" : "hover:bg-muted"
+                  )}
+                  onClick={handleAddToWishlist}
+                >
+                  <motion.div animate={isInWishlist ? { scale: [1, 1.2, 1] } : {}}>
+                    <Heart className={cn("h-6 w-6 transition-transform", isInWishlist ? "fill-current scale-110" : "scale-100")} />
+                  </motion.div>
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-14 w-14 rounded-2xl border-border/50 hover:bg-muted transition-all duration-300"
+                  onClick={handleShare}
+                >
+                  <Share2 className="h-6 w-6 text-muted-foreground" />
+                </Button>
+              </motion.div>
+            </motion.div>
 
             {/* Benefits Cards */}
             <div className="grid grid-cols-3 gap-4 pt-4">
@@ -337,8 +380,8 @@ export default function ProductPage() {
               ))}
             </div>
             
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Tabs Section */}
         <div className="mt-20 lg:mt-32">
@@ -383,28 +426,61 @@ export default function ProductPage() {
 
         {/* Related Products Section */}
         {relatedProducts && relatedProducts.length > 0 && (
-          <div className="mt-24">
-            <div className="flex items-center justify-between mb-8">
+          <motion.div 
+            className="mt-24"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div 
+              className="flex items-center justify-between mb-8"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
               <h2 className="text-3xl font-extrabold tracking-tight">Sản phẩm tương tự</h2>
               <Button variant="ghost" className="text-primary hover:bg-primary/10 rounded-xl font-bold">
                 Xem tất cả <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedProducts.map((relatedProduct: Product, index) => (
-                <div 
-                  key={relatedProduct.id} 
-                  className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
-                  style={{ animationDelay: `${index * 100}ms` }}
+            </motion.div>
+            <motion.div 
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-100px' }}
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                    delayChildren: 0.3,
+                  },
+                },
+              }}
+            >
+              {relatedProducts.map((relatedProduct: Product) => (
+                <motion.div
+                  key={relatedProduct.id}
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.5, ease: 'easeOut' },
+                    },
+                  }}
                 >
                   <ProductCard product={relatedProduct} />
-                </div>
+                </motion.div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 

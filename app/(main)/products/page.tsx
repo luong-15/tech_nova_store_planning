@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ChevronLeft, ChevronRight, Grid3X3, List, SlidersHorizontal, X, Loader2, PackageSearch } from "lucide-react"
 import type { Product } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
+import { TextReveal } from "@/components/animations/text-reveal"
 
 type ApiPagination = { page: number; limit: number; total: number }
 
@@ -199,16 +201,33 @@ function ProductsPageContent() {
         <div className="flex-1 space-y-8">
           {/* Header Info (Search Result) */}
           {searchQuery && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-2"
+            >
                 <h1 className="text-2xl font-bold tracking-tight">
                     Kết quả tìm kiếm cho: <span className="text-primary italic">"{searchQuery}"</span>
                 </h1>
-                <p className="text-muted-foreground mt-1 text-sm">Tìm thấy {filteredProducts.length} sản phẩm phù hợp</p>
-            </div>
+                <motion.p 
+                  className="text-muted-foreground text-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                >
+                  Tìm thấy {filteredProducts.length} sản phẩm phù hợp
+                </motion.p>
+            </motion.div>
           )}
 
           {/* Toolbar - Modernized appearance */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/40 bg-background/50 p-4 shadow-sm backdrop-blur-xl">
+          <motion.div 
+            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/40 bg-background/50 p-4 shadow-sm backdrop-blur-xl"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             <div className="flex items-center gap-4">
               <Button 
                 variant="secondary" 
@@ -273,36 +292,50 @@ function ProductsPageContent() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </motion.div>
 
           {/* Products Grid - Added staggering animation and smoother filtering transition */}
           {filteredProducts.length > 0 ? (
-            <div
+            <motion.div
               className={cn(
                 "grid gap-6 transition-opacity duration-500",
                 viewMode === "grid" ? "sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1",
                 filtering ? "opacity-30 pointer-events-none" : "opacity-100"
               )}
+              layout
             >
               {filteredProducts.map((product, index) => (
-                <div
+                <motion.div
                   key={product.id}
-                  className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out-expo"
-                  style={{
-                    animationDelay: `${index * 40}ms`,
-                    animationFillMode: "both",
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-100px' }}
+                  transition={{
+                    delay: index * 0.05,
+                    duration: 0.5,
+                    ease: 'easeOut',
                   }}
+                  layout
                 >
                   <ProductCard product={product} />
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           ) : (
             /* Empty State - Modernized with better icon and layout */
-            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/60 bg-muted/20 py-28 animate-in fade-in zoom-in-95 duration-500">
-              <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-background shadow-inner">
+            <motion.div 
+              className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/60 bg-muted/20 py-28"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <motion.div 
+                className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-background shadow-inner"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
                 <PackageSearch className="h-12 w-12 text-muted-foreground/50" />
-              </div>
+              </motion.div>
               <h3 className="mb-2 text-2xl font-bold tracking-tight">Không tìm thấy sản phẩm</h3>
               <p className="max-w-xs text-center text-muted-foreground/80 leading-relaxed">
                 Rất tiếc, chúng tôi không tìm thấy kết quả nào phù hợp với bộ lọc hiện tại. Hãy thử thay đổi điều kiện lọc.
@@ -314,7 +347,7 @@ function ProductsPageContent() {
               >
                 Xóa tất cả bộ lọc
               </Button>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
