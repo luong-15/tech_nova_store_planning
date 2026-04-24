@@ -256,24 +256,24 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
     <aside className="w-full">
       <div
         className={cn(
-          "bg-background/80 backdrop-blur-xl border border-border/50 rounded-3xl p-6 space-y-7 shadow-2xl shadow-black/5 transition-all duration-500 ease-out",
+          "bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl md:rounded-3xl p-4 md:p-6 space-y-5 md:space-y-7 shadow-2xl shadow-black/5 transition-all duration-500 ease-out max-h-screen md:max-h-none overflow-y-auto md:overflow-y-visible",
           isClearing && "scale-[0.98] opacity-50 blur-[2px]",
         )}
       >
         {/* Header Section */}
-        <div className="flex items-center justify-between pb-2">
-          <div className="flex items-center gap-2.5">
-            <div className="bg-primary/10 p-2 rounded-xl text-primary">
-              <Filter className="w-4 h-4" />
+        <div className="flex items-center justify-between pb-2 sticky top-0 bg-background/80 md:bg-transparent -mx-4 md:-mx-6 px-4 md:px-6 py-3 md:py-0 md:static">
+          <div className="flex items-center gap-2">
+            <div className="bg-primary/10 p-2 rounded-lg md:rounded-xl text-primary">
+              <Filter className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </div>
-            <h2 className="text-lg font-bold tracking-tight text-foreground">Bộ lọc</h2>
+            <h2 className="text-base md:text-lg font-bold tracking-tight text-foreground">Bộ lọc</h2>
             <div
               className={cn(
                 "transition-all duration-500 ease-out-expo",
                 activeCount > 0 ? "scale-100 opacity-100 translate-x-0" : "scale-50 opacity-0 -translate-x-4",
               )}
             >
-              <Badge variant="default" className="h-6 w-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shadow-sm p-0">
+              <Badge variant="default" className="h-5 w-5 md:h-6 md:w-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm p-0">
                 {activeCount}
               </Badge>
             </div>
@@ -285,35 +285,35 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
             onClick={clearAllFilters}
             disabled={activeCount === 0}
             className={cn(
-              "h-8 px-2.5 text-xs font-semibold gap-1.5 rounded-lg transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
+              "h-7 md:h-8 px-2 md:px-2.5 text-[11px] md:text-xs font-semibold gap-1 md:gap-1.5 rounded-lg transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
               activeCount > 0 ? "opacity-100" : "opacity-0 pointer-events-none",
             )}
           >
-            <RotateCw className={cn("h-3.5 w-3.5 transition-transform duration-500", isClearing && "animate-spin")} />
-            Xóa lọc
+            <RotateCw className={cn("h-3 w-3 md:h-3.5 md:w-3.5 transition-transform duration-500", isClearing && "animate-spin")} />
+            <span className="hidden sm:inline">Xóa lọc</span>
           </Button>
         </div>
 
         {/* Price Range Slider */}
-        <div className="space-y-5 pb-7 border-b border-border/40">
+        <div className="space-y-4 md:space-y-5 pb-5 md:pb-7 border-b border-border/40">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-bold text-foreground">Mức giá</Label>
+            <Label className="text-xs md:text-sm font-bold text-foreground">Mức giá</Label>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => clearFilter("priceRange")}
               className={cn(
-                "h-6 w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
+                "h-5 md:h-6 w-5 md:w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
                 filters.priceRange.min !== PRICE_MIN || filters.priceRange.max !== PRICE_MAX
                   ? "opacity-100 scale-100"
                   : "opacity-0 scale-50 pointer-events-none",
               )}
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-2.5 md:h-3.5 w-2.5 md:w-3.5" />
             </Button>
           </div>
           
-          <div className="px-1 pt-2">
+          <div className="px-1 pt-1 md:pt-2">
             <Slider
               value={[filters.priceRange.min, filters.priceRange.max]}
               onValueChange={handlePriceChange}
@@ -324,15 +324,15 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
             />
           </div>
           
-          <div className="flex items-center justify-between gap-4">
-            <div className={cn("flex-1 rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-center transition-colors", filters.priceRange.min !== PRICE_MIN && "border-primary/30 bg-primary/5 text-primary")}>
-              <span className="text-xs font-bold tabular-nums">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            <div className={cn("flex-1 rounded-lg md:rounded-xl border border-border/50 bg-muted/30 px-2 md:px-3 py-1.5 md:py-2 text-center transition-colors", filters.priceRange.min !== PRICE_MIN && "border-primary/30 bg-primary/5 text-primary")}>
+              <span className="text-[10px] md:text-xs font-bold tabular-nums line-clamp-1">
                 {formatCurrency(filters.priceRange.min)}
               </span>
             </div>
-            <div className="h-px w-4 bg-border/60 shrink-0" />
-            <div className={cn("flex-1 rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-center transition-colors", filters.priceRange.max !== PRICE_MAX && "border-primary/30 bg-primary/5 text-primary")}>
-              <span className="text-xs font-bold tabular-nums">
+            <div className="h-px w-2 md:w-4 bg-border/60 shrink-0" />
+            <div className={cn("flex-1 rounded-lg md:rounded-xl border border-border/50 bg-muted/30 px-2 md:px-3 py-1.5 md:py-2 text-center transition-colors", filters.priceRange.max !== PRICE_MAX && "border-primary/30 bg-primary/5 text-primary")}>
+              <span className="text-[10px] md:text-xs font-bold tabular-nums line-clamp-1">
                 {formatCurrency(filters.priceRange.max)}
               </span>
             </div>
@@ -340,7 +340,7 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
         </div>
 
         {/* Filter Sections */}
-        <div className={cn("space-y-1 max-h-[calc(100vh-320px)] overflow-y-auto pr-2", scrollbarClasses)}>
+        <div className={cn("space-y-1 max-h-[calc(100vh-380px)] md:max-h-[calc(100vh-320px)] overflow-y-auto pr-2", scrollbarClasses)}>
           {dynamicSections.map((section) => {
             const isExpanded = expandedSections.has(section.id)
             const sectionKey = section.id as keyof FilterState
@@ -348,7 +348,7 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
             const selectedCount = selectedValues.length
 
             return (
-              <div key={section.id} className="pb-3 border-b border-border/40 last:border-0 last:pb-0">
+              <div key={section.id} className="pb-2 md:pb-3 border-b border-border/40 last:border-0 last:pb-0">
                 <div
                   role="button"
                   tabIndex={0}
@@ -359,12 +359,12 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
                       toggleSection(section.id)
                     }
                   }}
-                  className="flex items-center justify-between w-full group py-3 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary -mx-2 px-2"
+                  className="flex items-center justify-between w-full group py-2 md:py-3 rounded-lg md:rounded-xl cursor-pointer hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary -mx-2 px-2"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Label className="text-sm font-bold cursor-pointer">{section.label}</Label>
+                  <div className="flex items-center gap-1.5 md:gap-2.5">
+                    <Label className="text-xs md:text-sm font-bold cursor-pointer">{section.label}</Label>
                     {selectedCount > 0 && (
-                       <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-primary/10 text-primary font-bold tabular-nums animate-in zoom-in duration-300">
+                       <Badge variant="secondary" className="h-4 md:h-5 px-1 md:px-1.5 text-[8px] md:text-[10px] bg-primary/10 text-primary font-bold tabular-nums animate-in zoom-in duration-300">
                          {selectedCount}
                        </Badge>
                     )}
@@ -379,15 +379,15 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
                         clearFilter(sectionKey)
                       }}
                       className={cn(
-                        "h-6 w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
+                        "h-5 w-5 md:h-6 md:w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
                         selectedCount > 0 ? "opacity-0 group-hover:opacity-100 scale-100" : "opacity-0 scale-50 pointer-events-none",
                       )}
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-2.5 md:h-3.5 w-2.5 md:w-3.5" />
                     </Button>
                     <ChevronDown
                       className={cn(
-                        "h-4 w-4 text-muted-foreground/70 transition-transform duration-500 ease-out-expo",
+                        "h-3.5 md:h-4 w-3.5 md:w-4 text-muted-foreground/70 transition-transform duration-500 ease-out-expo",
                         isExpanded && "rotate-180 text-foreground",
                       )}
                     />
@@ -401,7 +401,7 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
                   )}
                 >
                   <div className="overflow-hidden">
-                    <div className="space-y-1 pt-1 pb-3">
+                    <div className="space-y-0.5 md:space-y-1 pt-0.5 md:pt-1 pb-2 md:pb-3">
                       {section.options.map((option, index) => {
                         const itemKey = `${section.id}-${option.value}`
                         const isSelected = selectedValues.includes(option.value)
@@ -413,7 +413,7 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
                             tabIndex={0}
                             key={option.value}
                             className={cn(
-                              "flex items-center justify-between group/item rounded-xl px-2.5 py-2.5 transition-all duration-300 cursor-pointer border",
+                              "flex items-center justify-between group/item rounded-lg md:rounded-xl px-2 md:px-2.5 py-2 md:py-2.5 transition-all duration-300 cursor-pointer border",
                               isSelected
                                 ? "bg-primary/5 border-primary/20 shadow-sm"
                                 : "hover:bg-muted/50 border-transparent",
@@ -428,7 +428,7 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
                               }
                             }}
                           >
-                            <div className="flex items-center space-x-3 flex-1">
+                            <div className="flex items-center space-x-2 md:space-x-3 flex-1">
                               <Checkbox
                                 id={itemKey}
                                 checked={isSelected}
@@ -443,7 +443,7 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
                               <Label
                                 htmlFor={itemKey}
                                 className={cn(
-                                  "text-sm cursor-pointer flex-1 transition-colors duration-300",
+                                  "text-xs md:text-sm cursor-pointer flex-1 transition-colors duration-300",
                                   isSelected ? "text-foreground font-semibold" : "text-muted-foreground group-hover/item:text-foreground",
                                 )}
                               >
@@ -454,7 +454,7 @@ export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: Sideb
                             {option.count !== undefined && (
                               <span
                                 className={cn(
-                                  "text-xs font-medium transition-colors duration-300 tabular-nums px-2 py-0.5 rounded-md",
+                                  "text-[10px] md:text-xs font-medium transition-colors duration-300 tabular-nums px-1 md:px-2 py-0.5 rounded-md",
                                   isSelected ? "bg-primary/10 text-primary" : "text-muted-foreground/50 bg-muted/30 group-hover/item:bg-muted/60",
                                 )}
                               >

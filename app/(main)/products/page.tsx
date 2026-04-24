@@ -160,9 +160,9 @@ function ProductsPageContent() {
 
   return (
     <div className="container mx-auto px-4 py-10 lg:py-16">
-      <div className="flex flex-col lg:flex-row gap-10">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
         {/* Desktop Sidebar Filter */}
-        <aside className="hidden w-72 shrink-0 lg:block">
+        <aside className="hidden w-72 lg:w-80 2xl:w-96 shrink-0 lg:block">
           <div className="sticky top-28 overflow-hidden rounded-2xl border border-border/40 bg-card/30 p-1 backdrop-blur-sm">
              <SidebarFilter onFilterChange={handleFilterChange} />
           </div>
