@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Zap, TrendingUp, Star } from "lucide-react"
 import Link from "next/link"
 import type { Product, Category } from "@/lib/types"
+import { SectionTitle } from "@/components/animations/section-title"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -68,7 +69,9 @@ export default async function HomePage() {
       <section className="py-16 bg-slate-50/50 dark:bg-slate-900/20">
         <div className="container mx-auto px-4">
           <div className="mb-10 text-center">
-            <h2 className="mb-2 text-3xl font-black tracking-tight md:text-4xl">Danh mục sản phẩm</h2>
+            <SectionTitle className="mb-2 text-3xl font-black tracking-tight md:text-4xl">
+              Danh mục sản phẩm
+            </SectionTitle>
             <p className="text-muted-foreground text-sm uppercase tracking-widest font-medium">Khám phá công nghệ đỉnh cao</p>
           </div>
 

@@ -8,12 +8,14 @@ interface StaggerContainerProps {
   delay?: number
   staggerDelay?: number
   className?: string
+  itemDelay?: number
 }
 
 export function StaggerContainer({
   children,
   delay = 0,
-  staggerDelay = 0.1,
+  staggerDelay = 0.05,
+  itemDelay = 0.3,
   className = '',
 }: StaggerContainerProps) {
   const containerVariants = {
@@ -33,11 +35,13 @@ export function StaggerContainer({
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5,
+        duration: itemDelay,
         ease: 'easeOut',
       },
     },
   }
+
+  const childrenArray = Array.isArray(children) ? children : [children]
 
   return (
     <motion.div
@@ -47,13 +51,11 @@ export function StaggerContainer({
       whileInView="visible"
       viewport={{ once: true, margin: '-100px' }}
     >
-      {Array.isArray(children)
-        ? children.map((child, index) => (
-            <motion.div key={index} variants={itemVariants}>
-              {child}
-            </motion.div>
-          ))
-        : children}
+      {childrenArray.map((child, index) => (
+        <motion.div key={index} variants={itemVariants}>
+          {child}
+        </motion.div>
+      ))}
     </motion.div>
   )
 }

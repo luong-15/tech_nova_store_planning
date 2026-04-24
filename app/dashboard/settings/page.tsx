@@ -1,166 +1,307 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { createBrowserClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
-import { Heart, ShoppingBag, Trash2, Star, Loader2 } from "lucide-react"
-import { formatCurrency } from "@/lib/currency"
-import { useCartStore } from "@/lib/store/cart-store"
-import { notifyCartAdded } from "@/lib/notifications"
-import Image from "next/image"
-import Link from "next/link"
-import type { WishlistItem, Product } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { useEffect, useState } from 'react'
+import { createBrowserClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
+import { motion } from 'framer-motion'
+import { SectionTitle } from '@/components/animations/section-title'
+import { Bell, Lock, User, Palette, LogOut, Loader2, Check, AlertCircle } from 'lucide-react'
+import { notifySuccess, notifyError } from '@/lib/notifications'
+import type { UserProfile } from '@/lib/types'
 
-export default function WishlistPage() {
-  const [wishlistItems, setWishlistItems] = useState<(WishlistItem & { product: Product })[]>([])
+export default function SettingsPage() {
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [removingId, setRemovingId] = useState<string | null>(null)
-  const cartStore = useCartStore()
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+  })
+  const [preferences, setPreferences] = useState({
+    notifications_email: true,
+    notifications_sms: false,
+    newsletter: true,
+    marketing: false,
+  })
 
-  const fetchWishlist = async () => {
-    const supabase = createBrowserClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: wishlist } = await supabase.from("wishlist").select("*").eq("user_id", user.id)
-      if (wishlist?.length) {
-        const productIds = wishlist.map((w) => w.product_id)
-        const { data: products } = await supabase.from("products").select("*").in("id", productIds)
-        if (products) {
-          const combined = wishlist.map((w) => ({
-            ...w,
-            product: products.find((p) => p.id === w.product_id)!,
-          }))
-          setWishlistItems(combined.filter((item) => item.product))
+  useEffect(() => {
+    fetchProfile()
+  }, [])
+
+  const fetchProfile = async () => {
+    try {
+      const supabase = createBrowserClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        if (profile) {
+          setProfile(profile)
+          setFormData({
+            full_name: profile.full_name || '',
+            email: user.email || '',
+          })
         }
       }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  useEffect(() => { fetchWishlist() }, [])
-
-  const removeFromWishlist = async (wishlistId: string) => {
-    setRemovingId(wishlistId)
-    const supabase = createBrowserClient()
-    await supabase.from("wishlist").delete().eq("id", wishlistId)
-    setWishlistItems((prev) => prev.filter((item) => item.id !== wishlistId))
-    setRemovingId(null)
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    try {
+      const supabase = createBrowserClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ full_name: formData.full_name })
+          .eq('id', user.id)
+        
+        if (error) throw error
+        notifySuccess('Cập nhật thông tin cá nhân thành công')
+      }
+    } catch (err) {
+      notifyError('Lỗi khi cập nhật thông tin')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  if (loading) return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <Skeleton className="h-10 w-64" />
-      <div className="grid gap-4 md:grid-cols-2">
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
+  const handleLogout = async () => {
+    try {
+      const supabase = createBrowserClient()
+      await supabase.auth.signOut()
+      window.location.href = '/'
+    } catch (err) {
+      notifyError('Lỗi khi đăng xuất')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-8 max-w-4xl mx-auto p-6">
+        <Skeleton className="h-10 w-64" />
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  const settingSections = [
+    {
+      icon: User,
+      title: 'Thông tin cá nhân',
+      description: 'Quản lý tên, email và thông tin liên hệ',
+      color: 'from-blue-500/10 to-blue-600/5',
+    },
+    {
+      icon: Bell,
+      title: 'Thông báo',
+      description: 'Cài đặt cách bạn nhận thông báo',
+      color: 'from-purple-500/10 to-purple-600/5',
+    },
+    {
+      icon: Lock,
+      title: 'Bảo mật',
+      description: 'Quản lý mật khẩu và quyền truy cập',
+      color: 'from-red-500/10 to-red-600/5',
+    },
+    {
+      icon: Palette,
+      title: 'Giao diện',
+      description: 'Tùy chỉnh chủ đề và hiển thị',
+      color: 'from-green-500/10 to-green-600/5',
+    },
+  ]
 
   return (
-    <div className="p-6 space-y-8 max-w-6xl mx-auto pb-20">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Sản phẩm yêu thích</h1>
-        <p className="text-muted-foreground mt-1">Danh sách các sản phẩm bạn đã lưu.</p>
-      </div>
+    <motion.div
+      className="space-y-8 max-w-4xl mx-auto p-6 pb-20"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <SectionTitle className="text-4xl font-bold tracking-tight mb-2">
+          Cài đặt tài khoản
+        </SectionTitle>
+        <p className="text-muted-foreground">Quản lý thông tin cá nhân và tùy chỉnh trải nghiệm của bạn</p>
+      </motion.div>
 
-      {wishlistItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed py-20 bg-muted/10">
-          <Heart className="h-12 w-12 text-muted-foreground/40 mb-4" />
-          <p className="text-muted-foreground">Danh sách của bạn đang trống.</p>
-          <Button asChild className="mt-4 rounded-full px-6">
-            <Link href="/products">Tiếp tục mua sắm</Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {wishlistItems.map((item) => {
-            const hasDiscount = item.product.original_price && item.product.original_price > item.product.price;
-            
-            return (
-              <div
-                key={item.id}
-                className="group relative flex gap-4 rounded-2xl border bg-card p-3 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20"
-              >
-                {/* Image Section */}
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-50 dark:bg-zinc-900/50">
-                  <Image
-                    src={item.product.image_url || "/placeholder.svg"}
-                    alt={item.product.name}
-                    fill
-                    className="object-contain p-2 mix-blend-multiply dark:mix-blend-normal transition-transform group-hover:scale-110"
-                  />
-                  {hasDiscount && (
-                    <Badge className="absolute top-1.5 left-1.5 bg-red-500 hover:bg-red-500 border-none px-1 h-5 text-[10px] font-bold">
-                      -{Math.round((1 - item.product.price / item.product.original_price!) * 100)}%
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Content Section */}
-                <div className="flex flex-1 flex-col justify-between min-w-0 pr-2">
-                  <div className="relative">
-                    <Link href={`/products/${item.product.slug}`} className="block pr-8">
-                      <h3 className="line-clamp-1 font-semibold text-foreground hover:text-primary transition-colors">
-                        {item.product.name}
-                      </h3>
-                    </Link>
-                    
-                    {/* Trash button positioned Top-Right */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute -top-1 -right-1 h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => removeFromWishlist(item.id)}
-                      disabled={removingId === item.id}
-                    >
-                      {removingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </Button>
-
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-[10px] font-normal py-0 px-1.5 bg-muted/50 border-none">
-                        {item.product.brand || "TechNova"}
-                      </Badge>
-                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500 border-none" />
-                        <span>{item.product.rating || "5.0"}</span>
-                      </div>
-                    </div>
+      <motion.div
+        className="grid gap-6 md:grid-cols-2"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.1,
+              delayChildren: 0.2,
+            },
+          },
+        }}
+      >
+        {settingSections.map((section, idx) => {
+          const Icon = section.icon
+          return (
+            <motion.div
+              key={section.title}
+              className={`rounded-2xl border border-border/50 bg-gradient-to-br ${section.color} p-6 cursor-pointer transition-all hover:border-primary/30 hover:shadow-md`}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+              }}
+              whileHover={{ y: -4 }}
+            >
+              <div className="flex items-start justify-between">
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold">{section.title}</h3>
                   </div>
-
-                  {/* Price & Action Button */}
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex flex-col">
-                      {hasDiscount && (
-                        <span className="text-[11px] text-muted-foreground line-through decoration-muted-foreground/50">
-                          {formatCurrency(item.product.original_price!)}
-                        </span>
-                      )}
-                      <span className="text-base font-bold text-primary">
-                        {formatCurrency(item.product.price)}
-                      </span>
-                    </div>
-
-                    <Button 
-                      size="sm" 
-                      className="h-9 rounded-xl px-4 gap-2 bg-primary hover:bg-primary/90 shadow-md shadow-primary/20 transition-all active:scale-95"
-                      onClick={() => {
-                        cartStore.addToCart(item.product);
-                        notifyCartAdded(item.product.name);
-                      }}
-                    >
-                      <ShoppingBag className="h-4 w-4" />
-                      <span className="text-xs font-medium">Thêm vào giỏ</span>
-                    </Button>
-                  </div>
+                  <p className="text-sm text-muted-foreground">{section.description}</p>
                 </div>
               </div>
-            )
-          })}
+            </motion.div>
+          )
+        })}
+      </motion.div>
+
+      <motion.div
+        className="space-y-6 rounded-2xl border border-border/50 bg-card/50 p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <div>
+          <SectionTitle className="text-2xl font-bold mb-1">Thông tin cá nhân</SectionTitle>
+          <p className="text-sm text-muted-foreground">Cập nhật tên và email của bạn</p>
         </div>
-      )}
-    </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tên đầy đủ</label>
+            <Input
+              value={formData.full_name}
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              placeholder="Nhập tên của bạn"
+              className="rounded-lg h-10"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Email</label>
+            <Input
+              value={formData.email}
+              disabled
+              className="rounded-lg h-10 bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">Email không thể thay đổi</p>
+          </div>
+
+          <Button
+            onClick={handleSaveProfile}
+            disabled={saving}
+            className="w-full h-10 rounded-lg"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Đang lưu...
+              </>
+            ) : (
+              <>
+                <Check className="mr-2 h-4 w-4" />
+                Lưu thay đổi
+              </>
+            )}
+          </Button>
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="space-y-6 rounded-2xl border border-border/50 bg-card/50 p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <div>
+          <SectionTitle className="text-2xl font-bold mb-1">Thông báo</SectionTitle>
+          <p className="text-sm text-muted-foreground">Chọn cách bạn muốn nhận thông báo</p>
+        </div>
+
+        <div className="space-y-4">
+          {[
+            { key: 'notifications_email', label: 'Thông báo qua Email', desc: 'Nhận cập nhật đơn hàng và khuyến mãi qua email' },
+            { key: 'notifications_sms', label: 'Thông báo qua SMS', desc: 'Nhận thông báo quan trọng qua tin nhắn' },
+            { key: 'newsletter', label: 'Đăng ký bản tin', desc: 'Nhận tin tức và đề xuất sản phẩm mới' },
+            { key: 'marketing', label: 'Tiếp thị', desc: 'Nhận thông tin về khuyến mãi và sự kiện' },
+          ].map((item) => (
+            <motion.div
+              key={item.key}
+              className="flex items-center justify-between p-3 rounded-lg border border-border/30 hover:bg-muted/50 transition-colors"
+              whileHover={{ x: 4 }}
+            >
+              <div>
+                <p className="font-medium text-sm">{item.label}</p>
+                <p className="text-xs text-muted-foreground">{item.desc}</p>
+              </div>
+              <Switch
+                checked={preferences[item.key as keyof typeof preferences]}
+                onCheckedChange={(checked) =>
+                  setPreferences({
+                    ...preferences,
+                    [item.key]: checked,
+                  })
+                }
+              />
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="space-y-4 rounded-2xl border border-red-200/50 dark:border-red-900/20 bg-red-50/30 dark:bg-red-950/10 p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+        <div className="flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <SectionTitle className="text-lg font-bold mb-1">Vùng nguy hiểm</SectionTitle>
+            <p className="text-sm text-muted-foreground mb-4">Các tác vụ này không thể hoàn tác</p>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="w-full h-10 rounded-lg"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Đăng xuất
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }

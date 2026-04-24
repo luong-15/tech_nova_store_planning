@@ -2,7 +2,9 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { SectionTitle } from "@/components/animations/section-title"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"

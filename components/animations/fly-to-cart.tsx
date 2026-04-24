@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/lib/store/cart-store'
 
@@ -55,10 +56,23 @@ interface FlyItemProps {
 }
 
 function FlyItem({ item }: FlyItemProps) {
-  const cartButtonRect = document.querySelector('[data-cart-button]')?.getBoundingClientRect()
+  const [endPos, setEndPos] = useState({ x: window.innerWidth - 60, y: 80 })
 
-  const endX = cartButtonRect?.right ?? window.innerWidth - 20
-  const endY = cartButtonRect?.top ?? 20
+  useEffect(() => {
+    // Try multiple selectors to find cart icon
+    const cartIcon = 
+      document.querySelector('a[href*="/cart"]') ||
+      document.querySelector('[data-cart-link]') ||
+      document.querySelector('[aria-label*="cart" i]')
+
+    if (cartIcon) {
+      const rect = cartIcon.getBoundingClientRect()
+      setEndPos({
+        x: rect.left + rect.width / 2 - 24,
+        y: rect.top + rect.height / 2 - 24,
+      })
+    }
+  }, [])
 
   return (
     <motion.div
@@ -70,10 +84,10 @@ function FlyItem({ item }: FlyItemProps) {
         scale: 1,
       }}
       animate={{
-        x: endX,
-        y: endY,
+        x: endPos.x,
+        y: endPos.y,
         opacity: 0,
-        scale: 0.3,
+        scale: 0.2,
       }}
       exit={{ opacity: 0 }}
       transition={{
@@ -84,10 +98,10 @@ function FlyItem({ item }: FlyItemProps) {
       <motion.img
         src={item.image}
         alt="Flying to cart"
-        className="w-16 h-16 object-cover rounded-lg shadow-xl"
+        className="w-12 h-12 object-cover rounded-lg shadow-2xl ring-1 ring-primary/50"
         initial={{ rotate: 0 }}
-        animate={{ rotate: 720 }}
-        transition={{ duration: 0.8 }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 0.8, ease: 'linear' }}
       />
     </motion.div>
   )

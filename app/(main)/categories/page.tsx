@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Grid3X3, List } from "lucide-react"
 import Link from "next/link"
 import type { Category } from "@/lib/types"
+import { SectionTitle } from "@/components/animations/section-title"
 
 export default async function CategoriesPage() {
   const supabase = await createClient()
@@ -19,9 +20,9 @@ export default async function CategoriesPage() {
         <Badge variant="secondary" className="mb-4 rounded-full px-4 py-1.5 text-sm font-medium">
           Bộ Sưu Tập
         </Badge>
-        <h1 className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+        <SectionTitle className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
           Danh Mục Sản Phẩm
-        </h1>
+        </SectionTitle>
         <p className="max-w-2xl text-lg text-muted-foreground/80 sm:text-xl leading-relaxed">
           Khám phá các dòng sản phẩm công nghệ hàng đầu được tuyển chọn kĩ lưỡng dành riêng cho bạn.
         </p>

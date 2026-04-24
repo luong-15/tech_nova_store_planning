@@ -10,6 +10,8 @@ import { formatPrice } from "@/lib/currency"
 import { useComparisonStore } from "@/lib/store/comparison-store"
 import { useCartStore } from "@/lib/store/cart-store"
 import { useState } from "react"
+import { motion } from "framer-motion"
+import { SectionTitle } from "@/components/animations/section-title"
 
 export default function ComparePage() {
   const { products, removeProduct, clearComparison } = useComparisonStore()

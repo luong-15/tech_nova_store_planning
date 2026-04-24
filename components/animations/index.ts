@@ -1,5 +1,6 @@
 // Text and Reveal Animations
 export { TextReveal } from './text-reveal'
+export { SectionTitle } from './section-title'
 export { RevealOnScroll, ScrollTrigger } from './scroll-animations'
 
 // Card and Container Animations

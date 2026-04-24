@@ -12,6 +12,7 @@ import type { Product } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { TextReveal } from "@/components/animations/text-reveal"
+import { SectionTitle } from "@/components/animations/section-title"
 
 type ApiPagination = { page: number; limit: number; total: number }
 
@@ -303,6 +304,7 @@ function ProductsPageContent() {
                 filtering ? "opacity-30 pointer-events-none" : "opacity-100"
               )}
               layout
+              key={`grid-${sortBy}-${viewMode}`}
             >
               {filteredProducts.map((product, index) => (
                 <motion.div
@@ -311,8 +313,8 @@ function ProductsPageContent() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-100px' }}
                   transition={{
-                    delay: index * 0.05,
-                    duration: 0.5,
+                    delay: Math.min(index * 0.04, 0.3),
+                    duration: 0.4,
                     ease: 'easeOut',
                   }}
                   layout

@@ -8,6 +8,8 @@ import { formatCurrency } from "@/lib/currency"
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, Truck, Shield, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { motion } from "framer-motion"
+import { SectionTitle } from "@/components/animations/section-title"
 
 export default function CartPage() {
   const { cartItems: items, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore()
