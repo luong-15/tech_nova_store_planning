@@ -29,10 +29,10 @@ function ProductsPageContent() {
   const [filters, setFilters] = useState<FilterState>({
     priceRange: { min: 0, max: 100000000 },
     brands: [],
-    ram: [],
-    storage: [],
-    cpu: [],
-    screenSize: [],
+    // ram: [],
+    // storage: [],
+    // cpu: [],
+    // screenSize: [],
     categories: [],
   })
   const [filtering, setFiltering] = useState(false)
@@ -91,30 +91,36 @@ function ProductsPageContent() {
       })
     }
     if (filters.brands.length > 0) result = result.filter((p) => filters.brands.includes(p.brand || ""))
-    if (filters.ram.length > 0) {
+    if (filters.categories.length > 0) {
       result = result.filter((p) => {
-        const specs = p.specifications as Record<string, string> | null
-        return specs?.ram && filters.ram.includes(specs.ram)
+        const categoryId = p.category_id
+        return categoryId != null && filters.categories.includes(String(categoryId))
       })
     }
-    if (filters.storage.length > 0) {
-      result = result.filter((p) => {
-        const specs = p.specifications as Record<string, string> | null
-        return specs?.storage && filters.storage.includes(specs.storage)
-      })
-    }
-    if (filters.cpu.length > 0) {
-      result = result.filter((p) => {
-        const specs = p.specifications as Record<string, string> | null
-        return specs?.cpu && filters.cpu.some((cpu) => specs.cpu.includes(cpu))
-      })
-    }
-    if (filters.screenSize.length > 0) {
-      result = result.filter((p) => {
-        const specs = p.specifications as Record<string, string> | null
-        return specs?.screen && filters.screenSize.some((size) => specs.screen.includes(size))
-      })
-    }
+    // if (filters.ram.length > 0) {
+    //   result = result.filter((p) => {
+    //     const specs = p.specifications as Record<string, string> | null
+    //     return specs?.ram && filters.ram.includes(specs.ram)
+    //   })
+    // }
+    // if (filters.storage.length > 0) {
+    //   result = result.filter((p) => {
+    //     const specs = p.specifications as Record<string, string> | null
+    //     return specs?.storage && filters.storage.includes(specs.storage)
+    //   })
+    // }
+    // if (filters.cpu.length > 0) {
+    //   result = result.filter((p) => {
+    //     const specs = p.specifications as Record<string, string> | null
+    //     return specs?.cpu && filters.cpu.some((cpu) => specs.cpu.includes(cpu))
+    //   })
+    // }
+    // if (filters.screenSize.length > 0) {
+    //   result = result.filter((p) => {
+    //     const specs = p.specifications as Record<string, string> | null
+    //     return specs?.screen && filters.screenSize.some((size) => specs.screen.includes(size))
+    //   })
+    // }
     switch (sortBy) {
       case "price-asc": result.sort((a, b) => (a.discount_price || a.price) - (b.discount_price || b.price)); break
       case "price-desc": result.sort((a, b) => (b.discount_price || b.price) - (a.discount_price || a.price)); break
@@ -127,7 +133,8 @@ function ProductsPageContent() {
   const activeFilterCount = useMemo(() => {
     let count = 0
     if (filters.priceRange.min > 0 || filters.priceRange.max < 100000000) count++
-    count += filters.brands.length + filters.ram.length + filters.storage.length + filters.cpu.length + filters.screenSize.length + filters.categories.length
+    // count += filters.brands.length + filters.ram.length + filters.storage.length + filters.cpu.length + filters.screenSize.length + filters.categories.length
+    count += filters.brands.length + filters.categories.length
     return count
   }, [filters])
 

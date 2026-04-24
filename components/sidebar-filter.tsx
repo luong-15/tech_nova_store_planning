@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
@@ -25,44 +26,61 @@ interface PriceRange {
 export interface FilterState {
   priceRange: PriceRange
   brands: string[]
-  ram: string[]
-  storage: string[]
-  cpu: string[]
-  screenSize: string[]
+  // ram: string[]
+  // storage: string[]
+  // cpu: string[]
+  // screenSize: string[]
   categories: string[]
 }
 
 interface ApiFilters {
   brands: {value: string, label: string, count: number}[]
   categories: {value: string, label: string, count: number}[]
-  ram: {value: string, label: string, count: number}[]
-  storage: {value: string, label: string, count: number}[]
-  cpu: {value: string, label: string, count: number}[]
-  screenSize: {value: string, label: string, count: number}[]
+  // ram: {value: string, label: string, count: number}[]
+  // storage: {value: string, label: string, count: number}[]
+  // cpu: {value: string, label: string, count: number}[]
+  // screenSize: {value: string, label: string, count: number}[]
 }
 
 interface SidebarFilterProps {
   onFilterChange?: (filters: FilterState) => void
   initialFilters?: Partial<FilterState>
+  syncUrl?: boolean
 }
 
 const PRICE_MIN = 0
 const PRICE_MAX = 100000000
 
-export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterProps) {
+export function SidebarFilter({ onFilterChange, initialFilters, syncUrl }: SidebarFilterProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const urlSearchParams = useSearchParams()
+
+  const urlInitialFilters = useMemo(() => {
+    if (!syncUrl) return null
+    const priceMin = Number(urlSearchParams.get("price_min") || PRICE_MIN)
+    const priceMax = Number(urlSearchParams.get("price_max") || PRICE_MAX)
+    const brands = urlSearchParams.get("brand")?.split(",").filter(Boolean) || []
+    return {
+      priceRange: { min: priceMin, max: priceMax },
+      brands,
+      categories: [],
+    }
+  }, [syncUrl, urlSearchParams])
+
   const [dynamicSections, setDynamicSections] = useState<FilterSection[]>([])
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["brands"]))
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   const [filters, setFilters] = useState<FilterState>({
-    priceRange: initialFilters?.priceRange || { min: PRICE_MIN, max: PRICE_MAX },
-    brands: initialFilters?.brands || [],
-    ram: initialFilters?.ram || [],
-    storage: initialFilters?.storage || [],
-    cpu: initialFilters?.cpu || [],
-    screenSize: initialFilters?.screenSize || [],
-    categories: initialFilters?.categories || [],
+    priceRange: initialFilters?.priceRange || urlInitialFilters?.priceRange || { min: PRICE_MIN, max: PRICE_MAX },
+    brands: initialFilters?.brands || urlInitialFilters?.brands || [],
+    // ram: initialFilters?.ram || [],
+    // storage: initialFilters?.storage || [],
+    // cpu: initialFilters?.cpu || [],
+    // screenSize: initialFilters?.screenSize || [],
+    categories: initialFilters?.categories || urlInitialFilters?.categories || [],
   })
 
   // Fetch dynamic filters
@@ -81,21 +99,21 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
               label: "Hãng sản xuất",
               options: apiData.brands,
             },
-            {
-              id: "ram",
-              label: "RAM",
-              options: apiData.ram,
-            },
-            {
-              id: "storage",
-              label: "Bộ nhớ trong",
-              options: apiData.storage,
-            },
-            {
-              id: "cpu",
-              label: "CPU",
-              options: apiData.cpu,
-            },
+            // {
+            //   id: "ram",
+            //   label: "RAM",
+            //   options: apiData.ram,
+            // },
+            // {
+            //   id: "storage",
+            //   label: "Bộ nhớ trong",
+            //   options: apiData.storage,
+            // },
+            // {
+            //   id: "cpu",
+            //   label: "CPU",
+            //   options: apiData.cpu,
+            // },
             {
               id: "categories",
               label: "Danh mục",
@@ -129,9 +147,31 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
         onFilterChange?.(newFilters)
+
+        if (syncUrl) {
+          const params = new URLSearchParams(urlSearchParams.toString())
+
+          if (newFilters.priceRange.min > PRICE_MIN) {
+            params.set("price_min", String(newFilters.priceRange.min))
+          } else {
+            params.delete("price_min")
+          }
+          if (newFilters.priceRange.max < PRICE_MAX) {
+            params.set("price_max", String(newFilters.priceRange.max))
+          } else {
+            params.delete("price_max")
+          }
+          if (newFilters.brands.length > 0) {
+            params.set("brand", newFilters.brands.join(","))
+          } else {
+            params.delete("brand")
+          }
+
+          router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+        }
       }, 250)
     },
-    [onFilterChange],
+    [onFilterChange, syncUrl, router, pathname, urlSearchParams],
   )
 
   const handleCheckboxChange = (section: keyof FilterState, value: string, checked: boolean) => {
@@ -185,10 +225,10 @@ export function SidebarFilter({ onFilterChange, initialFilters }: SidebarFilterP
       const resetFilters: FilterState = {
         priceRange: { min: PRICE_MIN, max: PRICE_MAX },
         brands: [],
-        ram: [],
-        storage: [],
-        cpu: [],
-        screenSize: [],
+        // ram: [],
+        // storage: [],
+        // cpu: [],
+        // screenSize: [],
         categories: [],
       }
       setFilters(resetFilters)

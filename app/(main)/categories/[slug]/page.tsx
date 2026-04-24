@@ -22,7 +22,7 @@ interface CategoryPageProps {
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;
-  const resolvedSearchParams = searchParams;
+  const resolvedSearchParams = await searchParams;
   if (!slug) {
     notFound()
   }
@@ -55,7 +55,8 @@ const supabase = await createClient()
     query = query.lte("price", Number.parseInt(resolvedSearchParams.price_max))
   }
   if (resolvedSearchParams.brand) {
-    query = query.eq("brand", resolvedSearchParams.brand)
+    const brands = resolvedSearchParams.brand.split(",").map(b => b.trim()).filter(Boolean)
+    query = query.in("brand", brands)
   }
   if (resolvedSearchParams.in_stock === "true") {
     query = query.gt("stock_quantity", 0)
@@ -144,7 +145,7 @@ const supabase = await createClient()
       <div className="grid gap-8 lg:grid-cols-4">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <SidebarFilter />
+          <SidebarFilter syncUrl />
         </div>
 
         {/* Products Grid */}
