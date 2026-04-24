@@ -5,24 +5,29 @@ import Lenis from 'lenis'
 
 export function SmoothScroll() {
   useEffect(() => {
+    const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+    
     const lenis = new Lenis({
-      duration: 1.2,
+      duration: isMobile ? 0.6 : 0.8,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       direction: 'vertical',
       gestureDirection: 'vertical',
       smooth: true,
       smoothTouch: false,
-      touchMultiplier: 2,
+      touchMultiplier: 1.5,
     })
+
+    let rafId: number
 
     function raf(time: number) {
       lenis.raf(time)
-      requestAnimationFrame(raf)
+      rafId = requestAnimationFrame(raf)
     }
 
-    requestAnimationFrame(raf)
+    rafId = requestAnimationFrame(raf)
 
     return () => {
+      cancelAnimationFrame(rafId)
       lenis.destroy()
     }
   }, [])
