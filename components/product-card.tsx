@@ -3,7 +3,7 @@
 import { useCartStore } from "@/lib/store/cart-store"
 import { useComparisonStore } from "@/lib/store/comparison-store"
 import { notifyCartAdded, notifyComparisonAdded, notifyError } from "@/lib/notifications"
-import { useCallback, useState, useRef } from "react"
+import { useCallback, useState, useRef, memo } from "react"
 import { formatPrice } from "@/lib/currency"
 import Link from "next/link"
 import type { Product } from "@/lib/types"
@@ -165,3 +165,7 @@ export function ProductCard({ product }: ProductCardProps) {
     </motion.div>
   );
 }
+
+export const MemoizedProductCard = memo(ProductCard, (prevProps, nextProps) => {
+  return prevProps.product.id === nextProps.product.id
+})

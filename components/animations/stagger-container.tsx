@@ -30,12 +30,12 @@ export function StaggerContainer({
   }
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 16 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: itemDelay,
+        duration: Math.min(itemDelay, 0.25),
         ease: 'easeOut',
       },
     },

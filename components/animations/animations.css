@@ -3,22 +3,40 @@ html {
   scroll-behavior: smooth;
 }
 
-/* View Transition API */
+/* View Transition API - Optimized for smooth transitions */
 @supports (view-transition-name: auto) {
   ::view-transition {
-    animation-duration: 0.5s;
+    animation-duration: 0.3s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  ::view-transition-image-pair(root) {
-    animation: fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  ::view-transition-old(root) {
+    animation: fade-out-transition 0.2s cubic-bezier(0.4, 0, 1, 1);
   }
 
-  @keyframes fade-in {
+  ::view-transition-new(root) {
+    animation: fade-in-transition 0.25s cubic-bezier(0, 0, 0.2, 1) 0.05s;
+  }
+
+  @keyframes fade-out-transition {
+    from {
+      opacity: 1;
+      transform: translateZ(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateZ(0);
+    }
+  }
+
+  @keyframes fade-in-transition {
     from {
       opacity: 0;
+      transform: translateZ(0);
     }
     to {
       opacity: 1;
+      transform: translateZ(0);
     }
   }
 }
@@ -35,10 +53,10 @@ html {
 
 @keyframes float {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
 }
 
@@ -48,7 +66,7 @@ html {
     box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(147, 51, 234, 0);
+    box-shadow: 0 0 0 8px rgba(147, 51, 234, 0);
   }
 }
 
@@ -155,31 +173,31 @@ html {
 }
 
 .animate-slide-in-left {
-  animation: slide-in-from-left 0.5s ease-out;
+  animation: slide-in-from-left 0.3s ease-out;
 }
 
 .animate-slide-in-right {
-  animation: slide-in-from-right 0.5s ease-out;
+  animation: slide-in-from-right 0.3s ease-out;
 }
 
 .animate-slide-in-top {
-  animation: slide-in-from-top 0.5s ease-out;
+  animation: slide-in-from-top 0.3s ease-out;
 }
 
 .animate-slide-in-bottom {
-  animation: slide-in-from-bottom 0.5s ease-out;
+  animation: slide-in-from-bottom 0.3s ease-out;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .animate-rotate-in {
-  animation: rotate-in 0.5s ease-out;
+  animation: rotate-in 0.3s ease-out;
 }
 
 .animate-bounce-in {
-  animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Stagger animation delays */

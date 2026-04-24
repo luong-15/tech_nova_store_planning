@@ -1,7 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
-import { motion, useInView, useAnimation } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 interface TextRevealProps {
   children: string
@@ -14,44 +13,44 @@ export function TextReveal({
   children,
   className = '',
   delay = 0,
-  duration = 0.05,
+  duration = 0.03,
 }: TextRevealProps) {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '0px 0px -100px 0px' })
-  const controls = useAnimation()
-
   const words = children.split(' ')
 
-  useEffect(() => {
-    if (isInView) {
-      controls.start('visible')
-    }
-  }, [isInView, controls])
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: duration,
+        delayChildren: delay,
+      },
+    },
+  }
 
   const wordVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (custom: number) => ({
+    hidden: { opacity: 0, y: 12 },
+    visible: {
       opacity: 1,
       y: 0,
       transition: {
-        delay: custom * duration + delay,
-        duration: 0.5,
+        duration: 0.15,
         ease: 'easeOut',
       },
-    }),
+    },
   }
 
   return (
     <motion.div
-      ref={ref}
       className={`flex flex-wrap gap-2 ${className}`}
+      variants={containerVariants}
       initial="hidden"
-      animate={controls}
+      whileInView="visible"
+      viewport={{ once: true, margin: '-50px' }}
     >
       {words.map((word, index) => (
         <motion.span
           key={`${word}-${index}`}
-          custom={index}
           variants={wordVariants}
           className="inline-block"
         >
