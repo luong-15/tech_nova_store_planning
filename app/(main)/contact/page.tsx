@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Phone, Mail, MapPin, Clock, Send, Zap } from "lucide-react"
 import Link from "next/link"
+import { motion } from "framer-motion"
+import { SectionTitle } from "@/components/animations/section-title"
 
 export default function ContactPage() {
   return (

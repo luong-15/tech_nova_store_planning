@@ -21,6 +21,8 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
+import { motion } from "framer-motion"
+import { SectionTitle } from "@/components/animations/section-title"
 
 const stats = [
   { value: "10K+", label: "Khách hàng", icon: Users },
