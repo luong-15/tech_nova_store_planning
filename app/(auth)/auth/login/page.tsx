@@ -1,122 +1,145 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { createBrowserClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { notifySuccess } from "@/lib/notifications"
-import { Eye, EyeOff, Mail, Lock, User, Loader2, Zap, Check, X } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createBrowserClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { notifySuccess } from "@/lib/notifications";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Loader2,
+  Zap,
+  Check,
+  X,
+} from "lucide-react";
 
 export default function LoginPage() {
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login")
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const router = useRouter()
-
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   // Login form state
-  const [loginEmail, setLoginEmail] = useState("")
-  const [loginPassword, setLoginPassword] = useState("")
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Signup form state
-  const [signupName, setSignupName] = useState("")
-  const [signupEmail, setSignupEmail] = useState("")
-  const [signupPassword, setSignupPassword] = useState("")
-  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
   // Password strength
   const getPasswordStrength = (password: string) => {
-    let strength = 0
-    if (password.length >= 8) strength++
-    if (/[A-Z]/.test(password)) strength++
-    if (/[a-z]/.test(password)) strength++
-    if (/[0-9]/.test(password)) strength++
-    if (/[^A-Za-z0-9]/.test(password)) strength++
-    return strength
-  }
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return strength;
+  };
 
-  const passwordStrength = getPasswordStrength(signupPassword)
-  const strengthColors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-lime-500", "bg-green-500"]
-  const strengthLabels = ["Rất yếu", "Yếu", "Trung bình", "Mạnh", "Rất mạnh"]
+  const passwordStrength = getPasswordStrength(signupPassword);
+  const strengthColors = [
+    "bg-red-500",
+    "bg-orange-500",
+    "bg-yellow-500",
+    "bg-lime-500",
+    "bg-green-500",
+  ];
+  const strengthLabels = ["Rất yếu", "Yếu", "Trung bình", "Mạnh", "Rất mạnh"];
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const supabase = createBrowserClient()
+      const supabase = createBrowserClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
-      })
+      });
 
       if (error) {
-        setError(error.message)
-        setLoading(false)
+        setError(error.message);
+        setLoading(false);
       } else if (data.user) {
         // Show success toast and redirect to dashboard immediately
-        notifySuccess("Đăng nhập thành công! Chào mừng bạn quay trở lại TechNova.")
-        router.push("/")
+        notifySuccess(
+          "Đăng nhập thành công! Chào mừng bạn quay trở lại TechNova.",
+        );
+        router.push("/");
       } else {
-        setError("Đăng nhập thất bại. Vui lòng thử lại.")
-        setLoading(false)
+        setError("Đăng nhập thất bại. Vui lòng thử lại.");
+        setLoading(false);
       }
     } catch (err) {
-      console.error("Login error:", err)
-      setError("Có lỗi xảy ra. Vui lòng thử lại.")
-      setLoading(false)
+      console.error("Login error:", err);
+      setError("Có lỗi xảy ra. Vui lòng thử lại.");
+      setLoading(false);
     }
-  }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!agreeTerms) {
-      setError("Vui lòng đồng ý với điều khoản sử dụng")
-      return
+      setError("Vui lòng đồng ý với điều khoản sử dụng");
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
-    const supabase = createBrowserClient()
+    const supabase = createBrowserClient();
     const { error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
       options: {
-        emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+        emailRedirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
+          `${window.location.origin}/dashboard`,
         data: {
           full_name: signupName,
         },
       },
-    })
+    });
 
     if (error) {
-      setError(error.message)
-      setLoading(false)
+      setError(error.message);
+      setLoading(false);
     } else {
-      setSuccess("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.")
-      setLoading(false)
+      setSuccess(
+        "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.",
+      );
+      setLoading(false);
     }
-  }
+  };
 
   const handleOAuth = async (provider: "google" | "github") => {
-    const supabase = createBrowserClient()
+    const supabase = createBrowserClient();
     await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+        redirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
+          `${window.location.origin}/dashboard`,
       },
-    })
-  }
+    });
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -136,7 +159,8 @@ export default function LoginPage() {
             <span className="text-blue-400">công nghệ</span>
           </h1>
           <p className="text-lg text-blue-100/80">
-            Đăng nhập để trải nghiệm mua sắm công nghệ tuyệt vời với hàng ngàn sản phẩm chính hãng.
+            Đăng nhập để trải nghiệm mua sắm công nghệ tuyệt vời với hàng ngàn
+            sản phẩm chính hãng.
           </p>
         </div>
 
@@ -174,24 +198,28 @@ export default function LoginPage() {
             />
             <button
               onClick={() => {
-                setActiveTab("login")
-                setError(null)
-                setSuccess(null)
+                setActiveTab("login");
+                setError(null);
+                setSuccess(null);
               }}
               className={`relative z-10 flex-1 rounded-md py-2.5 text-sm font-medium transition-colors duration-300 ${
-                activeTab === "login" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                activeTab === "login"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Đăng nhập
             </button>
             <button
               onClick={() => {
-                setActiveTab("signup")
-                setError(null)
-                setSuccess(null)
+                setActiveTab("signup");
+                setError(null);
+                setSuccess(null);
               }}
               className={`relative z-10 flex-1 rounded-md py-2.5 text-sm font-medium transition-colors duration-300 ${
-                activeTab === "signup" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                activeTab === "signup"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Đăng ký
@@ -216,7 +244,8 @@ export default function LoginPage() {
             <div
               className="flex transition-transform duration-300 ease-out"
               style={{
-                transform: activeTab === "login" ? "translateX(0)" : "translateX(-50%)",
+                transform:
+                  activeTab === "login" ? "translateX(0)" : "translateX(-50%)",
                 width: "200%",
               }}
             >
@@ -224,7 +253,9 @@ export default function LoginPage() {
               <div className="w-1/2 shrink-0 space-y-6 px-1">
                 <div className="space-y-2 text-center">
                   <h2 className="text-2xl font-bold">Chào mừng trở lại!</h2>
-                  <p className="text-muted-foreground">Đăng nhập để tiếp tục mua sắm</p>
+                  <p className="text-muted-foreground">
+                    Đăng nhập để tiếp tục mua sắm
+                  </p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -247,7 +278,10 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="login-password">Mật khẩu</Label>
-                      <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
+                      <Link
+                        href="/auth/forgot-password"
+                        className="text-sm text-primary hover:underline"
+                      >
                         Quên mật khẩu?
                       </Link>
                     </div>
@@ -267,7 +301,11 @@ export default function LoginPage() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -289,12 +327,18 @@ export default function LoginPage() {
                     <div className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Hoặc đăng nhập với</span>
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Hoặc đăng nhập với
+                    </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="bg-transparent" onClick={() => handleOAuth("google")}>
+                  <Button
+                    variant="outline"
+                    className="bg-transparent"
+                    onClick={() => handleOAuth("google")}
+                  >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                       <path
                         fill="currentColor"
@@ -315,8 +359,16 @@ export default function LoginPage() {
                     </svg>
                     Google
                   </Button>
-                  <Button variant="outline" className="bg-transparent" onClick={() => handleOAuth("github")}>
-                    <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                  <Button
+                    variant="outline"
+                    className="bg-transparent"
+                    onClick={() => handleOAuth("github")}
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                     </svg>
                     GitHub
@@ -328,7 +380,9 @@ export default function LoginPage() {
               <div className="w-1/2 shrink-0 space-y-6 px-1">
                 <div className="space-y-2 text-center">
                   <h2 className="text-2xl font-bold">Tạo tài khoản mới</h2>
-                  <p className="text-muted-foreground">Đăng ký để nhận ưu đãi độc quyền</p>
+                  <p className="text-muted-foreground">
+                    Đăng ký để nhận ưu đãi độc quyền
+                  </p>
                 </div>
 
                 <form onSubmit={handleSignup} className="space-y-4">
@@ -382,7 +436,11 @@ export default function LoginPage() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                     {signupPassword && (
@@ -392,13 +450,18 @@ export default function LoginPage() {
                             <div
                               key={i}
                               className={`h-1.5 flex-1 rounded-full transition-all ${
-                                i < passwordStrength ? strengthColors[passwordStrength - 1] : "bg-muted"
+                                i < passwordStrength
+                                  ? strengthColors[passwordStrength - 1]
+                                  : "bg-muted"
                               }`}
                             />
                           ))}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Độ mạnh: {passwordStrength > 0 ? strengthLabels[passwordStrength - 1] : "Nhập mật khẩu"}
+                          Độ mạnh:{" "}
+                          {passwordStrength > 0
+                            ? strengthLabels[passwordStrength - 1]
+                            : "Nhập mật khẩu"}
                         </p>
                       </div>
                     )}
@@ -408,9 +471,14 @@ export default function LoginPage() {
                     <Checkbox
                       id="terms"
                       checked={agreeTerms}
-                      onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setAgreeTerms(checked as boolean)
+                      }
                     />
-                    <label htmlFor="terms" className="text-sm text-muted-foreground">
+                    <label
+                      htmlFor="terms"
+                      className="text-sm text-muted-foreground"
+                    >
                       Tôi đồng ý với{" "}
                       <Link href="#" className="text-primary hover:underline">
                         Điều khoản sử dụng
@@ -422,7 +490,11 @@ export default function LoginPage() {
                     </label>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading || !agreeTerms}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || !agreeTerms}
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -439,12 +511,18 @@ export default function LoginPage() {
                     <div className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Hoặc đăng ký với</span>
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Hoặc đăng ký với
+                    </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="bg-transparent" onClick={() => handleOAuth("google")}>
+                  <Button
+                    variant="outline"
+                    className="bg-transparent"
+                    onClick={() => handleOAuth("google")}
+                  >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                       <path
                         fill="currentColor"
@@ -465,8 +543,16 @@ export default function LoginPage() {
                     </svg>
                     Google
                   </Button>
-                  <Button variant="outline" className="bg-transparent" onClick={() => handleOAuth("github")}>
-                    <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                  <Button
+                    variant="outline"
+                    className="bg-transparent"
+                    onClick={() => handleOAuth("github")}
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                     </svg>
                     GitHub
@@ -478,5 +564,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

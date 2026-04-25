@@ -5,14 +5,14 @@ const nextConfig = {
   },
 
   productionBrowserSourceMaps: false,
-  
+
   images: {
     unoptimized: true,
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**",
       },
     ],
   },
@@ -20,23 +20,23 @@ const nextConfig = {
   // Performance optimizations
   compress: true,
   swcMinify: true,
-  
+
   headers: async () => [
     {
-      source: '/:path*',
+      source: "/:path*",
       headers: [
         {
-          key: 'Cache-Control',
-          value: 'public, max-age=31536000, immutable'
-        }
-      ]
-    }
+          key: "Cache-Control",
+          value: "public, max-age=31536000, immutable",
+        },
+      ],
+    },
   ],
 
   // Reduce CSS-in-JS overhead
   experimental: {
-    optimizePackageImports: ['framer-motion', 'lucide-react'],
+    optimizePackageImports: ["framer-motion", "lucide-react"],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

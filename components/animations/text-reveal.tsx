@@ -1,21 +1,21 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
 
 interface TextRevealProps {
-  children: string
-  className?: string
-  delay?: number
-  duration?: number
+  children: string;
+  className?: string;
+  delay?: number;
+  duration?: number;
 }
 
 export function TextReveal({
   children,
-  className = '',
+  className = "",
   delay = 0,
   duration = 0.03,
 }: TextRevealProps) {
-  const words = children.split(' ')
+  const words = children.split(" ");
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -26,7 +26,7 @@ export function TextReveal({
         delayChildren: delay,
       },
     },
-  }
+  };
 
   const wordVariants = {
     hidden: { opacity: 0, y: 12 },
@@ -35,10 +35,10 @@ export function TextReveal({
       y: 0,
       transition: {
         duration: 0.15,
-        ease: 'easeOut',
+        ease: "easeOut",
       },
     },
-  }
+  };
 
   return (
     <motion.div
@@ -46,7 +46,7 @@ export function TextReveal({
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: '-50px' }}
+      viewport={{ once: true, margin: "-50px" }}
     >
       {words.map((word, index) => (
         <motion.span
@@ -58,5 +58,5 @@ export function TextReveal({
         </motion.span>
       ))}
     </motion.div>
-  )
+  );
 }

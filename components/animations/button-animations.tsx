@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { motion, Variants } from 'framer-motion'
-import { ReactNode } from 'react'
+import { motion, Variants } from "framer-motion";
+import { ReactNode } from "react";
 
 interface AnimatedButtonProps {
-  children: ReactNode
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
-  disabled?: boolean
-  className?: string
-  variant?: 'default' | 'outline' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  children: ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  className?: string;
+  variant?: "default" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
 }
 
 const buttonVariants: Variants = {
   initial: { scale: 1 },
-  hover: { scale: 1.05, boxShadow: '0 8px 16px rgba(0,0,0,0.1)' },
+  hover: { scale: 1.05, boxShadow: "0 8px 16px rgba(0,0,0,0.1)" },
   tap: { scale: 0.95 },
-}
+};
 
 const pulseRingVariants: Variants = {
   initial: { scale: 0.8, opacity: 1 },
@@ -26,39 +26,39 @@ const pulseRingVariants: Variants = {
     transition: {
       duration: 0.6,
       repeat: Infinity,
-      repeatType: 'loop' as const,
+      repeatType: "loop" as const,
     },
   },
-}
+};
 
 export function AnimatedButton({
   children,
   onClick,
   disabled = false,
-  className = '',
-  variant = 'default',
-  size = 'md',
+  className = "",
+  variant = "default",
+  size = "md",
 }: AnimatedButtonProps) {
   return (
     <motion.button
       className={className}
       variants={buttonVariants}
       initial="initial"
-      whileHover={!disabled ? 'hover' : 'initial'}
-      whileTap={!disabled ? 'tap' : 'initial'}
+      whileHover={!disabled ? "hover" : "initial"}
+      whileTap={!disabled ? "tap" : "initial"}
       onClick={onClick}
       disabled={disabled}
     >
       {children}
     </motion.button>
-  )
+  );
 }
 
 export function PulseButton({
   children,
   onClick,
-  className = '',
-}: Omit<AnimatedButtonProps, 'variant' | 'size'>) {
+  className = "",
+}: Omit<AnimatedButtonProps, "variant" | "size">) {
   return (
     <motion.button
       className={`relative ${className}`}
@@ -74,18 +74,18 @@ export function PulseButton({
       />
       <span className="relative">{children}</span>
     </motion.button>
-  )
+  );
 }
 
-interface LoadingButtonProps extends Omit<AnimatedButtonProps, 'children'> {
-  loading?: boolean
-  loadingText?: string
-  children: ReactNode
+interface LoadingButtonProps extends Omit<AnimatedButtonProps, "children"> {
+  loading?: boolean;
+  loadingText?: string;
+  children: ReactNode;
 }
 
 export function LoadingButton({
   loading = false,
-  loadingText = 'Loading...',
+  loadingText = "Loading...",
   children,
   disabled = false,
   ...props
@@ -99,9 +99,11 @@ export function LoadingButton({
     >
       <motion.div
         initial={false}
-        animate={loading ? { opacity: 0, width: 0 } : { opacity: 1, width: 'auto' }}
+        animate={
+          loading ? { opacity: 0, width: 0 } : { opacity: 1, width: "auto" }
+        }
         transition={{ duration: 0.2 }}
-        style={{ overflow: 'hidden' }}
+        style={{ overflow: "hidden" }}
       >
         {children}
       </motion.div>
@@ -109,18 +111,18 @@ export function LoadingButton({
       {loading && (
         <motion.div
           initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: 'auto' }}
+          animate={{ opacity: 1, width: "auto" }}
           transition={{ duration: 0.2 }}
           className="flex items-center gap-2"
         >
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             className="h-4 w-4 border-2 border-current border-t-transparent rounded-full"
           />
           <span>{loadingText}</span>
         </motion.div>
       )}
     </motion.button>
-  )
+  );
 }

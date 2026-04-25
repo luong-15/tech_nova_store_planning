@@ -1,23 +1,34 @@
-import { createClient } from "@/lib/supabase/server"
-import { ProductCard } from "@/components/product-card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Zap, TrendingUp, Star } from "lucide-react"
-import Link from "next/link"
-import type { Product, Category } from "@/lib/types"
-import { SectionTitle } from "@/components/animations/section-title"
+import { createClient } from "@/lib/supabase/server";
+import { ProductCard } from "@/components/product-card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Zap, TrendingUp, Star } from "lucide-react";
+import Link from "next/link";
+import type { Product, Category } from "@/lib/types";
+import { SectionTitle } from "@/components/animations/section-title";
 
 export default async function HomePage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   // Fetch featured products
-  const { data: featuredProducts } = await supabase.from("products").select("*").eq("is_featured", true).limit(6)
+  const { data: featuredProducts } = await supabase
+    .from("products")
+    .select("*")
+    .eq("is_featured", true)
+    .limit(6);
 
   // Fetch deal products
-  const { data: dealProducts } = await supabase.from("products").select("*").eq("is_deal", true).limit(4)
+  const { data: dealProducts } = await supabase
+    .from("products")
+    .select("*")
+    .eq("is_deal", true)
+    .limit(4);
 
   // Fetch categories
-  const { data: categories } = await supabase.from("categories").select("*").order("name")
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("*")
+    .order("name");
 
   return (
     <>
@@ -33,17 +44,21 @@ export default async function HomePage() {
             </Badge>
 
             <h1 className="mb-6 text-balance text-4xl font-bold leading-tight text-white md:text-6xl">
-              Khám phá thế giới công nghệ{' '}
+              Khám phá thế giới công nghệ{" "}
               <span className="text-blue-400"> TechNova</span>
             </h1>
 
             <p className="mb-8 text-pretty text-lg text-blue-100 md:text-xl">
-              Laptop, Smartphone và Phụ kiện chính hãng với giá tốt nhất. Giao hàng miễn phí toàn quốc - Bảo hành chu
-              đáo.
+              Laptop, Smartphone và Phụ kiện chính hãng với giá tốt nhất. Giao
+              hàng miễn phí toàn quốc - Bảo hành chu đáo.
             </p>
 
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700"
+                asChild
+              >
                 <Link href="/products">
                   Mua sắm ngay
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -72,7 +87,9 @@ export default async function HomePage() {
             <SectionTitle className="mb-2 text-3xl font-black tracking-tight md:text-4xl">
               Danh mục sản phẩm
             </SectionTitle>
-            <p className="text-muted-foreground text-sm uppercase tracking-widest font-medium">Khám phá công nghệ đỉnh cao</p>
+            <p className="text-muted-foreground text-sm uppercase tracking-widest font-medium">
+              Khám phá công nghệ đỉnh cao
+            </p>
           </div>
 
           {/* Thay đổi grid gap và cấu trúc thẻ */}
@@ -94,7 +111,7 @@ export default async function HomePage() {
                   {/* Overlay gradient nhẹ khi hover */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                 </div>
-                
+
                 <div className="p-5 flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-bold group-hover:text-primary transition-colors">
@@ -112,7 +129,7 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
-</section>
+      </section>
 
       {/* Deal Products Section */}
       {dealProducts && dealProducts.length > 0 && (
@@ -122,11 +139,19 @@ export default async function HomePage() {
               <div>
                 <div className="mb-2 flex items-center gap-2">
                   <TrendingUp className="h-6 w-6 text-blue-500" />
-                  <h2 className="text-3xl font-bold md:text-4xl">Deal sốc hôm nay</h2>
+                  <h2 className="text-3xl font-bold md:text-4xl">
+                    Deal sốc hôm nay
+                  </h2>
                 </div>
-                <p className="text-muted-foreground">Giảm giá cực sâu - Số lượng có hạn</p>
+                <p className="text-muted-foreground">
+                  Giảm giá cực sâu - Số lượng có hạn
+                </p>
               </div>
-              <Button variant="outline" asChild className="hidden md:flex bg-transparent">
+              <Button
+                variant="outline"
+                asChild
+                className="hidden md:flex bg-transparent"
+              >
                 <Link href="/deals">
                   Xem tất cả
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -160,11 +185,19 @@ export default async function HomePage() {
               <div>
                 <div className="mb-2 flex items-center gap-2">
                   <Star className="h-6 w-6 text-yellow-500" />
-                  <h2 className="text-3xl font-bold md:text-4xl">Sản phẩm nổi bật</h2>
+                  <h2 className="text-3xl font-bold md:text-4xl">
+                    Sản phẩm nổi bật
+                  </h2>
                 </div>
-                <p className="text-muted-foreground">Được khách hàng tin tùng và đánh giá cao</p>
+                <p className="text-muted-foreground">
+                  Được khách hàng tin tùng và đánh giá cao
+                </p>
               </div>
-              <Button variant="outline" asChild className="hidden md:flex bg-transparent">
+              <Button
+                variant="outline"
+                asChild
+                className="hidden md:flex bg-transparent"
+              >
                 <Link href="/products">
                   Xem tất cả
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -196,17 +229,34 @@ export default async function HomePage() {
           <div className="grid gap-8 md:grid-cols-3">
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
               <h3 className="mb-2 text-xl font-bold">Chính hãng 100%</h3>
-              <p className="text-sm text-muted-foreground">Cam kết sản phẩm chính hãng, có tem nhập khẩu đầy đủ</p>
+              <p className="text-sm text-muted-foreground">
+                Cam kết sản phẩm chính hãng, có tem nhập khẩu đầy đủ
+              </p>
             </div>
 
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -216,12 +266,19 @@ export default async function HomePage() {
                 </svg>
               </div>
               <h3 className="mb-2 text-xl font-bold">Giao hàng nhanh</h3>
-              <p className="text-sm text-muted-foreground">Giao hàng miễn phí toàn quốc trong 1-2 ngày</p>
+              <p className="text-sm text-muted-foreground">
+                Giao hàng miễn phí toàn quốc trong 1-2 ngày
+              </p>
             </div>
 
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -231,11 +288,13 @@ export default async function HomePage() {
                 </svg>
               </div>
               <h3 className="mb-2 text-xl font-bold">Bảo hành tận tâm</h3>
-              <p className="text-sm text-muted-foreground">Bảo hành chính hãng, hỗ trợ đổi trả trong 30 ngày</p>
+              <p className="text-sm text-muted-foreground">
+                Bảo hành chính hãng, hỗ trợ đổi trả trong 30 ngày
+              </p>
             </div>
           </div>
         </div>
       </section>
     </>
-  )
+  );
 }

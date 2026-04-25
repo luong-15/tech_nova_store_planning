@@ -1,70 +1,91 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Header } from "@/components/header"
-import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import Link from "next/link"
-import { createBrowserClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Skeleton } from "@/components/ui/skeleton"
-import { User, Package, Heart, Settings, LogOut, ChevronRight, Menu, X } from "lucide-react"
-import type { UserProfile } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import type React from "react";
+import { Header } from "@/components/header";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { createBrowserClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  User,
+  Package,
+  Heart,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Menu,
+  X,
+} from "lucide-react";
+import type { UserProfile } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const sidebarItems = [
   { href: "/dashboard", label: "Hồ sơ cá nhân", icon: User },
   { href: "/dashboard/orders", label: "Quản lý đơn hàng", icon: Package },
   { href: "/dashboard/wishlist", label: "Sản phẩm yêu thích", icon: Heart },
   { href: "/dashboard/settings", label: "Cài đặt tài khoản", icon: Settings },
-]
+];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const router = useRouter()
-  const pathname = usePathname()
-  const supabase = createBrowserClient()
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const supabase = createBrowserClient();
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const checkAuth = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
         if (!authUser) {
-          router.push("/auth/login")
-          return
+          router.push("/auth/login");
+          return;
         }
         if (isMounted) {
-          setEmail(authUser.email || null)
-          const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", authUser.id).single()
-          if (profile) setUser(profile)
+          setEmail(authUser.email || null);
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("*")
+            .eq("id", authUser.id)
+            .single();
+          if (profile) setUser(profile);
         }
       } catch (error) {
-        console.error(error)
+        console.error(error);
       } finally {
-        if (isMounted) setLoading(false)
+        if (isMounted) setLoading(false);
       }
-    }
+    };
 
-    checkAuth()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') router.push("/auth/login")
-    })
+    checkAuth();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") router.push("/auth/login");
+    });
 
     return () => {
-      isMounted = false
-      subscription.unsubscribe()
-    }
-  }, [router, supabase])
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router, supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/")
-  }
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   if (loading) {
     return (
@@ -78,7 +99,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -88,9 +109,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="container mx-auto px-4 py-6 md:py-10">
         {/* Breadcrumb */}
         <div className="mb-8 flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 w-fit px-4 py-1.5 rounded-full border border-border/40">
-          <Link href="/" className="hover:text-primary transition-colors">Trang chủ</Link>
+          <Link href="/" className="hover:text-primary transition-colors">
+            Trang chủ
+          </Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-foreground font-medium italic">Bảng điều khiển</span>
+          <span className="text-foreground font-medium italic">
+            Bảng điều khiển
+          </span>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 relative">
@@ -108,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <aside
             className={cn(
               "fixed inset-y-0 left-0 z-60 w-80 bg-background/95 backdrop-blur-xl border-r p-6 transition-transform duration-500 ease-out lg:relative lg:translate-x-0 lg:w-72 lg:p-0 lg:bg-transparent lg:border-none",
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+              sidebarOpen ? "translate-x-0" : "-translate-x-full",
             )}
           >
             <div className="sticky top-28 space-y-6">
@@ -119,23 +144,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
                 <div className="flex items-center gap-4 relative">
                   <Avatar className="h-14 w-14 border-2 border-primary/20 p-0.5">
-                    <AvatarImage src={user?.avatar_url || undefined} className="rounded-full object-cover" />
+                    <AvatarImage
+                      src={user?.avatar_url || undefined}
+                      className="rounded-full object-cover"
+                    />
                     <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                      {user?.full_name?.charAt(0) || email?.charAt(0)?.toUpperCase()}
+                      {user?.full_name?.charAt(0) ||
+                        email?.charAt(0)?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <h3 className="truncate font-bold text-base tracking-tight">{user?.full_name || "Thành viên"}</h3>
-                    <p className="truncate text-xs text-muted-foreground font-medium">{email}</p>
+                    <h3 className="truncate font-bold text-base tracking-tight">
+                      {user?.full_name || "Thành viên"}
+                    </h3>
+                    <p className="truncate text-xs text-muted-foreground font-medium">
+                      {email}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Navigation Menu */}
               <nav className="space-y-1.5">
-                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-2">Menu quản lý</p>
+                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-2">
+                  Menu quản lý
+                </p>
                 {sidebarItems.map((item) => {
-                  const isActive = pathname === item.href
+                  const isActive = pathname === item.href;
                   return (
                     <Link
                       key={item.href}
@@ -143,18 +178,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       onClick={() => setSidebarOpen(false)}
                       className={cn(
                         "group relative flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-all duration-300",
-                        isActive 
-                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 translate-x-1" 
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-1"
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 translate-x-1"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-1",
                       )}
                     >
-                      <item.icon className={cn("h-5 w-5", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary transition-colors")} />
+                      <item.icon
+                        className={cn(
+                          "h-5 w-5",
+                          isActive
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground group-hover:text-primary transition-colors",
+                        )}
+                      />
                       {item.label}
                       {isActive && (
                         <div className="absolute left-0 w-1 h-6 bg-primary-foreground/40 rounded-full" />
                       )}
                     </Link>
-                  )
+                  );
                 })}
 
                 <div className="pt-6 mt-6 border-t border-border/40">
@@ -163,7 +205,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     className="flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-red-500/80 transition-all hover:bg-red-500/10 hover:text-red-500 group"
                   >
                     <div className="p-1 rounded-lg group-hover:bg-red-500/10 transition-colors">
-                        <LogOut className="h-5 w-5" />
+                      <LogOut className="h-5 w-5" />
                     </div>
                     Đăng xuất
                   </button>
@@ -174,20 +216,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Overlay for Mobile Sidebar */}
           {sidebarOpen && (
-            <div 
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity duration-300" 
-              onClick={() => setSidebarOpen(false)} 
+            <div
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+              onClick={() => setSidebarOpen(false)}
             />
           )}
 
           {/* Main Content Area */}
           <div className="min-w-0 flex-1 lg:pl-4">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {children}
+              {children}
             </div>
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }

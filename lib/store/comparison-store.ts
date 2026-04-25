@@ -1,23 +1,23 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
-import type { Product } from "@/lib/types"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Product } from "@/lib/types";
 
 interface ComparisonState {
-  products: Product[]
-  isOpen: boolean
+  products: Product[];
+  isOpen: boolean;
 
   // Actions
-  addProduct: (product: Product) => void
-  removeProduct: (productId: string) => void
-  clearComparison: () => void
-  toggleComparison: () => void
-  openComparison: () => void
-  closeComparison: () => void
+  addProduct: (product: Product) => void;
+  removeProduct: (productId: string) => void;
+  clearComparison: () => void;
+  toggleComparison: () => void;
+  openComparison: () => void;
+  closeComparison: () => void;
 
   // Computed
-  getProductCount: () => number
-  isProductInComparison: (productId: string) => boolean
-  canAddProduct: (product: Product) => boolean
+  getProductCount: () => number;
+  isProductInComparison: (productId: string) => boolean;
+  canAddProduct: (product: Product) => boolean;
 }
 
 export const useComparisonStore = create<ComparisonState>()(
@@ -27,17 +27,17 @@ export const useComparisonStore = create<ComparisonState>()(
       isOpen: false,
 
       addProduct: (product) => {
-        const products = get().products
-        const isAlreadyAdded = products.some((p) => p.id === product.id)
+        const products = get().products;
+        const isAlreadyAdded = products.some((p) => p.id === product.id);
 
         if (!isAlreadyAdded && products.length < 4) {
-          set({ products: [...products, product] })
-          set({ isOpen: true })
+          set({ products: [...products, product] });
+          set({ isOpen: true });
         }
       },
 
       removeProduct: (productId) => {
-        set({ products: get().products.filter((p) => p.id !== productId) })
+        set({ products: get().products.filter((p) => p.id !== productId) });
       },
 
       clearComparison: () => set({ products: [] }),
@@ -48,16 +48,18 @@ export const useComparisonStore = create<ComparisonState>()(
       getProductCount: () => get().products.length,
 
       isProductInComparison: (productId) => {
-        return get().products.some((p) => p.id === productId)
+        return get().products.some((p) => p.id === productId);
       },
 
       canAddProduct: (product) => {
-        const products = get().products
-        return !products.some((p) => p.id === product.id) && products.length < 4
+        const products = get().products;
+        return (
+          !products.some((p) => p.id === product.id) && products.length < 4
+        );
       },
     }),
     {
       name: "technova-comparison",
     },
   ),
-)
+);

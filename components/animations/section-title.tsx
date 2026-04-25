@@ -1,17 +1,21 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { ReactNode } from 'react'
+import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
 interface SectionTitleProps {
-  children: ReactNode
-  className?: string
-  delay?: number
+  children: ReactNode;
+  className?: string;
+  delay?: number;
 }
 
-export function SectionTitle({ children, className = '', delay = 0 }: SectionTitleProps) {
-  const text = typeof children === 'string' ? children : ''
-  const words = text.split(' ')
+export function SectionTitle({
+  children,
+  className = "",
+  delay = 0,
+}: SectionTitleProps) {
+  const text = typeof children === "string" ? children : "";
+  const words = text.split(" ");
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -22,7 +26,7 @@ export function SectionTitle({ children, className = '', delay = 0 }: SectionTit
         delayChildren: delay,
       },
     },
-  }
+  };
 
   const wordVariants = {
     hidden: {
@@ -34,10 +38,10 @@ export function SectionTitle({ children, className = '', delay = 0 }: SectionTit
       y: 0,
       transition: {
         duration: 0.5,
-        ease: 'easeOut',
+        ease: "easeOut",
       },
     },
-  }
+  };
 
   return (
     <motion.h2
@@ -45,13 +49,17 @@ export function SectionTitle({ children, className = '', delay = 0 }: SectionTit
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: '-100px' }}
+      viewport={{ once: true, margin: "-100px" }}
     >
       {words.map((word, idx) => (
-        <motion.span key={idx} variants={wordVariants} className="inline-block mr-1">
+        <motion.span
+          key={idx}
+          variants={wordVariants}
+          className="inline-block mr-1"
+        >
           {word}
         </motion.span>
       ))}
     </motion.h2>
-  )
+  );
 }

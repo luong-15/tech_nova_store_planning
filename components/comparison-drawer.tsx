@@ -1,19 +1,25 @@
-"use client"
+"use client";
 
-import { useComparisonStore } from "@/lib/store/comparison-store"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { X, GitCompare, ArrowRight, Package, Star } from "lucide-react"
-import { formatPrice } from "@/lib/currency"
-import Image from "next/image"
-import Link from "next/link"
+import { useComparisonStore } from "@/lib/store/comparison-store";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { X, GitCompare, ArrowRight, Package, Star } from "lucide-react";
+import { formatPrice } from "@/lib/currency";
+import Image from "next/image";
+import Link from "next/link";
 
 export function ComparisonDrawer() {
-  const { products, isOpen, closeComparison, removeProduct, getProductCount } = useComparisonStore()
+  const { products, isOpen, closeComparison, removeProduct, getProductCount } =
+    useComparisonStore();
 
-  const productCount = getProductCount()
+  const productCount = getProductCount();
 
   return (
     <Sheet open={isOpen} onOpenChange={closeComparison}>
@@ -39,12 +45,20 @@ export function ComparisonDrawer() {
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-xl font-semibold">Chưa có sản phẩm để so sánh</h3>
+              <h3 className="text-xl font-semibold">
+                Chưa có sản phẩm để so sánh
+              </h3>
               <p className="mt-2 max-w-[250px] text-sm text-muted-foreground">
-                Thêm sản phẩm vào danh sách so sánh để xem chi tiết và so sánh thông số kỹ thuật.
+                Thêm sản phẩm vào danh sách so sánh để xem chi tiết và so sánh
+                thông số kỹ thuật.
               </p>
             </div>
-            <Button asChild onClick={closeComparison} size="lg" className="mt-2 gap-2">
+            <Button
+              asChild
+              onClick={closeComparison}
+              size="lg"
+              className="mt-2 gap-2"
+            >
               <Link href="/products">
                 Khám phá sản phẩm
                 <ArrowRight className="h-4 w-4" />
@@ -73,7 +87,10 @@ export function ComparisonDrawer() {
                     {/* Product Image */}
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted/50">
                       <Image
-                        src={product.image_url || "/placeholder.svg?height=80&width=80&query=tech product"}
+                        src={
+                          product.image_url ||
+                          "/placeholder.svg?height=80&width=80&query=tech product"
+                        }
                         alt={product.name}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-110"
@@ -87,7 +104,9 @@ export function ComparisonDrawer() {
                           {product.name}
                         </h4>
                         {product.brand && (
-                          <p className="mt-0.5 text-xs text-muted-foreground">{product.brand}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {product.brand}
+                          </p>
                         )}
                         <div className="flex items-center gap-1 mt-1">
                           <div className="flex">
@@ -95,18 +114,24 @@ export function ComparisonDrawer() {
                               <Star
                                 key={i}
                                 className={`h-3 w-3 ${
-                                  i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
+                                  i < Math.floor(product.rating)
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "fill-muted text-muted"
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className="text-xs text-muted-foreground">({product.review_count})</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({product.review_count})
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex items-end justify-between">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-primary">{formatPrice(product.price)}</span>
+                          <span className="text-sm font-bold text-primary">
+                            {formatPrice(product.price)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -129,27 +154,43 @@ export function ComparisonDrawer() {
               <div className="mb-4 grid grid-cols-3 gap-2 text-center text-xs">
                 <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2">
                   <Package className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">So sánh chi tiết</span>
+                  <span className="text-muted-foreground">
+                    So sánh chi tiết
+                  </span>
                 </div>
                 <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2">
                   <Star className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">Đánh giá sản phẩm</span>
+                  <span className="text-muted-foreground">
+                    Đánh giá sản phẩm
+                  </span>
                 </div>
                 <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2">
                   <GitCompare className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">Thông số kỹ thuật</span>
+                  <span className="text-muted-foreground">
+                    Thông số kỹ thuật
+                  </span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Button asChild className="w-full gap-2" size="lg" onClick={closeComparison}>
+                <Button
+                  asChild
+                  className="w-full gap-2"
+                  size="lg"
+                  onClick={closeComparison}
+                >
                   <Link href="/compare">
                     <GitCompare className="h-4 w-4" />
                     So sánh chi tiết
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full bg-transparent" onClick={closeComparison}>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  onClick={closeComparison}
+                >
                   <Link href="/products">Tiếp tục mua sắm</Link>
                 </Button>
               </div>
@@ -158,5 +199,5 @@ export function ComparisonDrawer() {
         )}
       </SheetContent>
     </Sheet>
-  )
+  );
 }

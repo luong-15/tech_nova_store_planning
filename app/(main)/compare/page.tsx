@@ -1,34 +1,34 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import { X, ShoppingCart, Star, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { formatPrice } from "@/lib/currency"
-import { useComparisonStore } from "@/lib/store/comparison-store"
-import { useCartStore } from "@/lib/store/cart-store"
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { SectionTitle } from "@/components/animations/section-title"
+import Image from "next/image";
+import Link from "next/link";
+import { X, ShoppingCart, Star, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/currency";
+import { useComparisonStore } from "@/lib/store/comparison-store";
+import { useCartStore } from "@/lib/store/cart-store";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { SectionTitle } from "@/components/animations/section-title";
 
 export default function ComparePage() {
-  const { products, removeProduct, clearComparison } = useComparisonStore()
-  const { addToCart } = useCartStore()
-  const [addingToCart, setAddingToCart] = useState<string | null>(null)
+  const { products, removeProduct, clearComparison } = useComparisonStore();
+  const { addToCart } = useCartStore();
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   const handleAddToCart = (productId: string) => {
-    const product = products.find(p => p.id === productId)
-    if (!product) return
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
 
-    setAddingToCart(productId)
-    addToCart(product)
+    setAddingToCart(productId);
+    addToCart(product);
 
     setTimeout(() => {
-      setAddingToCart(null)
-    }, 1000)
-  }
+      setAddingToCart(null);
+    }, 1000);
+  };
 
   if (products.length === 0) {
     return (
@@ -36,30 +36,35 @@ export default function ComparePage() {
         <div className="text-center py-12">
           <h1 className="text-2xl font-bold mb-4">So sánh sản phẩm</h1>
           <p className="text-muted-foreground mb-6">
-            Chưa có sản phẩm nào để so sánh. Hãy thêm sản phẩm vào danh sách so sánh.
+            Chưa có sản phẩm nào để so sánh. Hãy thêm sản phẩm vào danh sách so
+            sánh.
           </p>
           <Link href="/products">
             <Button>Xem sản phẩm</Button>
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   // Get all unique specification keys from all products
-  const allSpecKeys = new Set<string>()
-  products.forEach(product => {
+  const allSpecKeys = new Set<string>();
+  products.forEach((product) => {
     if (product.specifications) {
-      Object.keys(product.specifications).forEach(key => allSpecKeys.add(key))
+      Object.keys(product.specifications).forEach((key) =>
+        allSpecKeys.add(key),
+      );
     }
-  })
+  });
 
-  const specKeys = Array.from(allSpecKeys)
+  const specKeys = Array.from(allSpecKeys);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">So sánh sản phẩm ({products.length})</h1>
+        <h1 className="text-2xl font-bold">
+          So sánh sản phẩm ({products.length})
+        </h1>
         <Button variant="outline" onClick={clearComparison}>
           Xóa tất cả
         </Button>
@@ -68,7 +73,12 @@ export default function ComparePage() {
       <div className="overflow-x-auto">
         <div className="min-w-200">
           {/* Product Headers */}
-          <div className="grid gap-4 mb-6" style={{ gridTemplateColumns: `200px repeat(${products.length}, 1fr)` }}>
+          <div
+            className="grid gap-4 mb-6"
+            style={{
+              gridTemplateColumns: `200px repeat(${products.length}, 1fr)`,
+            }}
+          >
             <div className="font-semibold text-muted-foreground">Sản phẩm</div>
             {products.map((product) => (
               <Card key={product.id} className="relative">
@@ -89,7 +99,9 @@ export default function ComparePage() {
                       className="object-cover"
                     />
                   </div>
-                  <h3 className="font-semibold text-sm mb-2 line-clamp-2">{product.name}</h3>
+                  <h3 className="font-semibold text-sm mb-2 line-clamp-2">
+                    {product.name}
+                  </h3>
                   <div className="text-lg font-bold text-primary mb-2">
                     {formatPrice(product.price)}
                   </div>
@@ -99,12 +111,16 @@ export default function ComparePage() {
                         <Star
                           key={i}
                           className={`h-3 w-3 ${
-                            i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
+                            i < Math.floor(product.rating)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "fill-muted text-muted"
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-muted-foreground">({product.review_count})</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({product.review_count})
+                    </span>
                   </div>
                   <Button
                     className="w-full text-xs"
@@ -137,16 +153,26 @@ export default function ComparePage() {
             <CardContent className="p-0">
               <div className="divide-y">
                 {specKeys.map((key) => (
-                  <div key={key} className="grid gap-4 p-4" style={{ gridTemplateColumns: `200px repeat(${products.length}, 1fr)` }}>
+                  <div
+                    key={key}
+                    className="grid gap-4 p-4"
+                    style={{
+                      gridTemplateColumns: `200px repeat(${products.length}, 1fr)`,
+                    }}
+                  >
                     <div className="font-medium text-sm">
-                      {key.replaceAll(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                      {key
+                        .replaceAll(/([A-Z])/g, " $1")
+                        .replace(/^./, (str) => str.toUpperCase())}
                     </div>
                     {products.map((product) => (
                       <div key={product.id} className="text-sm">
                         {product.specifications?.[key] ? (
-                          Array.isArray(product.specifications[key])
-                            ? product.specifications[key].join(', ')
-                            : String(product.specifications[key])
+                          Array.isArray(product.specifications[key]) ? (
+                            product.specifications[key].join(", ")
+                          ) : (
+                            String(product.specifications[key])
+                          )
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
@@ -160,5 +186,5 @@ export default function ComparePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
