@@ -1,25 +1,50 @@
-"use client"
+"use client";
 
-import { useCartStore } from "@/lib/store/cart-store"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Package, Truck, CreditCard } from "lucide-react"
-import { formatCurrency } from "@/lib/currency"
-import Image from "next/image"
-import Link from "next/link"
+import { useCartStore } from "@/lib/store/cart-store";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  ShoppingBag,
+  Trash2,
+  Plus,
+  Minus,
+  ArrowRight,
+  Package,
+  Truck,
+  CreditCard,
+} from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
+import Image from "next/image";
+import Link from "next/link";
 
 export function CartDrawer() {
-  const { cartItems: items, isOpen, closeCart, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore()
+  const {
+    cartItems: items,
+    isOpen,
+    closeCart,
+    removeItem,
+    updateQuantity,
+    getSubtotal,
+    getTotalItems,
+  } = useCartStore();
 
-  const subtotal = getSubtotal()
-  const shipping = subtotal > 2000000 ? 0 : 50000
-  const total = subtotal + shipping
+  const subtotal = getSubtotal();
+  const shipping = subtotal > 2000000 ? 0 : 50000;
+  const total = subtotal + shipping;
 
-  const freeShippingThreshold = 2000000
-  const progressPercentage = Math.min((subtotal / freeShippingThreshold) * 100, 100)
-  const amountToFreeShipping = freeShippingThreshold - subtotal
+  const freeShippingThreshold = 2000000;
+  const progressPercentage = Math.min(
+    (subtotal / freeShippingThreshold) * 100,
+    100,
+  );
+  const amountToFreeShipping = freeShippingThreshold - subtotal;
 
   return (
     <Sheet open={isOpen} onOpenChange={closeCart}>
@@ -47,10 +72,16 @@ export function CartDrawer() {
             <div className="text-center">
               <h3 className="text-xl font-semibold">Giỏ hàng trống</h3>
               <p className="mt-2 max-w-62.5 text-sm text-muted-foreground">
-                Hãy khám phá các sản phẩm công nghệ tuyệt vời và thêm vào giỏ hàng!
+                Hãy khám phá các sản phẩm công nghệ tuyệt vời và thêm vào giỏ
+                hàng!
               </p>
             </div>
-            <Button asChild onClick={closeCart} size="lg" className="mt-2 gap-2">
+            <Button
+              asChild
+              onClick={closeCart}
+              size="lg"
+              className="mt-2 gap-2"
+            >
               <Link href="/products">
                 Khám phá sản phẩm
                 <ArrowRight className="h-4 w-4" />
@@ -59,7 +90,6 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
-
             <div className="shrink-0 border-b border-border/50 pb-4 mt-4">
               {subtotal < freeShippingThreshold ? (
                 <div className="space-y-2">
@@ -67,8 +97,10 @@ export function CartDrawer() {
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Truck className="h-4 w-4" />
                       Mua thêm{" "}
-                      <span className="font-semibold text-primary">{formatCurrency(amountToFreeShipping)}</span> để được
-                      miễn phí ship
+                      <span className="font-semibold text-primary">
+                        {formatCurrency(amountToFreeShipping)}
+                      </span>{" "}
+                      để được miễn phí ship
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -99,16 +131,27 @@ export function CartDrawer() {
                     {/* Product Image */}
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted/50">
                       <Image
-                        src={item.product.image_url || "/placeholder.svg?height=80&width=80&query=tech product"}
+                        src={
+                          item.product.image_url ||
+                          "/placeholder.svg?height=80&width=80&query=tech product"
+                        }
                         alt={item.product.name}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-110"
                       />
-                      {item.product.original_price && item.product.original_price > item.product.price && (
-                        <div className="absolute left-1 top-1 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                          -{Math.round((1 - item.product.price / item.product.original_price) * 100)}%
-                        </div>
-                      )}
+                      {item.product.original_price &&
+                        item.product.original_price > item.product.price && (
+                          <div className="absolute left-1 top-1 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            -
+                            {Math.round(
+                              (1 -
+                                item.product.price /
+                                  item.product.original_price) *
+                                100,
+                            )}
+                            %
+                          </div>
+                        )}
                     </div>
 
                     {/* Product Info */}
@@ -118,18 +161,24 @@ export function CartDrawer() {
                           {item.product.name}
                         </h4>
                         {item.product.brand && (
-                          <p className="mt-0.5 text-xs text-muted-foreground">{item.product.brand}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {item.product.brand}
+                          </p>
                         )}
                       </div>
 
                       <div className="flex items-end justify-between">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-primary">{formatCurrency(item.product.price)}</span>
-                          {item.product.original_price && item.product.original_price > item.product.price && (
-                            <span className="text-xs text-muted-foreground line-through">
-                              {formatCurrency(item.product.original_price)}
-                            </span>
-                          )}
+                          <span className="text-sm font-bold text-primary">
+                            {formatCurrency(item.product.price)}
+                          </span>
+                          {item.product.original_price &&
+                            item.product.original_price >
+                              item.product.price && (
+                              <span className="text-xs text-muted-foreground line-through">
+                                {formatCurrency(item.product.original_price)}
+                              </span>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-1">
@@ -137,16 +186,22 @@ export function CartDrawer() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 rounded-md hover:bg-background"
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() =>
+                              updateQuantity(item.product.id, item.quantity - 1)
+                            }
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                          <span className="w-8 text-center text-sm font-medium">
+                            {item.quantity}
+                          </span>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 rounded-md hover:bg-background"
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={() =>
+                              updateQuantity(item.product.id, item.quantity + 1)
+                            }
                             disabled={item.quantity >= item.product.stock}
                           >
                             <Plus className="h-3 w-3" />
@@ -173,7 +228,9 @@ export function CartDrawer() {
               <div className="mb-4 grid grid-cols-3 gap-2 text-center text-xs">
                 <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2">
                   <Package className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">Đóng gói cẩn thận</span>
+                  <span className="text-muted-foreground">
+                    Đóng gói cẩn thận
+                  </span>
                 </div>
                 <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2">
                   <Truck className="h-4 w-4 text-primary" />
@@ -181,37 +238,61 @@ export function CartDrawer() {
                 </div>
                 <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2">
                   <CreditCard className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">Thanh toán an toàn</span>
+                  <span className="text-muted-foreground">
+                    Thanh toán an toàn
+                  </span>
                 </div>
               </div>
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tạm tính ({getTotalItems()} sản phẩm)</span>
-                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+                  <span className="text-muted-foreground">
+                    Tạm tính ({getTotalItems()} sản phẩm)
+                  </span>
+                  <span className="font-medium">
+                    {formatCurrency(subtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Phí vận chuyển</span>
-                  <span className={shipping === 0 ? "font-medium text-green-500" : "font-medium"}>
+                  <span
+                    className={
+                      shipping === 0
+                        ? "font-medium text-green-500"
+                        : "font-medium"
+                    }
+                  >
                     {shipping === 0 ? "Miễn phí" : formatCurrency(shipping)}
                   </span>
                 </div>
                 <Separator className="my-3" />
                 <div className="flex justify-between text-base font-semibold">
                   <span>Tổng cộng</span>
-                  <span className="text-lg text-primary">{formatCurrency(total)}</span>
+                  <span className="text-lg text-primary">
+                    {formatCurrency(total)}
+                  </span>
                 </div>
               </div>
 
               <div className="mt-4 space-y-2">
-                <Button asChild className="w-full gap-2" size="lg" onClick={closeCart}>
+                <Button
+                  asChild
+                  className="w-full gap-2"
+                  size="lg"
+                  onClick={closeCart}
+                >
                   <Link href="/checkout">
                     <CreditCard className="h-4 w-4" />
                     Thanh toán ngay
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full bg-transparent" onClick={closeCart}>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  onClick={closeCart}
+                >
                   <Link href="/cart">Xem chi tiết giỏ hàng</Link>
                 </Button>
               </div>
@@ -220,5 +301,5 @@ export function CartDrawer() {
         )}
       </SheetContent>
     </Sheet>
-  )
+  );
 }

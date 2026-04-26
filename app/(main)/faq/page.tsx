@@ -1,50 +1,71 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { HelpCircle, Phone, Mail, MessageCircle } from "lucide-react"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { HelpCircle, Phone, Mail, MessageCircle } from "lucide-react";
 
 const faqs = [
   {
     question: "TechNova có phải là cửa hàng chính hãng không?",
-    answer: "Có, TechNova là đại lý ủy quyền chính thức của các thương hiệu công nghệ hàng đầu như Apple, Samsung, Dell, HP, Lenovo, ASUS. Tất cả sản phẩm đều có nguồn gốc rõ ràng, tem nhập khẩu đầy đủ và được bảo hành chính hãng."
+    answer:
+      "Có, TechNova là đại lý ủy quyền chính thức của các thương hiệu công nghệ hàng đầu như Apple, Samsung, Dell, HP, Lenovo, ASUS. Tất cả sản phẩm đều có nguồn gốc rõ ràng, tem nhập khẩu đầy đủ và được bảo hành chính hãng.",
   },
   {
     question: "Thời gian bảo hành sản phẩm là bao lâu?",
-    answer: "Thời gian bảo hành tùy thuộc vào từng sản phẩm và nhà sản xuất: Laptop thường 12-24 tháng, Smartphone 12-18 tháng, Phụ kiện 6-12 tháng. Chi tiết thời gian bảo hành sẽ được ghi rõ trong phiếu bảo hành đi kèm sản phẩm."
+    answer:
+      "Thời gian bảo hành tùy thuộc vào từng sản phẩm và nhà sản xuất: Laptop thường 12-24 tháng, Smartphone 12-18 tháng, Phụ kiện 6-12 tháng. Chi tiết thời gian bảo hành sẽ được ghi rõ trong phiếu bảo hành đi kèm sản phẩm.",
   },
   {
     question: "TechNova có giao hàng tận nơi không?",
-    answer: "Có, TechNova giao hàng tận nơi trên toàn quốc. Thời gian giao hàng: TP.HCM 1-2 ngày, các tỉnh khác 2-3 ngày. Phí vận chuyển từ 30,000 VND, miễn phí cho đơn hàng từ 500,000 VND trở lên."
+    answer:
+      "Có, TechNova giao hàng tận nơi trên toàn quốc. Thời gian giao hàng: TP.HCM 1-2 ngày, các tỉnh khác 2-3 ngày. Phí vận chuyển từ 30,000 VND, miễn phí cho đơn hàng từ 500,000 VND trở lên.",
   },
   {
     question: "Tôi có thể thanh toán như thế nào?",
-    answer: "TechNova hỗ trợ nhiều phương thức thanh toán: Tiền mặt khi nhận hàng (COD), chuyển khoản ngân hàng, ví điện tử (Momo, ZaloPay, ViettelPay), thẻ tín dụng/ghi nợ, trả góp qua công ty tài chính."
+    answer:
+      "TechNova hỗ trợ nhiều phương thức thanh toán: Tiền mặt khi nhận hàng (COD), chuyển khoản ngân hàng, ví điện tử (Momo, ZaloPay, ViettelPay), thẻ tín dụng/ghi nợ, trả góp qua công ty tài chính.",
   },
   {
     question: "Chính sách đổi trả sản phẩm như thế nào?",
-    answer: "TechNova hỗ trợ đổi trả trong vòng 30 ngày với sản phẩm còn nguyên vẹn, đầy đủ phụ kiện và có hóa đơn. Đổi trả miễn phí cho lỗi kỹ thuật, phí đổi trả 50,000 VND cho đổi size/màu sắc phụ kiện."
+    answer:
+      "TechNova hỗ trợ đổi trả trong vòng 30 ngày với sản phẩm còn nguyên vẹn, đầy đủ phụ kiện và có hóa đơn. Đổi trả miễn phí cho lỗi kỹ thuật, phí đổi trả 50,000 VND cho đổi size/màu sắc phụ kiện.",
   },
   {
     question: "Làm sao để theo dõi đơn hàng?",
-    answer: "Bạn có thể theo dõi đơn hàng qua: Email xác nhận, tin nhắn SMS, gọi hotline 1900 XXXX, hoặc tra cứu trực tuyến trên website với mã đơn hàng."
+    answer:
+      "Bạn có thể theo dõi đơn hàng qua: Email xác nhận, tin nhắn SMS, gọi hotline 1900 XXXX, hoặc tra cứu trực tuyến trên website với mã đơn hàng.",
   },
   {
     question: "TechNova có hỗ trợ lắp đặt sản phẩm không?",
-    answer: "Có, TechNova hỗ trợ lắp đặt miễn phí cho các sản phẩm lớn như máy tính để bàn, màn hình tại TP.HCM. Đối với các sản phẩm khác, chúng tôi sẽ hướng dẫn sử dụng chi tiết."
+    answer:
+      "Có, TechNova hỗ trợ lắp đặt miễn phí cho các sản phẩm lớn như máy tính để bàn, màn hình tại TP.HCM. Đối với các sản phẩm khác, chúng tôi sẽ hướng dẫn sử dụng chi tiết.",
   },
   {
     question: "Tôi có thể mua trả góp không?",
-    answer: "Có, TechNova hợp tác với các công ty tài chính uy tín như Home Credit, FE Credit, TPBank để hỗ trợ mua trả góp với lãi suất 0% cho một số sản phẩm. Thủ tục đơn giản, chỉ cần CMND/CCCD."
+    answer:
+      "Có, TechNova hợp tác với các công ty tài chính uy tín như Home Credit, FE Credit, TPBank để hỗ trợ mua trả góp với lãi suất 0% cho một số sản phẩm. Thủ tục đơn giản, chỉ cần CMND/CCCD.",
   },
   {
     question: "TechNova có chương trình khuyến mãi gì?",
-    answer: "TechNova thường xuyên có các chương trình khuyến mãi: Giảm giá theo mùa, giảm giá cho sinh viên, giảm giá khi mua số lượng lớn, tặng phụ kiện, bảo hành mở rộng. Theo dõi website và fanpage để cập nhật chương trình mới nhất."
+    answer:
+      "TechNova thường xuyên có các chương trình khuyến mãi: Giảm giá theo mùa, giảm giá cho sinh viên, giảm giá khi mua số lượng lớn, tặng phụ kiện, bảo hành mở rộng. Theo dõi website và fanpage để cập nhật chương trình mới nhất.",
   },
   {
     question: "Làm sao để liên hệ khi cần hỗ trợ?",
-    answer: "Bạn có thể liên hệ TechNova qua: Hotline 1900 XXXX (8:00-22:00 hàng ngày), Email support@technova.vn, Fanpage Facebook, hoặc đến trực tiếp cửa hàng tại 123 Nguyễn Huệ, Quận 1, TP.HCM."
-  }
-]
+    answer:
+      "Bạn có thể liên hệ TechNova qua: Hotline 1900 XXXX (8:00-22:00 hàng ngày), Email support@technova.vn, Fanpage Facebook, hoặc đến trực tiếp cửa hàng tại 123 Nguyễn Huệ, Quận 1, TP.HCM.",
+  },
+];
 
 export default function FAQPage() {
   return (
@@ -59,9 +80,12 @@ export default function FAQPage() {
       </div>
 
       <div className="mb-12 text-center">
-        <h1 className="mb-4 text-3xl font-bold md:text-4xl">Câu hỏi thường gặp</h1>
+        <h1 className="mb-4 text-3xl font-bold md:text-4xl">
+          Câu hỏi thường gặp
+        </h1>
         <p className="text-muted-foreground">
-          Tìm câu trả lời cho những câu hỏi phổ biến về sản phẩm và dịch vụ của TechNova.
+          Tìm câu trả lời cho những câu hỏi phổ biến về sản phẩm và dịch vụ của
+          TechNova.
         </p>
       </div>
 
@@ -198,7 +222,9 @@ export default function FAQPage() {
 
           <Card className="cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Tài khoản & Thành viên</CardTitle>
+              <CardTitle className="text-base">
+                Tài khoản & Thành viên
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
@@ -213,9 +239,12 @@ export default function FAQPage() {
       <div className="text-center">
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <CardContent className="p-8">
-            <h3 className="mb-4 text-2xl font-bold">Vẫn chưa tìm thấy câu trả lời?</h3>
+            <h3 className="mb-4 text-2xl font-bold">
+              Vẫn chưa tìm thấy câu trả lời?
+            </h3>
             <p className="mb-6 text-muted-foreground">
-              Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ bạn. Liên hệ ngay để được giải đáp chi tiết.
+              Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ bạn. Liên hệ
+              ngay để được giải đáp chi tiết.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
@@ -235,5 +264,5 @@ export default function FAQPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

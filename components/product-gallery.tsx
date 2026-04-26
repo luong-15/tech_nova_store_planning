@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ProductGalleryProps {
-  images: string[]
-  productName: string
+  images: string[];
+  productName: string;
 }
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
-  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedImage, setSelectedImage] = useState(0);
 
   const nextImage = () => {
-    setSelectedImage((prev) => (prev + 1) % images.length)
-  }
+    setSelectedImage((prev) => (prev + 1) % images.length);
+  };
 
   const prevImage = () => {
-    setSelectedImage((prev) => (prev - 1 + images.length) % images.length)
-  }
+    setSelectedImage((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   return (
     <div className="space-y-4">
@@ -71,7 +71,9 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               key={index}
               onClick={() => setSelectedImage(index)}
               className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all hover:border-blue-500 ${
-                selectedImage === index ? "border-blue-500 ring-2 ring-blue-500/20" : "border-border"
+                selectedImage === index
+                  ? "border-blue-500 ring-2 ring-blue-500/20"
+                  : "border-border"
               }`}
             >
               <Image
@@ -85,5 +87,5 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

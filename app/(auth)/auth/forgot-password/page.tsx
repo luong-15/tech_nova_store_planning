@@ -1,38 +1,38 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { createBrowserClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Mail, Loader2, Zap, ArrowLeft, Check } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { createBrowserClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Mail, Loader2, Zap, ArrowLeft, Check } from "lucide-react";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    const supabase = createBrowserClient()
+    const supabase = createBrowserClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
-    })
+    });
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      setSent(true)
+      setSent(true);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-8">
@@ -54,7 +54,8 @@ export default function ForgotPasswordPage() {
             <div>
               <h2 className="text-2xl font-bold">Kiểm tra email</h2>
               <p className="mt-2 text-muted-foreground">
-                Chúng tôi đã gửi link đặt lại mật khẩu đến <span className="font-medium text-foreground">{email}</span>
+                Chúng tôi đã gửi link đặt lại mật khẩu đến{" "}
+                <span className="font-medium text-foreground">{email}</span>
               </p>
             </div>
             <Button asChild variant="outline" className="w-full bg-transparent">
@@ -68,11 +69,15 @@ export default function ForgotPasswordPage() {
           <>
             <div className="space-y-2 text-center">
               <h2 className="text-2xl font-bold">Quên mật khẩu?</h2>
-              <p className="text-muted-foreground">Nhập email của bạn và chúng tôi sẽ gửi link đặt lại mật khẩu</p>
+              <p className="text-muted-foreground">
+                Nhập email của bạn và chúng tôi sẽ gửi link đặt lại mật khẩu
+              </p>
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div>
+              <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">
+                {error}
+              </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -114,5 +119,5 @@ export default function ForgotPasswordPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
