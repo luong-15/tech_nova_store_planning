@@ -1,29 +1,37 @@
-import { createClient } from "@/lib/supabase/server"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Grid3X3, List } from "lucide-react"
-import Link from "next/link"
-import type { Category } from "@/lib/types"
+import { createClient } from "@/lib/supabase/server";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Grid3X3, List } from "lucide-react";
+import Link from "next/link";
+import type { Category } from "@/lib/types";
+import { SectionTitle } from "@/components/animations/section-title";
 
 export default async function CategoriesPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   // Fetch all categories
-  const { data: categories } = await supabase.from("categories").select("*").order("name")
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("*")
+    .order("name");
   // console.log("Categories page server - Fetched categories count:", categories?.length || 0, categories)
 
   return (
     <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
       {/* Header */}
       <div className="mb-12 flex flex-col items-center text-center animate-in slide-in-from-bottom-4 fade-in duration-700 ease-out">
-        <Badge variant="secondary" className="mb-4 rounded-full px-4 py-1.5 text-sm font-medium">
+        <Badge
+          variant="secondary"
+          className="mb-4 rounded-full px-4 py-1.5 text-sm font-medium"
+        >
           Bộ Sưu Tập
         </Badge>
-        <h1 className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+        <SectionTitle className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
           Danh Mục Sản Phẩm
-        </h1>
+        </SectionTitle>
         <p className="max-w-2xl text-lg text-muted-foreground/80 sm:text-xl leading-relaxed">
-          Khám phá các dòng sản phẩm công nghệ hàng đầu được tuyển chọn kĩ lưỡng dành riêng cho bạn.
+          Khám phá các dòng sản phẩm công nghệ hàng đầu được tuyển chọn kĩ lưỡng
+          dành riêng cho bạn.
         </p>
       </div>
 
@@ -47,7 +55,7 @@ export default async function CategoriesPage() {
                 {/* Subtle gradient overlay on hover for better transition */}
                 <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:from-background/80" />
               </div>
-              
+
               {/* Content Container */}
               <div className="flex flex-1 flex-col p-6 sm:p-8">
                 <h3 className="mb-2 text-xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
@@ -56,9 +64,9 @@ export default async function CategoriesPage() {
                 <p className="mb-6 flex-1 text-sm leading-relaxed text-muted-foreground/80 line-clamp-2">
                   {category.description}
                 </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="w-full rounded-xl transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary group-active:scale-[0.98]"
                 >
                   <Grid3X3 className="mr-2 h-4 w-4" />
@@ -78,10 +86,11 @@ export default async function CategoriesPage() {
             Không có danh mục nào
           </h3>
           <p className="text-sm text-muted-foreground/80">
-            Các danh mục sản phẩm đang được chúng tôi cập nhật. Hãy quay lại sau nhé!
+            Các danh mục sản phẩm đang được chúng tôi cập nhật. Hãy quay lại sau
+            nhé!
           </p>
         </div>
       )}
     </div>
-  )
+  );
 }

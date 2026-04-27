@@ -128,3 +128,12 @@ export function FlyToCart({
     </>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Global overlay component — place once at app root                 */
+/* ------------------------------------------------------------------ */
+
+export function FlyToCartOverlay() {
+  const { FlyingItemsLayer } = useFlyToCart();
+  return <FlyingItemsLayer />;
+}

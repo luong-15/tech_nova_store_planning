@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { ShieldAlert } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ShieldAlert } from "lucide-react";
 
 export default function Unauthorized() {
   return (
@@ -12,7 +12,8 @@ export default function Unauthorized() {
             Không có quyền truy cập
           </h1>
           <p className="text-muted-foreground mb-8">
-            Bạn cần tài khoản admin để truy cập trang quản trị. Vui lòng liên hệ quản trị viên.
+            Bạn cần tài khoản admin để truy cập trang quản trị. Vui lòng liên hệ
+            quản trị viên.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
@@ -25,6 +26,5 @@ export default function Unauthorized() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
