@@ -715,14 +715,14 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Items List with Scroll */}
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">
                   Sản phẩm ({items.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="h-96 overflow-y-auto px-4 pb-4">
+              <CardContent className="p-0 overflow-hidden">
+                <div className="max-h-96 overflow-y-auto overscroll-contain px-4 pb-4">
                   <div className="space-y-3">
                     {items.map((item) => (
                       <div
