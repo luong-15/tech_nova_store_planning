@@ -22,7 +22,6 @@ const nextConfig = {
 
   // Performance optimizations
   compress: true,
-  swcMinify: true,
 
   headers: async () => [
     {

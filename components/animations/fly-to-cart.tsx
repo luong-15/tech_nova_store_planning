@@ -137,3 +137,78 @@ export function FlyToCartOverlay() {
   const { FlyingItemsLayer } = useFlyToCart();
   return <FlyingItemsLayer />;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Standalone trigger function — usable outside React hooks          */
+/* ------------------------------------------------------------------ */
+
+function createFlyingItem(
+  imageSrc: string,
+  startRect: DOMRect,
+  endRect: DOMRect,
+) {
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const el = document.createElement("img");
+  el.src = imageSrc;
+  el.id = id;
+  el.alt = "";
+  el.style.position = "fixed";
+  el.style.zIndex = "9999";
+  el.style.width = "64px";
+  el.style.height = "64px";
+  el.style.objectFit = "cover";
+  el.style.borderRadius = "8px";
+  el.style.pointerEvents = "none";
+  el.style.boxShadow = "0 25px 50px -12px rgba(0, 0, 0, 0.25)";
+  el.style.left = `${startRect.left + startRect.width / 2 - 32}px`;
+  el.style.top = `${startRect.top + startRect.height / 2 - 32}px`;
+  el.style.willChange = "transform, opacity";
+  el.style.transition =
+    "transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1)";
+
+  document.body.appendChild(el);
+
+  // Force reflow
+  el.getBoundingClientRect();
+
+  requestAnimationFrame(() => {
+    const endX = endRect.left + endRect.width / 2 - 32;
+    const endY = endRect.top + endRect.height / 2 - 32;
+    el.style.transform = `translate(${endX - (startRect.left + startRect.width / 2 - 32)}px, ${endY - (startRect.top + startRect.height / 2 - 32)}px) scale(0.2)`;
+    el.style.opacity = "0";
+  });
+
+  setTimeout(() => {
+    el.remove();
+  }, 900);
+}
+
+export function triggerFlyToCart(
+  imageSrc: string,
+  _productId?: string,
+  eventOrElement?: React.MouseEvent | HTMLElement,
+  cartButtonSelector = "[data-cart-icon]",
+) {
+  const cartBtn = document.querySelector(
+    cartButtonSelector,
+  ) as HTMLElement | null;
+  if (!cartBtn) {
+    console.warn("Cart button not found");
+    return;
+  }
+
+  let startRect: DOMRect;
+  if (eventOrElement instanceof HTMLElement) {
+    startRect = eventOrElement.getBoundingClientRect();
+  } else if (eventOrElement && "currentTarget" in eventOrElement && "target" in eventOrElement) {
+    startRect = (
+      eventOrElement.target as HTMLElement
+    ).getBoundingClientRect();
+  } else {
+    // Fallback to cart button itself if no start element provided
+    startRect = cartBtn.getBoundingClientRect();
+  }
+
+  const endRect = cartBtn.getBoundingClientRect();
+  createFlyingItem(imageSrc, startRect, endRect);
+}

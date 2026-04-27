@@ -183,7 +183,7 @@ export default function SettingsPage() {
           return (
             <motion.div
               key={section.title}
-              className={`rounded-2xl border border-border/50 bg-gradient-to-br ${section.color} p-6 cursor-pointer transition-all hover:border-primary/30 hover:shadow-md`}
+              className={`rounded-2xl border border-border/50 bg-linear-to-br ${section.color} p-6 cursor-pointer transition-all hover:border-primary/30 hover:shadow-md`}
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
