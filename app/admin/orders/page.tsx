@@ -43,7 +43,7 @@ export default function OrdersPage() {
       delivered: { label: "Hoàn thành", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: CheckCircle2 },
       cancelled: { label: "Đã hủy", color: "bg-red-500/10 text-red-500 border-red-500/20", icon: Package },
     }
-    const config = statusMap[status] || { label: status, color: "bg-slate-500/10 text-slate-500", icon: Package }
+    const config = statusMap[status] || { label: status, color: "bg-muted/300/10 text-slate-500", icon: Package }
     const Icon = config.icon
     return (
       <Badge variant="outline" className={cn("flex w-fit items-center gap-1.5 font-medium px-2.5 py-0.5 rounded-full", config.color)}>
@@ -56,9 +56,9 @@ export default function OrdersPage() {
   const getPaymentBadge = (status: string) => {
     const statusMap: Record<string, { label: string, color: string }> = {
       unpaid: { label: "Chưa thanh toán", color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
-      paid: { label: "Đã thanh toán", color: "bg-emerald-500 text-white shadow-sm shadow-emerald-500/20" },
-      failed: { label: "Thất bại", color: "bg-red-500 text-white" },
-      cancelled: { label: "Hủy", color: "bg-slate-400 text-white" },
+      paid: { label: "Đã thanh toán", color: "bg-emerald-500 text-primary-foreground shadow-sm shadow-emerald-500/20" },
+      failed: { label: "Thất bại", color: "bg-red-500 text-primary-foreground" },
+      cancelled: { label: "Hủy", color: "bg-slate-400 text-primary-foreground" },
     }
     const config = statusMap[status] || { label: status, color: "bg-outline text-outline" }
     return <Badge className={cn("text-[10px] uppercase tracking-wider px-2 font-bold rounded-md", config.color)}>{config.label}</Badge>
@@ -200,7 +200,7 @@ export default function OrdersPage() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="rounded-full hover:bg-primary hover:text-white transition-all shadow-none"
+                      className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all shadow-none"
                       onClick={async () => {
                         const res = await fetch(`/api/admin/orders/${order.id}`, { cache: 'no-store' })
                         if (res.ok) {
@@ -369,7 +369,7 @@ export default function OrdersPage() {
             </div>
 
             <div className="flex justify-end">
-              <div className="w-full max-w-sm space-y-4 bg-muted/20 p-6 rounded-4xl border border-border/40">
+              <div className="w-full max-w-sm space-y-4 bg-muted/20 p-6 rounded-3xl border border-border/40">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-muted-foreground font-medium">
                     <span>Tạm tính</span>

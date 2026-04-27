@@ -54,7 +54,7 @@ function ButtonGroupText({
     <Comp
       className={cn(
         // Nâng cấp giao diện Text: Nền kính mờ, chữ nhạt tinh tế, padding tương xứng h-11 của Button
-        "bg-slate-50/50 dark:bg-slate-800/30 text-muted-foreground flex items-center gap-2 border border-border/60 px-5 py-2 text-sm font-bold backdrop-blur-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-5",
+        "bg-muted/30/50 dark:bg-slate-800/30 text-muted-foreground flex items-center gap-2 border border-border/60 px-5 py-2 text-sm font-bold backdrop-blur-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-5",
         className,
       )}
       {...props}

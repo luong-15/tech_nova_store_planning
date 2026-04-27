@@ -193,10 +193,10 @@ export default function ProductsPage() {
               <Plus className="mr-2 h-4 w-4" /> Thêm sản phẩm
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 backdrop-blur-xl">
             <DialogHeader className="px-6 py-4 border-b">
               <DialogTitle className="text-xl flex items-center gap-2">
-                {selectedProduct ? <Edit className="h-5 w-5 text-blue-500" /> : <Plus className="h-5 w-5 text-green-500" />}
+                {selectedProduct ? <Edit className="h-5 w-5 text-primary" /> : <Plus className="h-5 w-5 text-emerald-500" />}
                 {selectedProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
               </DialogTitle>
             </DialogHeader>
@@ -349,7 +349,7 @@ export default function ProductsPage() {
                     <div className="text-xs text-muted-foreground mt-1 flex gap-2 items-center">
                       {product.brand && <span className="bg-muted px-1.5 py-0.5 rounded text-[10px]">{product.brand}</span>}
                       {product.is_featured && <span className="text-orange-500 font-semibold text-[10px]">★ NỔI BẬT</span>}
-                      {product.is_deal && <span className="text-red-500 font-semibold text-[10px]">🔥 DEAL</span>}
+                      {product.is_deal && <span className="text-destructive font-semibold text-[10px]">🔥 DEAL</span>}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -366,7 +366,7 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell className="text-right pr-4">
                     <div className="flex justify-end gap-2">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-500" onClick={() => {
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => {
                         setSelectedProduct(product)
                         setProductForm({
                           ...product,
@@ -382,7 +382,7 @@ export default function ProductsPage() {
                         } as any)
                         setProductDialogOpen(true)
                       }}><Edit className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => handleDeleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>

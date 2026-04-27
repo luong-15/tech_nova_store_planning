@@ -319,7 +319,7 @@ export default function ProfilePage() {
                   )}
                 </div>
                 
-                <Button type="submit" disabled={saving} className="w-full sm:w-auto min-w-35">
+                <Button type="submit" disabled={saving} className="w-full sm:w-auto min-w-[140px]">
                   {saving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

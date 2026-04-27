@@ -3,11 +3,13 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-
+  experimental: {
+    viewTransition: true,
+  },
   productionBrowserSourceMaps: false,
   images: {
     unoptimized: true,
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

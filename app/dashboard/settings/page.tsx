@@ -85,7 +85,7 @@ export default function WishlistPage() {
                 className="group relative flex gap-4 rounded-2xl border bg-card p-3 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20"
               >
                 {/* Image Section */}
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-50 dark:bg-zinc-900/50">
+                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-muted/30 dark:bg-zinc-900/50">
                   <Image
                     src={item.product.image_url || "/placeholder.svg"}
                     alt={item.product.name}

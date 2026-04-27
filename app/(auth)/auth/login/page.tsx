@@ -121,31 +121,31 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left Side - Branding */}
-      <div className="hidden w-1/2 bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 lg:flex lg:flex-col lg:justify-between p-12">
+      <div className="hidden w-1/2 bg-linear-to-br from-background via-primary/20 to-background lg:flex lg:flex-col lg:justify-between p-12">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-            <Zap className="h-6 w-6 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <Zap className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold text-white">TechNova</span>
+          <span className="text-xl font-bold text-primary-foreground">TechNova</span>
         </Link>
 
         <div className="space-y-6">
-          <h1 className="text-4xl font-bold text-white">
+          <h1 className="text-4xl font-bold text-primary-foreground">
             Khám phá thế giới
             <br />
-            <span className="text-blue-400">công nghệ</span>
+            <span className="text-primary">công nghệ</span>
           </h1>
-          <p className="text-lg text-blue-100/80">
+          <p className="text-lg text-muted-foreground">
             Đăng nhập để trải nghiệm mua sắm công nghệ tuyệt vời với hàng ngàn sản phẩm chính hãng.
           </p>
         </div>
 
-        <div className="flex items-center gap-8 text-sm text-blue-200/60">
+        <div className="flex items-center gap-8 text-sm text-muted-foreground">
           <span>© 2025 TechNova</span>
-          <Link href="#" className="hover:text-white">
+          <Link href="#" className="hover:text-primary-foreground">
             Điều khoản
           </Link>
-          <Link href="#" className="hover:text-white">
+          <Link href="#" className="hover:text-primary-foreground">
             Bảo mật
           </Link>
         </div>
@@ -157,8 +157,8 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <div className="flex justify-center lg:hidden">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-                <Zap className="h-6 w-6 text-white" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                <Zap className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">TechNova</span>
             </Link>
@@ -212,16 +212,9 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="relative overflow-hidden">
-            <div
-              className="flex transition-transform duration-300 ease-out"
-              style={{
-                transform: activeTab === "login" ? "translateX(0)" : "translateX(-50%)",
-                width: "200%",
-              }}
-            >
-              {/* Login Form */}
-              <div className="w-1/2 shrink-0 space-y-6 px-1">
+          <div className="relative">
+            {activeTab === "login" ? (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-6">
                 <div className="space-y-2 text-center">
                   <h2 className="text-2xl font-bold">Chào mừng trở lại!</h2>
                   <p className="text-muted-foreground">Đăng nhập để tiếp tục mua sắm</p>
@@ -236,7 +229,7 @@ export default function LoginPage() {
                         id="login-email"
                         type="email"
                         placeholder="email@example.com"
-                        className="pl-10 bg-transparent"
+                        className="pl-10 bg-transparent rounded-xl"
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
                         required
@@ -257,7 +250,7 @@ export default function LoginPage() {
                         id="login-password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-10 pr-10 bg-transparent"
+                        className="pl-10 pr-10 bg-transparent rounded-xl"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         required
@@ -272,7 +265,7 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full rounded-xl" disabled={loading}>
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -324,8 +317,8 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Signup Form */}
-              <div className="w-1/2 shrink-0 space-y-6 px-1">
+            ) : (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-6">
                 <div className="space-y-2 text-center">
                   <h2 className="text-2xl font-bold">Tạo tài khoản mới</h2>
                   <p className="text-muted-foreground">Đăng ký để nhận ưu đãi độc quyền</p>
@@ -340,7 +333,7 @@ export default function LoginPage() {
                         id="signup-name"
                         type="text"
                         placeholder="Nguyễn Văn A"
-                        className="pl-10 bg-transparent"
+                        className="pl-10 bg-transparent rounded-xl"
                         value={signupName}
                         onChange={(e) => setSignupName(e.target.value)}
                         required
@@ -356,7 +349,7 @@ export default function LoginPage() {
                         id="signup-email"
                         type="email"
                         placeholder="email@example.com"
-                        className="pl-10 bg-transparent"
+                        className="pl-10 bg-transparent rounded-xl"
                         value={signupEmail}
                         onChange={(e) => setSignupEmail(e.target.value)}
                         required
@@ -372,7 +365,7 @@ export default function LoginPage() {
                         id="signup-password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-10 pr-10 bg-transparent"
+                        className="pl-10 pr-10 bg-transparent rounded-xl"
                         value={signupPassword}
                         onChange={(e) => setSignupPassword(e.target.value)}
                         required
@@ -422,7 +415,7 @@ export default function LoginPage() {
                     </label>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading || !agreeTerms}>
+                  <Button type="submit" className="w-full rounded-xl" disabled={loading || !agreeTerms}>
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -473,7 +466,7 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

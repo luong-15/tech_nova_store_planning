@@ -35,21 +35,21 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-8">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 sm:p-8">
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-              <Zap className="h-6 w-6 text-white" />
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-sm group-hover:scale-105 transition-transform">
+              <Zap className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold">TechNova</span>
+            <span className="text-xl font-bold tracking-tight">TechNova</span>
           </Link>
         </div>
 
         {sent ? (
           <div className="space-y-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
-              <Check className="h-8 w-8 text-green-500" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
+              <Check className="h-8 w-8 text-emerald-500" />
             </div>
             <div>
               <h2 className="text-2xl font-bold">Kiểm tra email</h2>
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
                 Chúng tôi đã gửi link đặt lại mật khẩu đến <span className="font-medium text-foreground">{email}</span>
               </p>
             </div>
-            <Button asChild variant="outline" className="w-full bg-transparent">
+            <Button asChild variant="outline" className="w-full">
               <Link href="/auth/login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Quay lại đăng nhập
@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div>
+              <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive animate-in fade-in slide-in-from-top-2"><span className="text-base">×</span>{error}</div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
                     id="email"
                     type="email"
                     placeholder="email@example.com"
-                    className="pl-10 bg-transparent"
+                    className="pl-10 bg-transparent rounded-xl"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full rounded-xl" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

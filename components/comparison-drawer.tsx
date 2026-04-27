@@ -17,7 +17,7 @@ export function ComparisonDrawer() {
 
   return (
     <Sheet open={isOpen} onOpenChange={closeComparison}>
-      <SheetContent className="flex w-full flex-col border-l border-border/50 bg-background/95 backdrop-blur-xl sm:max-w-lg p-[15px]">
+      <SheetContent className="flex h-full w-full flex-col border-l border-border/50 bg-background/95 backdrop-blur-xl sm:max-w-lg sm:h-[calc(100dvh-4rem)] sm:top-16 sm:mt-0 sm:rounded-l-2xl overflow-hidden p-3.75">
         <SheetHeader className="space-y-2.5 pr-6">
           <SheetTitle className="flex items-center gap-2 text-xl">
             <GitCompare className="h-5 w-5 text-primary" />
@@ -31,7 +31,7 @@ export function ComparisonDrawer() {
         {products.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 py-12">
             <div className="relative">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5">
+              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5">
                 <GitCompare className="h-14 w-14 text-primary/50" />
               </div>
               <div className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
@@ -40,7 +40,7 @@ export function ComparisonDrawer() {
             </div>
             <div className="text-center">
               <h3 className="text-xl font-semibold">Chưa có sản phẩm để so sánh</h3>
-              <p className="mt-2 max-w-[250px] text-sm text-muted-foreground">
+              <p className="mt-2 max-w-62.5 text-sm text-muted-foreground">
                 Thêm sản phẩm vào danh sách so sánh để xem chi tiết và so sánh thông số kỹ thuật.
               </p>
             </div>

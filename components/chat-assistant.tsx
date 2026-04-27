@@ -142,7 +142,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
             <MessageCircle className="h-6 w-6 transition-transform group-hover:scale-110" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 border-2 border-white"></span>
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 border-2 border-background"></span>
             </span>
           </Button>
         </motion.div>
@@ -156,7 +156,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
             className="fixed bottom-0 right-0 z-100 w-full sm:bottom-6 sm:right-6 sm:w-105 h-dvh sm:h-162.5"
           >
-            <Card className="w-full h-full shadow-2xl flex flex-col border-border/50 bg-background/95 backdrop-blur-xl sm:rounded-4xl overflow-hidden">
+            <Card className="w-full h-full shadow-2xl flex flex-col border-border/50 bg-background/95 backdrop-blur-xl sm:rounded-3xl overflow-hidden">
               {/* Header */}
               <CardHeader className="bg-primary/5 border-b p-5 shrink-0">
                 <div className="flex items-center justify-between">
@@ -187,7 +187,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
                         <div className={cn("flex gap-3 max-w-[85%]", message.role === "user" && "flex-row-reverse")}>
                           <div className={cn(
                             "h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border shadow-sm",
-                            message.role === "assistant" ? "bg-white text-primary border-primary/10" : "bg-primary text-primary-foreground border-transparent"
+                            message.role === "assistant" ? "bg-background text-primary border-primary/10" : "bg-primary text-primary-foreground border-transparent"
                           )}>
                             {message.role === "assistant" ? <Sparkles size={14} /> : <User size={14} />}
                           </div>
@@ -230,14 +230,14 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
                 </ScrollArea>
 
                 {/* Input Area */}
-                <div className="p-4 bg-background border-t">
+                <div className="px-4 pt-4 bg-background border-t">
                   <AnimatePresence>
                     {selectedImages.length > 0 && (
                       <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="flex gap-2 overflow-x-auto pb-3">
                         {selectedImages.map((file, i) => (
                           <div key={i} className="relative group shrink-0">
                             <img src={URL.createObjectURL(file)} className="w-14 h-14 object-cover rounded-xl border" alt="preview" />
-                            <button onClick={() => setSelectedImages(p => p.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 shadow-lg scale-0 group-hover:scale-100 transition-transform">
+                            <button onClick={() => setSelectedImages(p => p.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 bg-destructive text-primary-foreground rounded-full p-1 shadow-lg scale-0 group-hover:scale-100 transition-transform">
                               <X size={10} />
                             </button>
                           </div>

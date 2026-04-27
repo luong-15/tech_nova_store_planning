@@ -19,7 +19,7 @@ interface Stats {
 // --- Thẻ Thống kê Premium ---
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: any, description: string }) {
   return (
-    <Card className="relative overflow-hidden border-border/40 shadow-sm hover:shadow-md transition-all bg-white dark:bg-card/50 rounded-4xl group">
+    <Card className="relative overflow-hidden border-border/40 shadow-sm hover:shadow-md transition-all bg-card rounded-3xl group">
       <div className="absolute -right-4 -top-4 p-3 opacity-5 group-hover:opacity-10 transition-opacity group-hover:scale-110 group-hover:-rotate-12 duration-500">
         <Icon className="h-32 w-32" />
       </div>
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
 
       {loadingStats ? (
         <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => <Card key={i} className="h-36 rounded-4xl" />)}
+          {[...Array(4)].map((_, i) => <Card key={i} className="h-36 rounded-3xl" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="text-center text-muted-foreground text-lg font-medium p-12 border-2 border-dashed border-border/60 rounded-4xl">
+      <div className="text-center text-muted-foreground text-lg font-medium p-12 border-2 border-dashed border-border/60 rounded-3xl">
         <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
         <h3 className="text-2xl font-black mb-2">Sử dụng Sidebar Navigation</h3>
         <p>Click vào các mục trong sidebar bên trái để quản lý Sản phẩm, Đơn hàng, Khách hàng, Danh mục.</p>
