@@ -11,13 +11,13 @@ export function LoadingState({ className, count = 6 }: LoadingStateProps) {
     <div className={cn("container mx-auto px-4 py-12", className)}>
       <div className="flex gap-10">
         <div className="hidden w-72 shrink-0 lg:block">
-          <Skeleton className="h-[500px] w-full rounded-2xl" />
+          <Skeleton className="h-125ull rounded-2xl" />
         </div>
         <div className="flex-1 space-y-8">
           <Skeleton className="h-16 w-full rounded-2xl" />
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: count }).map((_, i) => (
-              <Skeleton key={i} className="h-[280px] w-full rounded-2xl" />
+              <Skeleton key={i} className="h-70 w-full rounded-2xl" />
             ))}
           </div>
         </div>

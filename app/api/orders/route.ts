@@ -1,8 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  createServerClient,
   createAdminServerClient,
   createReadOnlyServerClient,
 } from "@/lib/supabase/server";
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const page = Number(searchParams.get("page") || "1");
+    const limit = Number(searchParams.get("limit") || "10");
+
+    const { data, error, count } = await supabase
+      .from("orders")
+      .select(
+        `
+        *,
+        order_items (
+          *,
+          product:name
+        )
+      `,
+        { count: "exact" },
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
+
+    if (error) throw error;
+
+    return NextResponse.json({
+      data,
+      pagination: { page, limit, total: count || 0 },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch orders" },
+      { status: 500 },
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
