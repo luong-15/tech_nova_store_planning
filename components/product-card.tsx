@@ -7,7 +7,7 @@ import {
   notifyComparisonAdded,
   notifyError,
 } from "@/lib/notifications";
-import { useCallback, useState, useRef } from "react";
+import React, { useCallback, useState, useRef } from "react";
 import { formatPrice } from "@/lib/currency";
 import Link from "next/link";
 import type { Product } from "@/lib/types";
@@ -20,7 +20,7 @@ interface ProductCardProps {
   product: Product;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export const ProductCard = React.memo(({ product }: ProductCardProps) => {
   const addToCart = useCartStore((state) => state.addToCart);
   const addProduct = useComparisonStore((state) => state.addProduct);
   const isProductInComparison = useComparisonStore(
@@ -38,7 +38,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
     notifyCartAdded(product.name, async () => {
       const freshCartStore = useCartStore.getState();
-      freshCartStore.removeFromCart(product.id);
+      freshCartStore.removeItem(product.id);
       setIsInCart(false);
       if (wasEmpty) {
         notifyError("Giỏ hàng đã được hoàn tác");
@@ -148,4 +148,4 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
     </BorderGlow>
   );
-}
+});

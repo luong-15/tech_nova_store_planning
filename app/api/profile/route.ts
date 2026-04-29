@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Profile PUT error:", error);
+    // Profile PUT error
     return NextResponse.json(
       { error: "Failed to update profile" },
       { status: 500 },

@@ -72,7 +72,6 @@ export async function GET(request: NextRequest) {
   );
 
   if (error) {
-    console.error("Products fetch error:", error);
     return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500 },

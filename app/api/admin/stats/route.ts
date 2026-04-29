@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
     const [ordersRes, productsRes, usersRes] = await Promise.all([
       supabaseAdmin
         .from("orders")
-        .select("total, count", { count: "exact", head: true }),
+        .select("id", { count: "exact", head: true }),
       supabaseAdmin
         .from("products")
-        .select("count", { count: "exact", head: true }),
+        .select("id", { count: "exact", head: true }),
       supabaseAdmin.auth.admin
         .listUsers()
         .then((users) => ({ count: users.data.users.length })),

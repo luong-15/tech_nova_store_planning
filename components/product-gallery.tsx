@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ interface ProductGalleryProps {
   productName: string;
 }
 
-export function ProductGallery({ images, productName }: ProductGalleryProps) {
+export const ProductGallery = React.memo(({ images, productName }: ProductGalleryProps) => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const nextImage = () => {
@@ -88,4 +88,4 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
       )}
     </div>
   );
-}
+});

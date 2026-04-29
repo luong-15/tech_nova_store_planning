@@ -28,7 +28,7 @@ import {
 import { useCartStore } from "@/lib/store/cart-store";
 import { useComparisonStore } from "@/lib/store/comparison-store";
 import { CartDrawer } from "@/components/cart/cart-drawer";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

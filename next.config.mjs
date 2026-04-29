@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   experimental: {
     viewTransition: true,
@@ -10,7 +10,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
 
   images: {
-    unoptimized: true,
+    unoptimized: false,
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
