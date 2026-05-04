@@ -67,13 +67,16 @@ export default function UsersPage() {
       }
 
       const response = await fetch(`/api/admin/users?${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
       const data = await response.json();
 
       setUsers(data.data || []);
       setUsersPagination((prev) => ({
         ...prev,
-        total: data.pagination.total,
-        totalPages: data.pagination.totalPages,
+        total: data.pagination?.total || 0,
+        totalPages: data.pagination?.totalPages || 0,
       }));
     } catch (error) {
       console.error("Error fetching users:", error);

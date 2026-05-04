@@ -22,12 +22,14 @@ import {
   Shield,
   LayoutDashboard,
   Settings2,
+  BarChart3,
 } from "lucide-react";
 import type { UserProfile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const adminSidebarItems = [
   { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/admin/stats",    label: "Thống kê", icon: BarChart3 }, 
   { href: "/admin/products", label: "Sản phẩm", icon: Package },
   { href: "/admin/categories", label: "Danh mục", icon: Package },
   { href: "/admin/orders", label: "Đơn hàng", icon: ShoppingCart },

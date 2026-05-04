@@ -1,136 +1,90 @@
-"use client";
+"use client"
 
-export const dynamic = "force-dynamic";
+import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  Package, ShoppingCart, Users, BarChart3,
+  Settings2, LayoutDashboard, ArrowRight
+} from "lucide-react"
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Package, ShoppingCart, Users, DollarSign } from "lucide-react";
-
-interface Stats {
-  totalProducts: number;
-  totalOrders: number;
-  totalUsers: number;
-  totalRevenue: number;
-}
-
-// --- Thẻ Thống kê Premium ---
-function StatCard({
-  title,
-  value,
-  icon: Icon,
-  description,
-}: {
-  title: string;
-  value: string | number;
-  icon: any;
-  description: string;
-}) {
-  return (
-    <Card className="relative overflow-hidden border-border/40 shadow-sm hover:shadow-md transition-all bg-card rounded-3xl group">
-      <div className="absolute -right-4 -top-4 p-3 opacity-5 group-hover:opacity-10 transition-opacity group-hover:scale-110 group-hover:-rotate-12 duration-500">
-        <Icon className="h-32 w-32" />
-      </div>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-          <Icon className="h-5 w-5" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-black tracking-tighter">{value}</div>
-        <p className="text-xs text-muted-foreground mt-2 font-medium">
-          {description}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+const quickLinks = [
+  {
+    href: "/admin/stats",
+    label: "Thống kê",
+    description: "Doanh thu, đơn hàng, khách hàng",
+    icon: BarChart3,
+    color: "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+  },
+  {
+    href: "/admin/products",
+    label: "Sản phẩm",
+    description: "Quản lý danh sách sản phẩm",
+    icon: Package,
+    color: "bg-violet-100 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400",
+  },
+  {
+    href: "/admin/orders",
+    label: "Đơn hàng",
+    description: "Xem và cập nhật trạng thái đơn",
+    icon: ShoppingCart,
+    color: "bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400",
+  },
+  {
+    href: "/admin/users",
+    label: "Người dùng",
+    description: "Quản lý tài khoản khách hàng",
+    icon: Users,
+    color: "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400",
+  },
+  {
+    href: "/admin/categories",
+    label: "Danh mục",
+    description: "Phân loại sản phẩm",
+    icon: Package,
+    color: "bg-pink-100 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400",
+  },
+  {
+    href: "/admin/settings",
+    label: "Cài đặt",
+    description: "Cấu hình hệ thống cửa hàng",
+    icon: Settings2,
+    color: "bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400",
+  },
+]
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({
-    totalProducts: 0,
-    totalOrders: 0,
-    totalUsers: 0,
-    totalRevenue: 0,
-  });
-  const [loadingStats, setLoadingStats] = useState(true);
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-
-  useEffect(() => {
-    fetch("/api/admin/stats")
-      .then((res) => res.json())
-      .then(setStats)
-      .finally(() => setLoadingStats(false));
-  }, []);
-
   return (
-    <div className="container mx-auto p-6 space-y-8 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight">
-            Hệ thống Quản trị
-          </h1>
-          <p className="text-muted-foreground font-medium mt-1">
-            Quản lý cửa hàng một cách toàn diện.
-          </p>
-        </div>
+    <div className="p-6 space-y-8">
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="text-4xl font-black tracking-tight flex items-center gap-3">
+          <LayoutDashboard className="h-9 w-9 text-primary" />
+          Hệ thống Quản trị
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Chọn mục cần quản lý từ bên dưới hoặc dùng sidebar bên trái.
+        </p>
       </div>
 
-      {loadingStats ? (
-        <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="h-36 rounded-3xl" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Tổng sản phẩm"
-            value={stats.totalProducts}
-            icon={Package}
-            description="Đang được kinh doanh"
-          />
-          <StatCard
-            title="Tổng đơn hàng"
-            value={stats.totalOrders}
-            icon={ShoppingCart}
-            description="Toàn thời gian"
-          />
-          <StatCard
-            title="Khách hàng"
-            value={stats.totalUsers}
-            icon={Users}
-            description="Thành viên đã đăng ký"
-          />
-          <StatCard
-            title="Doanh thu"
-            value={formatCurrency(stats.totalRevenue)}
-            icon={DollarSign}
-            description="Tổng thu nhập thực tế"
-          />
-        </div>
-      )}
-
-      <div className="text-center text-muted-foreground text-lg font-medium p-12 border-2 border-dashed border-border/60 rounded-3xl">
-        <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-        <h3 className="text-2xl font-black mb-2">Sử dụng Sidebar Navigation</h3>
-        <p>
-          Click vào các mục trong sidebar bên trái để quản lý Sản phẩm, Đơn
-          hàng, Khách hàng, Danh mục.
-        </p>
-        <p className="text-sm mt-2 opacity-75">
-          Các trang riêng biệt đã có đầy đủ chức năng CRUD hoạt động bình
-          thường!
-        </p>
+      {/* Quick links grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {quickLinks.map(({ href, label, description, icon: Icon, color }) => (
+          <Link key={href} href={href}>
+            <Card className="group border-border/40 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all rounded-2xl cursor-pointer">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className={`p-3 rounded-2xl shrink-0 ${color}`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-sm">{label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{description}</p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
       </div>
     </div>
-  );
+  )
 }

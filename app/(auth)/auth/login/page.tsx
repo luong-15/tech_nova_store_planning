@@ -86,14 +86,14 @@ function OAuthButtons({
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-border" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
+        <div className="relative flex justify-center text-xs uppercase text-muted-foreground">
           <span className="bg-background px-2 text-muted-foreground">
             Hoặc tiếp tục với
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mt-4">
         <Button
           variant="outline"
           className="bg-transparent"
