@@ -129,12 +129,12 @@ export default function ProductPage() {
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (product && cartButtonRef.current) {
-      triggerFlyToCart(product.image_url, product.id, e as any);
+      triggerFlyToCart(product.image_url || '', product.id, e as any);
       setTimeout(() => {
         addToCart(product);
         notifyCartAdded(product.name, () =>
-          useCartStore.getState().removeFromCart(product.id),
-        );
+        useCartStore.getState().removeItem(product.id),
+      );
       }, 200);
     }
   };
