@@ -129,7 +129,7 @@ export function Footer() {
       {/* Decorative top line */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
 
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-16">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* About */}
           <div className="flex flex-col">
@@ -219,7 +219,7 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-16 pt-8 border-t border-border/40 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground">
+        <div className="mt-4 pt-4 border-t border-border/40 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-muted-foreground">
           <p>&copy; 2025 TechNova Store. All rights reserved.</p>
           <div className="flex gap-4">
             <Link

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // Generate VietQR URL (compact QR image)
     const amount = Math.round(total); // No decimals for VND QR
-    const qrUrl = `https://img.vietqr.io/image/${BANK_CODE}-${ACCOUNT_NO}-compact2.png?amount=${amount}&addInfo=${order.order_number || order_id}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+    const qrUrl = `https://img.vietqr.io/image/${BANK_CODE}-${ACCOUNT_NO}-compact2.png?amount=${amount}&addInfo=${order.order_number || order_id}&accountName=${encodeURIComponent(ACCOUNT_NAME || '')}`;
 
     return NextResponse.json({
       success: true,
