@@ -238,7 +238,14 @@ export default function OrdersPage() {
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          <div
+            className="flex-1 min-h-0 overflow-y-auto p-6 space-y-8 overscroll-contain"
+            data-lenis-prevent
+            onWheel={(e) => {
+              e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
+            }}
+          >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Cột 1: Khách hàng */}
               <Card className="border-none bg-muted/30 shadow-none rounded-3xl">

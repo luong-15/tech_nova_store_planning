@@ -4,9 +4,7 @@ import { createAdminServerClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = await createAdminServerClient();
-    const {
-      data: { user },
-    } = await supabaseAdmin.auth.getUser();
+    const { data: { user } } = await supabaseAdmin.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,163 +13,150 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = Number(searchParams.get("page") || "1");
     const limit = Number(searchParams.get("limit") || "10");
-    const search = searchParams.get("search") || "";
+    const search = searchParams.get("search")?.trim().toLowerCase() || "";
 
-    const { data: users, error } = await supabaseAdmin.auth.admin.listUsers({
+    // 1. Fetch auth users
+    const { data: users, error: authError } = await supabaseAdmin.auth.admin.listUsers({
       page,
       perPage: limit,
     });
 
-    if (error) throw error;
+    if (authError) throw authError;
+    const authUsers = users.users;
 
-    // Get user IDs
-    const userIds = users.users.map((u) => u.id);
+    if (authUsers.length === 0) {
+      return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+    }
 
-    // Fetch user profiles with additional information
-    let query = supabaseAdmin
+    // 2. Fetch user profiles
+    const userIds = authUsers.map((u) => u.id);
+    const { data: profiles, error: profileError } = await supabaseAdmin
       .from("user_profiles")
       .select("*")
       .in("id", userIds);
 
+    if (profileError) throw profileError;
+
+    // 3. Map profiles by user ID
+    const profileMap = (profiles || []).reduce((map, profile) => {
+      map[profile.id] = profile;
+      return map;
+    }, {} as Record<string, any>);
+
+    // 4. Merge data
+    let enrichedUsers = authUsers.map((u) => {
+      const profile = profileMap[u.id] || {};
+      return {
+        id: u.id,
+        email: u.email,
+        full_name: profile.full_name || u.user_metadata?.full_name || "",
+        role: u.user_metadata?.role || "user",
+        created_at: u.created_at,
+        phone: profile.phone || "",
+        avatar_url: profile.avatar_url || u.user_metadata?.avatar_url || "",
+        address: profile.address || "",
+        city: profile.city || "",
+        postal_code: profile.postal_code || "",
+        country: profile.country || "",
+        updated_at: profile.updated_at || null,
+      };
+    });
+
+    // 5. Lọc kết quả nếu có search (tìm theo tên, email, hoặc sđt)
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+      enrichedUsers = enrichedUsers.filter(u => 
+        u.full_name.toLowerCase().includes(search) || 
+        u.email?.toLowerCase().includes(search) ||
+        u.phone.includes(search)
+      );
     }
-
-    const { data: profiles } = await query;
-
-    // Map profiles by user ID for easy lookup
-    const profileMap = (profiles || []).reduce(
-      (map, profile) => {
-        map[profile.id] = profile;
-        return map;
-      },
-      {} as Record<string, any>,
-    );
-
-    // Merge auth users with profile data
-    const enrichedUsers = users.users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      full_name: u.user_metadata?.full_name || "",
-      phone: u.user_metadata?.phone || "",
-      role: u.user_metadata?.role || "user",
-      created_at: u.created_at,
-      // Add profile data
-      address: profileMap[u.id]?.address || "",
-      city: profileMap[u.id]?.city || "",
-      postal_code: profileMap[u.id]?.postal_code || "",
-      country: profileMap[u.id]?.country || "",
-      updated_at: profileMap[u.id]?.updated_at || null,
-    }));
 
     return NextResponse.json({
       data: enrichedUsers,
       pagination: {
         page,
         limit,
-        total: users.total,
+        total: users.total, 
         totalPages: Math.ceil(users.total / limit),
       },
     });
   } catch (error) {
-    console.error("Admin users error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch users" },
-      { status: 500 },
-    );
+    console.error("Admin users GET error:", error);
+    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
     const supabaseAdmin = await createAdminServerClient();
-    const {
-      data: { user },
-    } = await supabaseAdmin.auth.getUser();
+    const { data: { user } } = await supabaseAdmin.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { id, full_name, email, phone, address, city, postal_code, country } =
-      body;
+    const { id, email, ...restBody } = body;
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 },
-      );
+    if (!id) return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+
+    // Cập nhật Auth Email nếu có
+    if (email !== undefined) {
+      const { error: emailError } = await supabaseAdmin.auth.admin.updateUserById(id, { email });
+      if (emailError) throw emailError;
     }
 
-    // Update user profile in user_profile table
-    const { data: updatedProfile, error: profileError } = await supabaseAdmin
-      .from("user_profile")
-      .update({
-        full_name,
-        email,
-        phone,
-        address,
-        city,
-        postal_code,
-        country,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single();
+    // Lọc và cập nhật User Profile
+    const allowedFields = ['full_name', 'phone', 'avatar_url', 'address', 'city', 'postal_code', 'country'];
+    const profilePatch: Record<string, any> = { updated_at: new Date().toISOString() };
 
-    if (profileError) throw profileError;
-
-    return NextResponse.json({
-      success: true,
-      data: updatedProfile,
+    allowedFields.forEach(field => {
+      if (restBody[field] !== undefined) {
+        profilePatch[field] = restBody[field];
+      }
     });
+
+    // Chỉ gọi update DB nếu có ít nhất 1 field ngoài updated_at cần cập nhật
+    if (Object.keys(profilePatch).length > 1) {
+      const { data: updatedProfile, error: profileError } = await supabaseAdmin
+        .from("user_profiles")
+        .update(profilePatch)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+      return NextResponse.json({ success: true, data: updatedProfile });
+    }
+
+    return NextResponse.json({ success: true, message: "No profile fields to update" });
   } catch (error) {
     console.error("Update user error:", error);
-    return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
     const supabaseAdmin = await createAdminServerClient();
-    const {
-      data: { user },
-    } = await supabaseAdmin.auth.getUser();
+    const { data: { user } } = await supabaseAdmin.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("id");
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 },
-      );
-    }
+    if (!userId) return NextResponse.json({ error: "User ID is required" }, { status: 400 });
 
-    // Delete user profile
-    await supabaseAdmin.from("user_profile").delete().eq("id", userId);
+    // Xóa profile trước (nếu không thiết lập ON DELETE CASCADE trong Postgres)
+    const { error: profileDeleteError } = await supabaseAdmin.from("user_profiles").delete().eq("id", userId);
+    if (profileDeleteError) throw profileDeleteError;
 
-    // Delete auth user
-    await supabaseAdmin.auth.admin.deleteUser(userId);
+    // Xóa auth user
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (authDeleteError) throw authDeleteError;
 
-    return NextResponse.json({
-      success: true,
-      message: "User deleted successfully",
-    });
+    return NextResponse.json({ success: true, message: "User deleted successfully" });
   } catch (error) {
     console.error("Delete user error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete user" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
 }

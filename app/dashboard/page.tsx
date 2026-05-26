@@ -37,6 +37,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
+    avatar_url: "",
     address: "",
     city: "",
     postal_code: "",
@@ -59,6 +60,7 @@ export default function ProfilePage() {
           setFormData({
             full_name: data.full_name || "",
             phone: data.phone || "",
+            avatar_url: data.avatar_url || "",
             address: data.address || "",
             city: data.city || "",
             postal_code: data.postal_code || "",
@@ -70,6 +72,7 @@ export default function ProfilePage() {
             id: user.id,
             full_name: user.user_metadata?.full_name || "",
             phone: "",
+            avatar_url: "",
             address: "",
             city: "",
             postal_code: "",
@@ -88,6 +91,7 @@ export default function ProfilePage() {
             setFormData({
               full_name: upsertedProfile.full_name || "",
               phone: upsertedProfile.phone || "",
+              avatar_url: upsertedProfile.avatar_url || "",
               address: upsertedProfile.address || "",
               city: upsertedProfile.city || "",
               postal_code: upsertedProfile.postal_code || "",
@@ -319,7 +323,7 @@ export default function ProfilePage() {
                   )}
                 </div>
                 
-                <Button type="submit" disabled={saving} className="w-full sm:w-auto min-w-[140px]">
+                <Button type="submit" disabled={saving} className="w-full sm:w-auto min-w-35">
                   {saving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: profile } = await supabase
-      .from("profiles")
+      .from("user_profiles")
       .select("*")
       .eq("id", user.id)
       .single();
@@ -38,14 +38,17 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { full_name, phone, address, city } = body;
+    const { full_name, phone, avatar_url, address, city, postal_code, country } = body;
 
-    const { error } = await supabase.from("profiles").upsert({
+    const { error } = await supabase.from("user_profiles").upsert({
       id: user.id,
       full_name,
       phone,
+      avatar_url,
       address,
       city,
+      postal_code,
+      country,
       updated_at: new Date().toISOString(),
     });
 

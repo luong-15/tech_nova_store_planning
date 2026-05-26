@@ -201,7 +201,12 @@ export default function ProductsPage() {
               </DialogTitle>
             </DialogHeader>
 
-            <form onSubmit={handleProductSubmit} className="overflow-y-auto px-6 py-4 space-y-8 flex-1">
+            <form onSubmit={handleProductSubmit} className="overflow-y-auto px-6 py-4 space-y-8 flex-1"
+            data-lenis-prevent
+            onWheel={(e) => {
+              e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
+            }}>
 
               {/* Section 1: Thông tin */}
               <div className="space-y-4">
