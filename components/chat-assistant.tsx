@@ -180,7 +180,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
 
               {/* Chat View */}
               <CardContent className="flex-1 overflow-hidden p-0 flex flex-col bg-muted/20">
-                <ScrollArea className="flex-1">
+                <ScrollArea className="flex-1 min-h-0 overflow-hidden overscroll-contain">
                   <div className="p-5 space-y-6">
                     {messages.map((message) => (
                       <div key={message.id} className={cn("flex flex-col", message.role === "user" ? "items-end" : "items-start")}>
