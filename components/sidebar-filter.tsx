@@ -11,13 +11,6 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, X, RotateCw, Filter } from "lucide-react";
@@ -38,20 +31,13 @@ interface PriceRange {
 export interface FilterState {
   priceRange: PriceRange;
   brands: string[];
-  // ram: string[]
-  // storage: string[]
-  // cpu: string[]
-  // screenSize: string[]
   categories: string[];
+  [key: string]: any; // Dành cho các bộ lọc mở rộng sau này
 }
 
 interface ApiFilters {
   brands: { value: string; label: string; count: number }[];
   categories: { value: string; label: string; count: number }[];
-  // ram: {value: string, label: string, count: number}[]
-  // storage: {value: string, label: string, count: number}[]
-  // cpu: {value: string, label: string, count: number}[]
-  // screenSize: {value: string, label: string, count: number}[]
 }
 
 interface SidebarFilterProps {
@@ -72,6 +58,7 @@ export function SidebarFilter({
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
 
+  // 1. Khởi tạo state từ URL hoặc Props
   const urlInitialFilters = useMemo(() => {
     if (!syncUrl) return null;
     const priceMin = Number(urlSearchParams.get("price_min") || PRICE_MIN);
@@ -89,76 +76,47 @@ export function SidebarFilter({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["brands"]),
   );
-  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     priceRange: initialFilters?.priceRange ||
       urlInitialFilters?.priceRange || { min: PRICE_MIN, max: PRICE_MAX },
     brands: initialFilters?.brands || urlInitialFilters?.brands || [],
-    // ram: initialFilters?.ram || [],
-    // storage: initialFilters?.storage || [],
-    // cpu: initialFilters?.cpu || [],
-    // screenSize: initialFilters?.screenSize || [],
     categories:
       initialFilters?.categories || urlInitialFilters?.categories || [],
   });
 
-  // Fetch dynamic filters
+  // 2. Fetch data bộ lọc
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const searchParams = new URLSearchParams(window.location.search);
-        const search = searchParams.get("search") || "";
+        const search = urlSearchParams.get("search") || "";
         const url = `/api/products/filters${search ? `?search=${encodeURIComponent(search)}` : ""}`;
         const response = await fetch(url);
         if (response.ok) {
           const apiData: ApiFilters = await response.json();
-          const sections: FilterSection[] = [
-            {
-              id: "brands",
-              label: "Hãng sản xuất",
-              options: apiData.brands,
-            },
-            // {
-            //   id: "ram",
-            //   label: "RAM",
-            //   options: apiData.ram,
-            // },
-            // {
-            //   id: "storage",
-            //   label: "Bộ nhớ trong",
-            //   options: apiData.storage,
-            // },
-            // {
-            //   id: "cpu",
-            //   label: "CPU",
-            //   options: apiData.cpu,
-            // },
+          setDynamicSections([
+            { id: "brands", label: "Hãng sản xuất", options: apiData.brands },
             {
               id: "categories",
               label: "Danh mục",
               options: apiData.categories,
             },
-          ];
-          setDynamicSections(sections);
+          ]);
         }
       } catch (error) {
         console.error("Failed to fetch filters:", error);
       }
     };
-
     fetchFilters();
-  }, []);
+  }, [urlSearchParams]);
 
+  // 3. Xử lý logic thay đổi bộ lọc
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
-      } else {
-        next.add(sectionId);
-      }
+      next.has(sectionId) ? next.delete(sectionId) : next.add(sectionId);
       return next;
     });
   };
@@ -172,25 +130,34 @@ export function SidebarFilter({
         if (syncUrl) {
           const params = new URLSearchParams(urlSearchParams.toString());
 
-          if (newFilters.priceRange.min > PRICE_MIN) {
-            params.set("price_min", String(newFilters.priceRange.min));
-          } else {
-            params.delete("price_min");
-          }
-          if (newFilters.priceRange.max < PRICE_MAX) {
-            params.set("price_max", String(newFilters.priceRange.max));
-          } else {
-            params.delete("price_max");
-          }
-          if (newFilters.brands.length > 0) {
-            params.set("brand", newFilters.brands.join(","));
-          } else {
-            params.delete("brand");
-          }
+          // Helper tối ưu URL params
+          const updateParam = (
+            key: string,
+            value: string,
+            condition: boolean,
+          ) => {
+            condition ? params.set(key, value) : params.delete(key);
+          };
+
+          updateParam(
+            "price_min",
+            String(newFilters.priceRange.min),
+            newFilters.priceRange.min > PRICE_MIN,
+          );
+          updateParam(
+            "price_max",
+            String(newFilters.priceRange.max),
+            newFilters.priceRange.max < PRICE_MAX,
+          );
+          updateParam(
+            "brand",
+            newFilters.brands.join(","),
+            newFilters.brands.length > 0,
+          );
 
           router.replace(`${pathname}?${params.toString()}`, { scroll: false });
         }
-      }, 250);
+      }, 300);
     },
     [onFilterChange, syncUrl, router, pathname, urlSearchParams],
   );
@@ -200,27 +167,17 @@ export function SidebarFilter({
     value: string,
     checked: boolean,
   ) => {
-    const itemKey = `${section}-${value}`;
-    setAnimatingItems((prev) => new Set(prev).add(itemKey));
-    setTimeout(() => {
-      setAnimatingItems((prev) => {
-        const next = new Set(prev);
-        next.delete(itemKey);
-        return next;
-      });
-    }, 300);
-
-    const newFilters = { ...filters };
-    const currentValues = newFilters[section] as string[];
-
-    if (checked) {
-      newFilters[section] = [...currentValues, value] as any;
-    } else {
-      newFilters[section] = currentValues.filter((v) => v !== value) as any;
-    }
-
-    setFilters(newFilters);
-    triggerFilterChange(newFilters);
+    setFilters((prev) => {
+      const currentValues = (prev[section] as string[]) || [];
+      const newFilters = {
+        ...prev,
+        [section]: checked
+          ? [...currentValues, value]
+          : currentValues.filter((v) => v !== value),
+      };
+      triggerFilterChange(newFilters);
+      return newFilters;
+    });
   };
 
   const handlePriceChange = (values: number[]) => {
@@ -232,133 +189,98 @@ export function SidebarFilter({
     triggerFilterChange(newFilters);
   };
 
-  const clearFilter = (section: keyof FilterState) => {
+  const clearFilter = (section: keyof FilterState, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const newFilters = { ...filters };
     if (section === "priceRange") {
       newFilters.priceRange = { min: PRICE_MIN, max: PRICE_MAX };
     } else {
-      newFilters[section] = [] as any;
+      newFilters[section] = [];
     }
     setFilters(newFilters);
     triggerFilterChange(newFilters);
   };
 
-  const [isClearing, setIsClearing] = useState(false);
   const clearAllFilters = () => {
     setIsClearing(true);
-    setTimeout(() => {
-      const resetFilters: FilterState = {
-        priceRange: { min: PRICE_MIN, max: PRICE_MAX },
-        brands: [],
-        // ram: [],
-        // storage: [],
-        // cpu: [],
-        // screenSize: [],
-        categories: [],
-      };
-      setFilters(resetFilters);
-      triggerFilterChange(resetFilters);
-      setIsClearing(false);
-    }, 300);
+    const resetFilters: FilterState = {
+      priceRange: { min: PRICE_MIN, max: PRICE_MAX },
+      brands: [],
+      categories: [],
+    };
+    setFilters(resetFilters);
+    triggerFilterChange(resetFilters);
+    setTimeout(() => setIsClearing(false), 400); // Khớp với thời gian spin
   };
 
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (
-      filters.priceRange.min !== PRICE_MIN ||
-      filters.priceRange.max !== PRICE_MAX
-    )
-      count++;
-    Object.entries(filters).forEach(([key, value]) => {
-      if (key !== "priceRange" && Array.isArray(value) && value.length > 0) {
-        count += value.length;
-      }
-    });
-    return count;
-  };
-
-  const activeCount = getActiveFilterCount();
-
-  const scrollbarClasses =
-    "scrollbar-thin [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/60 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary/50 transition-colors";
+  // 4. Tính toán UI state
+  const activeCount = Object.entries(filters).reduce((count, [key, value]) => {
+    if (key === "priceRange") {
+      return (
+        count + (value.min !== PRICE_MIN || value.max !== PRICE_MAX ? 1 : 0)
+      );
+    }
+    return count + (Array.isArray(value) ? value.length : 0);
+  }, 0);
 
   return (
-    <aside className="w-full">
+    <aside className="w-full md:sticky md:top-20 self-start">
       <div
         className={cn(
-          "bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl md:rounded-3xl p-4 md:p-6 space-y-5 md:space-y-7 shadow-2xl shadow-black/5 transition-all duration-500 ease-out max-h-screen md:max-h-none overflow-y-auto md:overflow-y-visible",
-          isClearing && "scale-[0.98] opacity-50 blur-[2px]",
+          "bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl md:rounded-3xl p-4 md:p-6 space-y-5 md:space-y-7 shadow-xl shadow-black/5 transition-all duration-300",
+          "max-h-[85dvh] overflow-y-auto overscroll-contain", 
+          isClearing && "opacity-60 pointer-events-none blur-[1px]",
         )}
       >
-        {/* Header Section */}
-        <div className="flex items-center justify-between pb-2 sticky top-0 bg-background/80 md:bg-transparent -mx-4 md:-mx-6 px-4 md:px-6 py-3 md:py-0 md:static">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-2 sticky top-0 bg-background/80 md:bg-transparent z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 md:py-0 md:static">
           <div className="flex items-center gap-2">
             <div className="bg-primary/10 p-2 rounded-lg md:rounded-xl text-primary">
-              <Filter className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <Filter className="w-4 h-4" />
             </div>
             <h2 className="text-base md:text-lg font-bold tracking-tight text-foreground">
               Bộ lọc
             </h2>
-            <div
-              className={cn(
-                "transition-all duration-500 ease-out-expo",
-                activeCount > 0
-                  ? "scale-100 opacity-100 translate-x-0"
-                  : "scale-50 opacity-0 -translate-x-4",
-              )}
-            >
-              <Badge
-                variant="default"
-                className="h-5 w-5 md:h-6 md:w-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm p-0"
-              >
+            {activeCount > 0 && (
+              <Badge className="h-5 w-5 md:h-6 md:w-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold p-0 animate-in zoom-in">
                 {activeCount}
               </Badge>
-            </div>
+            )}
           </div>
 
           <Button
             variant="ghost"
             size="sm"
             onClick={clearAllFilters}
-            disabled={activeCount === 0}
             className={cn(
-              "h-7 md:h-8 px-2 md:px-2.5 text-[11px] md:text-xs font-semibold gap-1 md:gap-1.5 rounded-lg transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
-              activeCount > 0 ? "opacity-100" : "opacity-0 pointer-events-none",
+              "h-8 px-2 md:px-3 text-xs font-semibold gap-1.5 rounded-lg transition-all hover:bg-destructive/10 hover:text-destructive",
+              activeCount === 0 && "opacity-0 pointer-events-none",
             )}
           >
             <RotateCw
-              className={cn(
-                "h-3 w-3 md:h-3.5 md:w-3.5 transition-transform duration-500",
-                isClearing && "animate-spin",
-              )}
+              className={cn("h-3.5 w-3.5", isClearing && "animate-spin")}
             />
             <span className="hidden sm:inline">Xóa lọc</span>
           </Button>
         </div>
 
-        {/* Price Range Slider */}
-        <div className="space-y-4 md:space-y-5 pb-5 md:pb-7 border-b border-border/40">
+        {/* Price Slider */}
+        <div className="space-y-5 pb-6 border-b border-border/40">
           <div className="flex items-center justify-between">
-            <Label className="text-xs md:text-sm font-bold text-foreground">
-              Mức giá
-            </Label>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => clearFilter("priceRange")}
-              className={cn(
-                "h-5 md:h-6 w-5 md:w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
-                filters.priceRange.min !== PRICE_MIN ||
-                  filters.priceRange.max !== PRICE_MAX
-                  ? "opacity-100 scale-100"
-                  : "opacity-0 scale-50 pointer-events-none",
-              )}
-            >
-              <X className="h-2.5 md:h-3.5 w-2.5 md:w-3.5" />
-            </Button>
+            <Label className="text-sm font-bold text-foreground">Mức giá</Label>
+            {(filters.priceRange.min !== PRICE_MIN ||
+              filters.priceRange.max !== PRICE_MAX) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => clearFilter("priceRange", e)}
+                className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive animate-in fade-in"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
-
-          <div className="px-1 pt-1 md:pt-2">
+          <div className="px-1 pt-2">
             <Slider
               value={[filters.priceRange.min, filters.priceRange.max]}
               onValueChange={handlePriceChange}
@@ -368,40 +290,36 @@ export function SidebarFilter({
               className="w-full"
             />
           </div>
-
-          <div className="flex items-center justify-between gap-2 md:gap-4">
+          <div className="flex items-center justify-between gap-3">
             <div
               className={cn(
-                "flex-1 rounded-lg md:rounded-xl border border-border/50 bg-muted/30 px-2 md:px-3 py-1.5 md:py-2 text-center transition-colors",
+                "flex-1 rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-center transition-colors",
                 filters.priceRange.min !== PRICE_MIN &&
                   "border-primary/30 bg-primary/5 text-primary",
               )}
             >
-              <span className="text-[10px] md:text-xs font-bold tabular-nums line-clamp-1">
+              <span className="text-xs font-bold tabular-nums">
                 {formatCurrency(filters.priceRange.min)}
               </span>
             </div>
-            <div className="h-px w-2 md:w-4 bg-border/60 shrink-0" />
+            <div className="h-px w-3 bg-border/60 shrink-0" />
             <div
               className={cn(
-                "flex-1 rounded-lg md:rounded-xl border border-border/50 bg-muted/30 px-2 md:px-3 py-1.5 md:py-2 text-center transition-colors",
+                "flex-1 rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-center transition-colors",
                 filters.priceRange.max !== PRICE_MAX &&
                   "border-primary/30 bg-primary/5 text-primary",
               )}
             >
-              <span className="text-[10px] md:text-xs font-bold tabular-nums line-clamp-1">
+              <span className="text-xs font-bold tabular-nums">
                 {formatCurrency(filters.priceRange.max)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Filter Sections */}
+        {/* Dynamic Filter Sections */}
         <div
-          className={cn(
-            "space-y-1 max-h-[calc(100vh-380px)] md:max-h-[calc(100vh-320px)] overflow-y-auto pr-2",
-            scrollbarClasses,
-          )}
+          className={cn("space-y-1")}
         >
           {dynamicSections.map((section) => {
             const isExpanded = expandedSections.has(section.id);
@@ -412,155 +330,102 @@ export function SidebarFilter({
             return (
               <div
                 key={section.id}
-                className="pb-2 md:pb-3 border-b border-border/40 last:border-0 last:pb-0"
+                className="pl-4 pb-3 border-b border-border/40 last:border-0 last:pb-0"
               >
-                <div
-                  role="button"
-                  tabIndex={0}
+                <button
+                  type="button"
                   onClick={() => toggleSection(section.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      toggleSection(section.id);
-                    }
-                  }}
-                  className="flex items-center justify-between w-full group py-2 md:py-3 rounded-lg md:rounded-xl cursor-pointer hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary -mx-2 px-2"
+                  className="flex items-center justify-between w-full group py-3 rounded-xl hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary -mx-2 px-2"
                 >
-                  <div className="flex items-center gap-1.5 md:gap-2.5">
-                    <Label className="text-xs md:text-sm font-bold cursor-pointer">
-                      {section.label}
-                    </Label>
+                  <div className="flex items-center gap-2.5 pointer-events-none">
+                    <Label className="text-sm font-bold">{section.label}</Label>
                     {selectedCount > 0 && (
                       <Badge
                         variant="secondary"
-                        className="h-4 md:h-5 px-1 md:px-1.5 text-[8px] md:text-[10px] bg-primary/10 text-primary font-bold tabular-nums animate-in zoom-in duration-300"
+                        className="h-5 px-1.5 text-[10px] bg-primary/10 text-primary font-bold tabular-nums"
                       >
                         {selectedCount}
                       </Badge>
                     )}
                   </div>
-
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearFilter(sectionKey);
-                      }}
-                      className={cn(
-                        "h-5 w-5 md:h-6 md:w-6 rounded-full transition-all duration-300 hover:bg-destructive/10 hover:text-destructive",
-                        selectedCount > 0
-                          ? "opacity-0 group-hover:opacity-100 scale-100"
-                          : "opacity-0 scale-50 pointer-events-none",
-                      )}
-                    >
-                      <X className="h-2.5 md:h-3.5 w-2.5 md:w-3.5" />
-                    </Button>
+                    {selectedCount > 0 && (
+                      <div
+                        role="button"
+                        onClick={(e) => clearFilter(sectionKey, e)}
+                        className="h-6 w-6 rounded-full flex items-center justify-center transition-all hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </div>
+                    )}
                     <ChevronDown
                       className={cn(
-                        "h-3.5 md:h-4 w-3.5 md:w-4 text-muted-foreground/70 transition-transform duration-500 ease-out-expo",
+                        "h-4 w-4 text-muted-foreground/70 transition-transform duration-300",
                         isExpanded && "rotate-180 text-foreground",
                       )}
                     />
                   </div>
-                </div>
+                </button>
 
                 <div
                   className={cn(
-                    "grid transition-all duration-500 ease-out-expo",
+                    "grid transition-all duration-300",
                     isExpanded
                       ? "grid-rows-[1fr] opacity-100"
                       : "grid-rows-[0fr] opacity-0",
                   )}
                 >
-                  <div className="overflow-hidden">
-                    <div className="space-y-0.5 md:space-y-1 pt-0.5 md:pt-1 pb-2 md:pb-3">
-                      {section.options.map((option, index) => {
-                        const itemKey = `${section.id}-${option.value}`;
-                        const isSelected = selectedValues.includes(
-                          option.value,
-                        );
-                        const isAnimating = animatingItems.has(itemKey);
-
-                        return (
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            key={option.value}
-                            className={cn(
-                              "flex items-center justify-between group/item rounded-lg md:rounded-xl px-2 md:px-2.5 py-2 md:py-2.5 transition-all duration-300 cursor-pointer border",
-                              isSelected
-                                ? "bg-primary/5 border-primary/20 shadow-sm"
-                                : "hover:bg-muted/50 border-transparent",
-                              isAnimating && "scale-[0.97] opacity-80",
-                            )}
-                            style={{ animationDelay: `${index * 20}ms` }}
-                            onClick={() =>
-                              handleCheckboxChange(
-                                sectionKey,
-                                option.value,
-                                !isSelected,
-                              )
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
+                  <div className="overflow-hidden space-y-1 min-h-0">
+                    {section.options.map((option) => {
+                      const isSelected = selectedValues.includes(option.value);
+                      return (
+                        <label
+                          key={option.value}
+                          className={cn(
+                            "flex items-center justify-between rounded-xl px-2.5 py-2.5 transition-all duration-200 cursor-pointer border active:scale-[0.98]",
+                            isSelected
+                              ? "bg-primary/5 border-primary/20"
+                              : "hover:bg-muted/50 border-transparent",
+                          )}
+                        >
+                          <div className="flex items-center space-x-3 flex-1">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) =>
                                 handleCheckboxChange(
                                   sectionKey,
                                   option.value,
-                                  !isSelected,
-                                );
+                                  checked as boolean,
+                                )
                               }
-                            }}
-                          >
-                            <div className="flex items-center space-x-2 md:space-x-3 flex-1">
-                              <Checkbox
-                                id={itemKey}
-                                checked={isSelected}
-                                onCheckedChange={(checked) =>
-                                  handleCheckboxChange(
-                                    sectionKey,
-                                    option.value,
-                                    checked as boolean,
-                                  )
-                                }
-                                onClick={(e) => e.stopPropagation()}
-                                className={cn(
-                                  "border-muted-foreground/30 transition-all duration-300 shadow-sm rounded-lg",
-                                  "data-[state=checked]:bg-primary data-[state=checked]:border-primary",
-                                  isAnimating && "scale-110",
-                                )}
-                              />
-                              <Label
-                                htmlFor={itemKey}
-                                className={cn(
-                                  "text-xs md:text-sm cursor-pointer flex-1 transition-colors duration-300",
-                                  isSelected
-                                    ? "text-foreground font-semibold"
-                                    : "text-muted-foreground group-hover/item:text-foreground",
-                                )}
-                              >
-                                {option.label}
-                              </Label>
-                            </div>
-
-                            {option.count !== undefined && (
-                              <span
-                                className={cn(
-                                  "text-[10px] md:text-xs font-medium transition-colors duration-300 tabular-nums px-1 md:px-2 py-0.5 rounded-md",
-                                  isSelected
-                                    ? "bg-primary/10 text-primary"
-                                    : "text-muted-foreground/50 bg-muted/30 group-hover/item:bg-muted/60",
-                                )}
-                              >
-                                {option.count}
-                              </span>
-                            )}
+                              className="rounded-md transition-all duration-300 data-[state=checked]:bg-primary"
+                            />
+                            <span
+                              className={cn(
+                                "text-sm flex-1 transition-colors",
+                                isSelected
+                                  ? "text-foreground font-semibold"
+                                  : "text-muted-foreground",
+                              )}
+                            >
+                              {option.label}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
+                          {option.count !== undefined && (
+                            <span
+                              className={cn(
+                                "text-xs font-medium tabular-nums px-2 py-0.5 rounded-md",
+                                isSelected
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-muted-foreground/50 bg-muted/30",
+                              )}
+                            >
+                              {option.count}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

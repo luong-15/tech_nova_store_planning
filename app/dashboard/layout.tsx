@@ -140,7 +140,7 @@ export default function DashboardLayout({
               {/* Profile Card */}
               <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/40 p-5 backdrop-blur-md shadow-sm group">
                 <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <User size={60} />
+                  <User size={45} />
                 </div>
                 <div className="flex items-center gap-4 relative">
                   <Avatar className="h-14 w-14 border-2 border-primary/20 p-0.5">
