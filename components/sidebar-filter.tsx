@@ -310,9 +310,9 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
   );
 
   return (
-    <aside className="w-full md:sticky md:top-20">
-      <div className="bg-background border rounded-2xl p-5 space-y-6 shadow-sm">
-        <div className="flex justify-between items-center">
+    <aside className="w-full">
+      <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full">
+        <div className="flex justify-between items-center border-b px-5 py-4 shrink-0">
           <div className="flex items-center gap-2">
             <Filter size={18} />
             <b>Bộ lọc</b>
@@ -328,19 +328,21 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
           </Button>
         </div>
 
-        {sections.map((s) => (
-          <FilterSectionUI
-            key={s.id}
-            section={s}
-            expanded={expanded.has(s.id)}
-            toggle={toggle}
-            selectedValues={filters[s.id] || []}
-            onChange={(value: string, checked: boolean) =>
-              handleCheckbox(s.id, value, checked)
-            }
-            onClear={() => handleSectionClear(s.id)}
-          />
-        ))}
+        <div className="flex-1 overflow-y-auto space-y-6 p-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/70">
+          {sections.map((s) => (
+            <FilterSectionUI
+              key={s.id}
+              section={s}
+              expanded={expanded.has(s.id)}
+              toggle={toggle}
+              selectedValues={filters[s.id] || []}
+              onChange={(value: string, checked: boolean) =>
+                handleCheckbox(s.id, value, checked)
+              }
+              onClear={() => handleSectionClear(s.id)}
+            />
+          ))}
+        </div>
       </div>
     </aside>
   );

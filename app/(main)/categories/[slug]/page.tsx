@@ -154,7 +154,9 @@ export default async function CategoryPage({
       <div className="grid gap-8 lg:grid-cols-4">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <SidebarFilter syncUrl />
+          <div className="h-auto lg:sticky lg:top-28 lg:max-h-[calc(100vh-140px)]">
+            <SidebarFilter syncUrl />
+          </div>
         </div>
 
         {/* Products Grid */}

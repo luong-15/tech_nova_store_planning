@@ -186,10 +186,8 @@ function ProductsPageContent() {
       <div className="flex flex-col lg:flex-row gap-10 items-start">
         {/* Desktop Sidebar Filter */}
         <aside className="hidden w-72 shrink-0 lg:block">
-          <div className="sticky top-28 h-[calc(100vh-120px)] overflow-hidden rounded-2xl border border-border/40 bg-card/30 backdrop-blur-sm">
-            <div className="h-full overflow-y-auto p-1">
-              <SidebarFilter onFilterChange={handleFilterChange} />
-            </div>
+          <div className="sticky top-28 h-[calc(100vh-140px)] max-h-[600px] lg:max-h-[700px] rounded-2xl border border-border/40 bg-card/30 backdrop-blur-sm">
+            <SidebarFilter onFilterChange={handleFilterChange} />
           </div>
         </aside>
 
