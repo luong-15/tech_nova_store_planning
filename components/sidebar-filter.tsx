@@ -40,6 +40,7 @@ interface ApiFilters {
 
 interface SidebarFilterProps {
   onFilterChange?: (filters: FilterState) => void;
+  syncUrl?: boolean;
 }
 
 const PRICE_MIN = 0;
@@ -68,9 +69,7 @@ const OptionItem = React.memo(
         <span
           className={cn(
             "text-sm",
-            checked
-              ? "font-semibold text-foreground"
-              : "text-muted-foreground",
+            checked ? "font-semibold text-foreground" : "text-muted-foreground",
           )}
         >
           {option.label}
@@ -108,10 +107,7 @@ function FilterSectionUI({
   const [showAll, setShowAll] = useState(false);
 
   /* ✅ O(1) lookup */
-  const selectedSet = useMemo(
-    () => new Set(selectedValues),
-    [selectedValues],
-  );
+  const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues]);
 
   const filteredOptions = useMemo(() => {
     const list = section.options.filter((o) =>
@@ -120,16 +116,12 @@ function FilterSectionUI({
 
     return list.sort(
       (a, b) =>
-        Number(selectedSet.has(b.value)) -
-        Number(selectedSet.has(a.value)),
+        Number(selectedSet.has(b.value)) - Number(selectedSet.has(a.value)),
     );
   }, [section.options, search, selectedSet]);
 
   const visibleOptions = useMemo(
-    () =>
-      showAll
-        ? filteredOptions
-        : filteredOptions.slice(0, SHOW_LIMIT),
+    () => (showAll ? filteredOptions : filteredOptions.slice(0, SHOW_LIMIT)),
     [showAll, filteredOptions],
   );
 
@@ -146,8 +138,7 @@ function FilterSectionUI({
   }, [expanded, filteredOptions.length, showAll]);
 
   const handleOptionChange = useCallback(
-    (value: string) => (checked: boolean) =>
-      onChange(value, checked),
+    (value: string) => (checked: boolean) => onChange(value, checked),
     [onChange],
   );
 
@@ -162,9 +153,7 @@ function FilterSectionUI({
           <Label className="font-bold text-sm">{section.label}</Label>
 
           {selectedValues.length > 0 && (
-            <Badge variant="secondary">
-              {selectedValues.length}
-            </Badge>
+            <Badge variant="secondary">{selectedValues.length}</Badge>
           )}
         </div>
 
@@ -190,10 +179,7 @@ function FilterSectionUI({
           )}
 
           <ChevronDown
-            className={cn(
-              "transition-transform",
-              expanded && "rotate-180",
-            )}
+            className={cn("transition-transform", expanded && "rotate-180")}
           />
         </div>
       </button>
@@ -231,16 +217,12 @@ function FilterSectionUI({
 }
 
 /* ================= MAIN ================= */
-export function SidebarFilter({
-  onFilterChange,
-}: SidebarFilterProps) {
-
+export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
-      if (debounceRef.current)
-        clearTimeout(debounceRef.current);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 
@@ -316,13 +298,16 @@ export function SidebarFilter({
     trigger(resetFilters);
   }, [trigger]);
 
-  const handleSectionClear = useCallback((sectionId: string) => {
-    setFilters((prev) => {
-      const next = { ...prev, [sectionId]: [] };
-      trigger(next);
-      return next;
-    });
-  }, [trigger]);
+  const handleSectionClear = useCallback(
+    (sectionId: string) => {
+      setFilters((prev) => {
+        const next = { ...prev, [sectionId]: [] };
+        trigger(next);
+        return next;
+      });
+    },
+    [trigger],
+  );
 
   return (
     <aside className="w-full md:sticky md:top-20">
