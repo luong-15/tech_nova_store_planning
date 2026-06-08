@@ -76,6 +76,20 @@ function ProductsPageContent() {
     if (showMobileFilter) {
       document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
+
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setShowMobileFilter(false);
+        }
+      };
+
+      document.addEventListener("keydown", handleEscape);
+
+      return () => {
+        document.removeEventListener("keydown", handleEscape);
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      };
     } else {
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
@@ -217,7 +231,7 @@ function ProductsPageContent() {
               onKeyDown={handleBackdropDismiss}
               aria-label="Đóng bộ lọc"
             />
-            <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50">
+            <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50 flex flex-col">
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b px-6 py-5">
                   <h2 className="text-lg font-bold">Bộ lọc sản phẩm</h2>
@@ -230,7 +244,7 @@ function ProductsPageContent() {
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="flex-1 overflow-y-auto p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/70">
                   <SidebarFilter onFilterChange={handleFilterChange} />
                 </div>
               </div>
