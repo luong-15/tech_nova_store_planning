@@ -72,6 +72,8 @@ function ProductsPageContent() {
     setShowMobileFilter(false);
   };
 
+
+
   useEffect(() => {
     if (showMobileFilter) {
       document.documentElement.style.overflow = "hidden";
@@ -83,10 +85,18 @@ function ProductsPageContent() {
         }
       };
 
+      const handleWindowScroll = (e: Event) => {
+        e.preventDefault();
+      };
+
       document.addEventListener("keydown", handleEscape);
+      document.addEventListener("wheel", handleWindowScroll, { passive: false });
+      document.addEventListener("touchmove", handleWindowScroll, { passive: false });
 
       return () => {
         document.removeEventListener("keydown", handleEscape);
+        document.removeEventListener("wheel", handleWindowScroll);
+        document.removeEventListener("touchmove", handleWindowScroll);
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
       };
