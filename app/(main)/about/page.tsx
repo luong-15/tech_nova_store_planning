@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Cpu,
   Users,
@@ -17,17 +17,19 @@ import {
   Target,
   Rocket,
   Heart,
-} from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { SectionTitle } from "@/components/animations/section-title";
 
 const stats = [
   { value: "10K+", label: "Khách hàng", icon: Users },
   { value: "50+", label: "Cửa hàng", icon: Store },
   { value: "500+", label: "Sản phẩm", icon: Cpu },
   { value: "99%", label: "Hài lòng", icon: Award },
-]
+];
 
 const team = [
   {
@@ -58,7 +60,7 @@ const team = [
     bio: "Xây dựng thương hiệu từ số 0",
     social: { github: "#", linkedin: "#", twitter: "#" },
   },
-]
+];
 
 const values = [
   {
@@ -76,49 +78,61 @@ const values = [
     title: "Khách hàng là trọng tâm",
     description: "Mọi quyết định đều hướng đến lợi ích của khách hàng",
   },
-]
+];
 
 const features = [
-  { icon: Shield, title: "Bảo hành chính hãng", description: "Lên đến 24 tháng" },
+  {
+    icon: Shield,
+    title: "Bảo hành chính hãng",
+    description: "Lên đến 24 tháng",
+  },
   { icon: Truck, title: "Giao hàng nhanh", description: "2-4 giờ nội thành" },
-  { icon: Zap, title: "Giá tốt nhất", description: "Cam kết hoàn tiền nếu đắt hơn" },
-  { icon: HeadphonesIcon, title: "Hỗ trợ 24/7", description: "Luôn sẵn sàng giúp đỡ" },
-]
+  {
+    icon: Zap,
+    title: "Giá tốt nhất",
+    description: "Cam kết hoàn tiền nếu đắt hơn",
+  },
+  {
+    icon: HeadphonesIcon,
+    title: "Hỗ trợ 24/7",
+    description: "Luôn sẵn sàng giúp đỡ",
+  },
+];
 
 function AnimatedCounter({ value, label }: { value: string; label: string }) {
-  const [count, setCount] = useState(0)
-  const ref = useRef<HTMLDivElement>(null)
-  const numericValue = Number.parseInt(value.replaceAll(/\D/g, ""))
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const numericValue = Number.parseInt(value.replaceAll(/\D/g, ""));
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          const duration = 2000
-          const steps = 60
-          const increment = numericValue / steps
-          let current = 0
+          const duration = 2000;
+          const steps = 60;
+          const increment = numericValue / steps;
+          let current = 0;
 
           const timer = setInterval(() => {
-            current += increment
+            current += increment;
             if (current >= numericValue) {
-              setCount(numericValue)
-              clearInterval(timer)
+              setCount(numericValue);
+              clearInterval(timer);
             } else {
-              setCount(Math.floor(current))
+              setCount(Math.floor(current));
             }
-          }, duration / steps)
+          }, duration / steps);
         }
       },
       { threshold: 0.5 },
-    )
+    );
 
     if (ref.current) {
-      observer.observe(ref.current)
+      observer.observe(ref.current);
     }
 
-    return () => observer.disconnect()
-  }, [numericValue])
+    return () => observer.disconnect();
+  }, [numericValue]);
 
   return (
     <div ref={ref} className="text-center">
@@ -128,7 +142,7 @@ function AnimatedCounter({ value, label }: { value: string; label: string }) {
       </p>
       <p className="mt-2 text-muted-foreground">{label}</p>
     </div>
-  )
+  );
 }
 
 export default function AboutPage() {
@@ -150,8 +164,8 @@ export default function AboutPage() {
               </span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground md:text-xl">
-              TechNova ra đời với sứ mệnh mang công nghệ tiên tiến nhất đến tay người Việt, với cam kết về chất lượng,
-              giá cả và dịch vụ tốt nhất.
+              TechNova ra đời với sứ mệnh mang công nghệ tiên tiến nhất đến tay
+              người Việt, với cam kết về chất lượng, giá cả và dịch vụ tốt nhất.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Button asChild size="lg" className="gap-2">
@@ -160,7 +174,12 @@ export default function AboutPage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="bg-transparent">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="bg-transparent"
+              >
                 <Link href="#team">Đội ngũ của chúng tôi</Link>
               </Button>
             </div>
@@ -176,7 +195,9 @@ export default function AboutPage() {
               <div
                 key={stat.label}
                 className="text-center"
-                style={{ animation: `fadeIn 0.5s ease-out ${index * 0.1}s both` }}
+                style={{
+                  animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
+                }}
               >
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
                   <stat.icon className="h-7 w-7 text-primary" />
@@ -206,15 +227,18 @@ export default function AboutPage() {
             </div>
 
             <div className="space-y-6">
-              <h2 className="text-3xl font-bold md:text-4xl">Sứ mệnh của chúng tôi</h2>
+              <h2 className="text-3xl font-bold md:text-4xl">
+                Sứ mệnh của chúng tôi
+              </h2>
               <p className="text-lg text-muted-foreground">
-                TechNova được thành lập vào năm 2020 với khát vọng trở thành cầu nối giữa công nghệ tiên tiến và người
-                tiêu dùng Việt Nam.
+                TechNova được thành lập vào năm 2020 với khát vọng trở thành cầu
+                nối giữa công nghệ tiên tiến và người tiêu dùng Việt Nam.
               </p>
               <p className="text-muted-foreground">
-                Chúng tôi tin rằng mọi người đều xứng đáng được tiếp cận với những sản phẩm công nghệ chất lượng cao với
-                mức giá hợp lý. Đó là lý do tại sao chúng tôi không ngừng nỗ lực để mang đến trải nghiệm mua sắm tốt
-                nhất.
+                Chúng tôi tin rằng mọi người đều xứng đáng được tiếp cận với
+                những sản phẩm công nghệ chất lượng cao với mức giá hợp lý. Đó
+                là lý do tại sao chúng tôi không ngừng nỗ lực để mang đến trải
+                nghiệm mua sắm tốt nhất.
               </p>
 
               <div className="space-y-4 pt-4">
@@ -222,14 +246,18 @@ export default function AboutPage() {
                   <div
                     key={value.title}
                     className="flex gap-4 rounded-xl border border-border/50 bg-card/50 p-4 transition-colors hover:border-primary/30"
-                    style={{ animation: `fadeIn 0.5s ease-out ${index * 0.1}s both` }}
+                    style={{
+                      animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
+                    }}
                   >
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <value.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                       <h3 className="font-semibold">{value.title}</h3>
-                      <p className="text-sm text-muted-foreground">{value.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {value.description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -254,14 +282,25 @@ export default function AboutPage() {
               <div
                 key={member.name}
                 className="group rounded-2xl border border-border/50 bg-card/50 p-6 text-center backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"
-                style={{ animation: `fadeIn 0.5s ease-out ${index * 0.1}s both` }}
+                style={{
+                  animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
+                }}
               >
                 <div className="relative mx-auto mb-4 h-32 w-32 overflow-hidden rounded-full border-4 border-primary/20 transition-transform group-hover:scale-105">
-                  <Image src={member.image || "/placeholder.svg"} alt={member.name} fill className="object-cover" />
+                  <Image
+                    src={member.image || "/placeholder.svg"}
+                    alt={member.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 <h3 className="text-lg font-semibold">{member.name}</h3>
-                <p className="text-sm font-medium text-primary">{member.role}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{member.bio}</p>
+                <p className="text-sm font-medium text-primary">
+                  {member.role}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {member.bio}
+                </p>
 
                 <div className="mt-4 flex justify-center gap-3">
                   <a
@@ -293,7 +332,9 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
-            <h2 className="text-3xl font-bold md:text-4xl">Tại sao chọn TechNova?</h2>
+            <h2 className="text-3xl font-bold md:text-4xl">
+              Tại sao chọn TechNova?
+            </h2>
             <p className="mt-4 text-muted-foreground">
               Chúng tôi cam kết mang đến trải nghiệm mua sắm công nghệ tốt nhất
             </p>
@@ -304,13 +345,17 @@ export default function AboutPage() {
               <div
                 key={feature.title}
                 className="group rounded-2xl border border-border/50 bg-card/50 p-6 text-center backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"
-                style={{ animation: `fadeIn 0.5s ease-out ${index * 0.1}s both` }}
+                style={{
+                  animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
+                }}
               >
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-transform group-hover:scale-110">
                   <feature.icon className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
@@ -321,9 +366,12 @@ export default function AboutPage() {
       <section className="border-t border-border/50 bg-linear-to-r from-primary/10 via-background to-blue-500/10 py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold md:text-4xl">Sẵn sàng khám phá?</h2>
+            <h2 className="text-3xl font-bold md:text-4xl">
+              Sẵn sàng khám phá?
+            </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Tham gia cùng hơn 10,000 khách hàng hài lòng và trải nghiệm cách mua sắm công nghệ hoàn toàn mới.
+              Tham gia cùng hơn 10,000 khách hàng hài lòng và trải nghiệm cách
+              mua sắm công nghệ hoàn toàn mới.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Button asChild size="lg" className="gap-2">
@@ -332,7 +380,12 @@ export default function AboutPage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="bg-transparent">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="bg-transparent"
+              >
                 <Link href="/auth/login">Đăng ký tài khoản</Link>
               </Button>
             </div>
@@ -340,5 +393,5 @@ export default function AboutPage() {
         </div>
       </section>
     </>
-  )
+  );
 }

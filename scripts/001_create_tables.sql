@@ -158,3 +158,26 @@ CREATE TABLE public.reviews (
 ) TABLESPACE pg_default;
 
 CREATE INDEX idx_reviews_product ON public.reviews(product_id);
+
+-- 8. Bảng Settings (Lưu trữ cấu hình động cho cửa hàng)
+CREATE TABLE IF NOT EXISTS settings (
+  id text PRIMARY KEY DEFAULT 'global',
+  store_name text DEFAULT 'TechNova Store',
+  store_description text DEFAULT 'Laptop, Smartphone và Phụ kiện chính hãng với giá tốt nhất. Giao hàng miễn phí toàn quốc - Bảo hành chu đáo.',
+  email text DEFAULT 'support@technova.vn',
+  phone text DEFAULT '0123456789',
+  address text DEFAULT '123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh',
+  currency text DEFAULT 'VND',
+  timezone text DEFAULT 'Asia/Ho_Chi_Minh',
+  maintenance_mode boolean DEFAULT false,
+  auto_approve_orders boolean DEFAULT false,
+  default_tax_rate numeric DEFAULT 10,
+  logo_url text DEFAULT '',
+  favicon_url text DEFAULT '',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Enable RLS
+-- Fixed: Disable RLS for global settings table (single row, no security risk)
+ALTER TABLE settings DISABLE ROW LEVEL SECURITY;

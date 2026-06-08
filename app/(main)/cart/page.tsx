@@ -1,20 +1,38 @@
-"use client"
+"use client";
 
-import { useCartStore } from "@/lib/store/cart-store"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { formatCurrency } from "@/lib/currency"
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, Truck, Shield, ChevronRight } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+import { useCartStore } from "@/lib/store/cart-store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/lib/currency";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingBag,
+  ArrowRight,
+  Tag,
+  Truck,
+  Shield,
+  ChevronRight,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { SectionTitle } from "@/components/animations/section-title";
 
 export default function CartPage() {
-  const { cartItems: items, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore()
+  const {
+    cartItems: items,
+    removeItem,
+    updateQuantity,
+    getSubtotal,
+    getTotalItems,
+  } = useCartStore();
 
-  const subtotal = getSubtotal()
-  const shipping = subtotal >= 500000 ? 0 : 30000
-  const total = subtotal + shipping
+  const subtotal = getSubtotal();
+  const shipping = subtotal >= 500000 ? 0 : 30000;
+  const total = subtotal + shipping;
 
   if (items.length === 0) {
     return (
@@ -25,7 +43,8 @@ export default function CartPage() {
           </div>
           <h1 className="mb-4 text-2xl font-bold">Giỏ hàng trống</h1>
           <p className="mb-8 text-muted-foreground">
-            Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm công nghệ tuyệt vời của chúng tôi!
+            Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm
+            công nghệ tuyệt vời của chúng tôi!
           </p>
           <Button asChild size="lg">
             <Link href="/products">
@@ -35,7 +54,7 @@ export default function CartPage() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -54,23 +73,36 @@ export default function CartPage() {
         <div className="lg:col-span-2">
           <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm">
             <div className="border-b border-border/50 p-4">
-              <h2 className="text-lg font-semibold">Giỏ hàng của bạn ({getTotalItems()} sản phẩm)</h2>
+              <h2 className="text-lg font-semibold">
+                Giỏ hàng của bạn ({getTotalItems()} sản phẩm)
+              </h2>
             </div>
 
             <div className="divide-y divide-border/50">
               {items.map((item) => (
                 <div key={item.product.id} className="flex gap-4 p-4">
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    <Image src={item.product.image_url || "/placeholder.svg"} alt={item.product.name} fill className="object-cover" />
+                    <Image
+                      src={item.product.image_url || "/placeholder.svg"}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
 
                   <div className="flex flex-1 flex-col">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-medium hover:text-primary">
-                          <Link href={`/products/${item.product.slug}`}>{item.product.name}</Link>
+                          <Link href={`/products/${item.product.slug}`}>
+                            {item.product.name}
+                          </Link>
                         </h3>
-                        {item.product.brand && <p className="text-sm text-muted-foreground">{item.product.brand}</p>}
+                        {item.product.brand && (
+                          <p className="text-sm text-muted-foreground">
+                            {item.product.brand}
+                          </p>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
@@ -88,26 +120,36 @@ export default function CartPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 bg-transparent"
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          onClick={() =>
+                            updateQuantity(item.product.id, item.quantity - 1)
+                          }
                           disabled={item.quantity <= 1}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <span className="w-8 text-center font-medium">
+                          {item.quantity}
+                        </span>
                         <Button
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 bg-transparent"
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          onClick={() =>
+                            updateQuantity(item.product.id, item.quantity + 1)
+                          }
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
 
                       <div className="text-right">
-                        <p className="font-semibold text-primary">{formatCurrency(item.product.price * item.quantity)}</p>
+                        <p className="font-semibold text-primary">
+                          {formatCurrency(item.product.price * item.quantity)}
+                        </p>
                         {item.quantity > 1 && (
-                          <p className="text-sm text-muted-foreground">{formatCurrency(item.product.price)}/sp</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatCurrency(item.product.price)}/sp
+                          </p>
                         )}
                       </div>
                     </div>
@@ -149,12 +191,15 @@ export default function CartPage() {
                 {shipping > 0 && (
                   <div className="rounded-lg bg-primary/10 p-3 text-sm">
                     <p className="text-primary">
-                      Mua thêm {formatCurrency(500000 - subtotal)} để được miễn phí vận chuyển!
+                      Mua thêm {formatCurrency(500000 - subtotal)} để được miễn
+                      phí vận chuyển!
                     </p>
                     <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full bg-primary transition-all"
-                        style={{ width: `${Math.min((subtotal / 500000) * 100, 100)}%` }}
+                        style={{
+                          width: `${Math.min((subtotal / 500000) * 100, 100)}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -193,5 +238,5 @@ export default function CartPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

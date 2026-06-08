@@ -1,5 +1,5 @@
-import { createBrowserClient as createSupabaseBrowserClient } from "@supabase/ssr"
-import https from "https"
+import { createBrowserClient as createSupabaseBrowserClient } from "@supabase/ssr";
+import https from "https";
 
 const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
   return fetch(url, {
@@ -7,8 +7,8 @@ const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
     agent: new https.Agent({
       rejectUnauthorized: false,
     }),
-  } as any)
-}
+  } as any);
+};
 
 export function createBrowserClient() {
   return createSupabaseBrowserClient(
@@ -18,10 +18,10 @@ export function createBrowserClient() {
       global: {
         fetch: customFetch,
       },
-    }
-  )
+    },
+  );
 }
 
 export function createClient() {
-  return createBrowserClient()
+  return createBrowserClient();
 }

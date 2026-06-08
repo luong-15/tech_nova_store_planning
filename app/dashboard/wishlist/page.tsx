@@ -107,7 +107,7 @@ export default function WishlistPage() {
                   className="object-cover transition-transform group-hover:scale-105"
                 />
                 {item.product.original_price && item.product.original_price > item.product.price && (
-                  <div className="absolute left-1 top-1 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  <div className="absolute left-1 top-1 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
                     -{Math.round((1 - item.product.price / item.product.original_price) * 100)}%
                   </div>
                 )}

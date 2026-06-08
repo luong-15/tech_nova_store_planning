@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -38,9 +39,9 @@ import {
 import React, { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
+import { notifySuccess, notifyError, notifyInfo } from "@/lib/notifications";
 
 const checkoutSchema = z.object({
   shipping_name: z.string().min(2, "Tên người nhận phải có ít nhất 2 ký tự"),
@@ -75,11 +76,11 @@ export default function CheckoutPage() {
     const interval = setInterval(async () => {
       try {
         if (!qrData?.order_id) {
-          console.warn('No order_id for polling, stopping');
+          console.warn("No order_id for polling, stopping");
           clearInterval(interval);
           return;
         }
-        console.log('Polling order:', qrData.order_id);
+        console.log("Polling order:", qrData.order_id);
         const statusRes = await fetch(`/api/orders/${qrData.order_id}/status`);
         const statusData = await statusRes.json();
 
@@ -87,8 +88,8 @@ export default function CheckoutPage() {
           clearCart(); // NOW safe to clear cart after payment confirmed
           clearInterval(interval);
           setIsPolling(false);
-          toast.success("Thanh toán thành công!");
-          router.push(`/order-success?order_id=${qrData.order_id}`); 
+          notifySuccess("Thanh toán thành công!");
+          router.push(`/order-success?order_id=${qrData.order_id}`);
         }
       } catch (error) {
         console.error("Polling error:", error);
@@ -108,23 +109,23 @@ export default function CheckoutPage() {
 
   // Cleanup on unmount
   // Auto start polling when QR is ready
-      useEffect(() => {
-        if (qrData && !isPolling) {
-          startPolling();
-        }
-      }, [qrData]);
+  useEffect(() => {
+    if (qrData && !isPolling) {
+      startPolling();
+    }
+  }, [qrData]);
 
-      // Auto-scroll to QR section
-      useEffect(() => {
-        if (qrData) {
-          setTimeout(() => {
-            const qrElement = document.getElementById('qr-section');
-            if (qrElement) {
-              qrElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }, 300);
+  // Auto-scroll to QR section
+  useEffect(() => {
+    if (qrData) {
+      setTimeout(() => {
+        const qrElement = document.getElementById("qr-section");
+        if (qrElement) {
+          qrElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-      }, [qrData]);
+      }, 300);
+    }
+  }, [qrData]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -158,7 +159,7 @@ export default function CheckoutPage() {
 
     if (!session?.user) {
       router.push("/auth/login");
-      toast.error("Vui lòng đăng nhập để thanh toán");
+      notifyError("Vui lòng đăng nhập để thanh toán");
       return;
     }
 
@@ -195,7 +196,7 @@ export default function CheckoutPage() {
 
   const onSubmit = async (data: CheckoutForm) => {
     if (items.length === 0) {
-      toast.error("Giỏ hàng trống");
+      notifyError("Giỏ hàng trống");
       return;
     }
 
@@ -229,20 +230,19 @@ export default function CheckoutPage() {
         }),
       });
 
-
       const result = await response.json();
       console.log("Order response:", result, "Status:", response.status);
 
       if (!response.ok || !result.success) {
         console.error("Order API error:", result);
-        toast.error(result.error || "Lỗi tạo đơn hàng: " + response.status);
+        notifyError(result.error || "Lỗi tạo đơn hàng: " + response.status);
         return;
       }
 
       // Clear cart ONLY for COD. For online payments, clear after confirmation
       if (data.payment_method === "cod") {
         clearCart();
-        toast.success("Đặt hàng thành công!");
+        notifySuccess("Đặt hàng thành công!");
         router.push(`/order-success?order_id=${result.order_id}`);
         return;
       }
@@ -262,16 +262,16 @@ export default function CheckoutPage() {
       console.log("QR response:", qrResult);
 
       if (!qrRes.ok || !qrResult.success) {
-        toast.error(qrResult.error || "Lỗi tạo QR code");
+        notifyError(qrResult.error || "Lỗi tạo QR code");
         return;
       }
 
       setQrData(qrResult);
-      toast.success("QR code sẵn sàng! Quét để thanh toán.");
+      notifySuccess("QR code sẵn sàng! Quét để thanh toán.");
       startPolling();
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.");
+      notifyError("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }
@@ -520,14 +520,21 @@ export default function CheckoutPage() {
                         <img
                           src={qrData.qr_url}
                           alt="Mã QR VietQR - Quét để thanh toán"
-                          style={{ width: '100%', height: 'auto', maxWidth: '280px' }}
+                          style={{
+                            width: "100%",
+                            height: "auto",
+                            maxWidth: "280px",
+                          }}
                           className="mx-auto rounded-xl border-4 border-primary shadow-xl"
                           loading="lazy"
-                          onLoad={() => console.log('QR loaded successfully')}
+                          onLoad={() => console.log("QR loaded successfully")}
                           onError={(e) => {
-                            console.error('QR image load failed:', qrData.qr_url);
-                            (e.target as any).style.display = 'none';
-                            toast.error('Không tải được QR. Kiểm tra mạng!');
+                            console.error(
+                              "QR image load failed:",
+                              qrData.qr_url,
+                            );
+                            (e.target as any).style.display = "none";
+                            notifyError("Không tải được QR. Kiểm tra mạng!");
                           }}
                         />
                       </div>
@@ -555,21 +562,27 @@ export default function CheckoutPage() {
                         size="sm"
                         className="mt-4 w-full"
                         onClick={async () => {
-                          console.log('QR data:', qrData); // Debug
-                          const amountText = formatCurrency(qrData.amount || 0).replace(/[^\d]/g, '');
-                          const content = qrData.order_number || 'Thanh toan TechNova';
+                          console.log("QR data:", qrData); // Debug
+                          const amountText = formatCurrency(
+                            qrData.amount || 0,
+                          ).replace(/[^\d]/g, "");
+                          const content =
+                            qrData.order_number || "Thanh toan TechNova";
                           const text = `${amountText} - ${content}`;
-                          console.log('Copying text:', text);
+                          console.log("Copying text:", text);
                           try {
                             await navigator.clipboard.writeText(text);
-                            toast.success("✅ Đã copy số tiền & nội dung!");
+                            notifySuccess("✅ Đã copy số tiền & nội dung!");
                           } catch (err) {
-                            console.error('Clipboard failed:', err);
-                            const fallback = window.prompt('Copy manually:', text);
+                            console.error("Clipboard failed:", err);
+                            const fallback = window.prompt(
+                              "Copy manually:",
+                              text,
+                            );
                             if (fallback !== null) {
-                              toast.success("✅ Đã copy thành công!");
+                              notifySuccess("✅ Đã copy thành công!");
                             } else {
-                              toast.info("Đã hủy copy");
+                              notifyInfo("Đã hủy copy");
                             }
                           }
                         }}
@@ -583,26 +596,35 @@ export default function CheckoutPage() {
                         className="flex-1"
                         onClick={async () => {
                           if (!qrData?.order_id) {
-                            toast.error('Không có ID đơn hàng để kiểm tra');
+                            notifyError("Không có ID đơn hàng để kiểm tra");
                             return;
                           }
                           if (isPolling) return;
                           setIsPolling(true);
                           try {
-                            console.log('Manual checking order:', qrData.order_id);
-                            const statusRes = await fetch(`/api/orders/${qrData.order_id}/status`);
+                            console.log(
+                              "Manual checking order:",
+                              qrData.order_id,
+                            );
+                            const statusRes = await fetch(
+                              `/api/orders/${qrData.order_id}/status`,
+                            );
                             const statusData = await statusRes.json();
-                            console.log('Manual check:', statusData);
+                            console.log("Manual check:", statusData);
                             if (statusData.isPaid) {
                               clearCart();
-                              toast.success("Thanh toán thành công!");
-                              router.push(`/order-success?order_id=${qrData.order_id}`);
+                              notifySuccess("Thanh toán thành công!");
+                              router.push(
+                                `/order-success?order_id=${qrData.order_id}`,
+                              );
                             } else {
-                              toast.info(`Chưa thanh toán (status: ${statusData.status})`);
+                              notifyInfo(
+                                `Chưa thanh toán (status: ${statusData.status})`,
+                              );
                             }
                           } catch (error) {
-                            console.error('Manual check error:', error);
-                            toast.error('Lỗi kiểm tra');
+                            console.error("Manual check error:", error);
+                            notifyError("Lỗi kiểm tra");
                           } finally {
                             setIsPolling(false);
                           }
@@ -618,7 +640,7 @@ export default function CheckoutPage() {
                         onClick={() => {
                           stopPolling();
                           setQrData(null);
-                          toast.success('Đã hủy thanh toán QR');
+                          notifySuccess("Đã hủy thanh toán QR");
                         }}
                       >
                         Hủy thanh toán
@@ -646,17 +668,22 @@ export default function CheckoutPage() {
                 {/* Free Shipping Progress */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Vận chuyển miễn phí khi mua từ 500.000₫</span>
+                    <span className="text-muted-foreground">
+                      Vận chuyển miễn phí khi mua từ 500.000₫
+                    </span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div 
-className="h-full bg-linear-to-r from-primary to-blue-500 rounded-full transition-all duration-500"
-                      style={{width: `${Math.min((subtotal / 500000) * 100, 100)}%`}}
+                    <div
+                      className="h-full bg-linear-to-r from-primary to-blue-500 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min((subtotal / 500000) * 100, 100)}%`,
+                      }}
                     />
                   </div>
                   {subtotal < 500000 && (
                     <p className="text-xs text-primary font-medium">
-                      Thêm {formatCurrency(500000 - subtotal)} để được miễn phí ship
+                      Thêm {formatCurrency(500000 - subtotal)} để được miễn phí
+                      ship
                     </p>
                   )}
                 </div>
@@ -669,75 +696,98 @@ className="h-full bg-linear-to-r from-primary to-blue-500 rounded-full transitio
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Phí ship</span>
-                    <Badge variant={shipping === 0 ? "default" : "secondary"} className="px-2">
+                    <Badge
+                      variant={shipping === 0 ? "default" : "secondary"}
+                      className="px-2"
+                    >
                       {shipping === 0 ? "Miễn phí" : formatCurrency(shipping)}
                     </Badge>
                   </div>
                   <Separator />
                   <div className="flex justify-between items-center text-xl font-bold">
                     <span>Tổng thanh toán</span>
-                    <span className="text-2xl text-primary">{formatCurrency(total)}</span>
+                    <span className="text-2xl text-primary">
+                      {formatCurrency(total)}
+                    </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Items List */}
-            <Card>
+            {/* Items List with Scroll */}
+            <Card className="overflow-hidden">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Sản phẩm</CardTitle>
+                <CardTitle className="text-lg">
+                  Sản phẩm ({items.length})
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 max-h-96 overflow-y-auto -mx-4 px-4 pb-4">
-                {items.map((item) => (
-                  <div key={item.product.id} className="group flex gap-4 p-4 rounded-xl border border-border/50 hover:border-primary/50 hover:shadow-md transition-all bg-card/50">
-                    {/* Image */}
-                    <div className="relative h-20 w-20 shrink-0 rounded-lg overflow-hidden bg-muted/50">
-                      <Image
-                        src={item.product.image_url || "/placeholder.svg"}
-                        alt={item.product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform"
-                      />
-                      {item.product.original_price && (
-                        <div className="absolute top-1 left-1 bg-destructive/90 text-destructive-foreground text-xs px-1.5 py-0.5 rounded font-bold">
-                          {Math.round(((item.product.original_price - item.product.price) / item.product.original_price) * 100)}% OFF
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <div>
-                        <h4 className="font-semibold text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-                          {item.product.name}
-                        </h4>
-                        {item.product.brand && (
-                          <p className="text-xs text-muted-foreground">{item.product.brand}</p>
-                        )}
-                        {item.product.specs && Object.keys(item.product.specs || {}).length > 0 && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {Object.entries(item.product.specs || {}).slice(0, 2).map(([k, v]) => (
-                              <div key={k} className="truncate">{k}: {String(v)}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 bg-muted/50 px-2 py-1 rounded-md">
-                          <span className="text-xs font-medium">SL: {item.quantity}</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-sm">{formatCurrency(item.product.price * item.quantity)}</div>
+              <CardContent className="p-0 overflow-hidden">
+                <div className="max-h-96 overflow-y-auto overscroll-contain px-4 pb-4">
+                  <div className="space-y-3">
+                    {items.map((item) => (
+                      <div
+                        key={item.product.id}
+                        className="group flex gap-3 p-3 rounded-xl border border-border/50 hover:border-primary/50 hover:shadow-md transition-all bg-card/50"
+                      >
+                        {/* Image */}
+                        <div className="relative h-20 w-20 shrink-0 rounded-lg overflow-hidden bg-muted/50">
+                          <Image
+                            src={item.product.image_url || "/placeholder.svg"}
+                            alt={item.product.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform"
+                          />
                           {item.product.original_price && (
-                            <div className="text-xs text-muted-foreground line-through">
-                              {formatCurrency(item.product.original_price * item.quantity)}
+                            <div className="absolute top-1 left-1 bg-destructive/90 text-destructive-foreground text-xs px-1.5 py-0.5 rounded font-bold">
+                              {Math.round(
+                                ((item.product.original_price -
+                                  item.product.price) /
+                                  item.product.original_price) *
+                                  100,
+                              )}
+                              % OFF
                             </div>
                           )}
                         </div>
+
+                        {/* Details */}
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div>
+                            <h4 className="font-semibold text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                              {item.product.name}
+                            </h4>
+                            {item.product.brand && (
+                              <p className="text-xs text-muted-foreground">
+                                {item.product.brand}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 bg-muted/50 px-2 py-1 rounded-md">
+                              <span className="text-xs font-medium">
+                                SL: {item.quantity}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-sm">
+                                {formatCurrency(
+                                  item.product.price * item.quantity,
+                                )}
+                              </div>
+                              {item.product.original_price && (
+                                <div className="text-xs text-muted-foreground line-through">
+                                  {formatCurrency(
+                                    item.product.original_price * item.quantity,
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </CardContent>
             </Card>
 
@@ -751,10 +801,12 @@ className="h-full bg-linear-to-r from-primary to-blue-500 rounded-full transitio
                   <div>
                     <h4 className="font-semibold text-sm">Giao hàng tới</h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-{form.watch("shipping_name") || "Nhập thông tin giao hàng"} 
+                      {form.watch("shipping_name") ||
+                        "Nhập thông tin giao hàng"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                      {form.watch("shipping_address") || "Địa chỉ giao hàng"} • {form.watch("shipping_city") || "Thành phố"}
+                      {form.watch("shipping_address") || "Địa chỉ giao hàng"} •{" "}
+                      {form.watch("shipping_city") || "Thành phố"}
                     </p>
                   </div>
                 </div>

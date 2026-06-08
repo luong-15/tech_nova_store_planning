@@ -11,18 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
-import { 
-  Eye, Printer, Search, Package, MapPin, User, 
+import {
+  Eye, Printer, Search, Package, MapPin, User,
   Calendar, Save, CreditCard, Truck, CheckCircle2, Clock
 } from "lucide-react"
 import { formatCurrency } from "@/lib/currency"
 import type { Order } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
+import { notifyError, notifySuccess } from "@/lib/notifications"
 
 
 export default function OrdersPage() {
-  const { toast } = useToast()
+
   const [orders, setOrders] = useState<Order[]>([])
 
   const [ordersPagination, setOrdersPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 })
@@ -43,7 +43,7 @@ export default function OrdersPage() {
       delivered: { label: "Hoàn thành", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: CheckCircle2 },
       cancelled: { label: "Đã hủy", color: "bg-red-500/10 text-red-500 border-red-500/20", icon: Package },
     }
-    const config = statusMap[status] || { label: status, color: "bg-slate-500/10 text-slate-500", icon: Package }
+    const config = statusMap[status] || { label: status, color: "bg-muted/300/10 text-slate-500", icon: Package }
     const Icon = config.icon
     return (
       <Badge variant="outline" className={cn("flex w-fit items-center gap-1.5 font-medium px-2.5 py-0.5 rounded-full", config.color)}>
@@ -56,9 +56,9 @@ export default function OrdersPage() {
   const getPaymentBadge = (status: string) => {
     const statusMap: Record<string, { label: string, color: string }> = {
       unpaid: { label: "Chưa thanh toán", color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
-      paid: { label: "Đã thanh toán", color: "bg-emerald-500 text-white shadow-sm shadow-emerald-500/20" },
-      failed: { label: "Thất bại", color: "bg-red-500 text-white" },
-      cancelled: { label: "Hủy", color: "bg-slate-400 text-white" },
+      paid: { label: "Đã thanh toán", color: "bg-emerald-500 text-primary-foreground shadow-sm shadow-emerald-500/20" },
+      failed: { label: "Thất bại", color: "bg-red-500 text-primary-foreground" },
+      cancelled: { label: "Hủy", color: "bg-slate-400 text-primary-foreground" },
     }
     const config = statusMap[status] || { label: status, color: "bg-outline text-outline" }
     return <Badge className={cn("text-[10px] uppercase tracking-wider px-2 font-bold rounded-md", config.color)}>{config.label}</Badge>
@@ -71,7 +71,7 @@ export default function OrdersPage() {
       const params = new URLSearchParams({ page: ordersPagination.page.toString(), limit: ordersPagination.limit.toString() })
       if (debouncedOrdersSearch) params.append("search", debouncedOrdersSearch)
       if (ordersStatusFilter && ordersStatusFilter !== "all") params.append("status", ordersStatusFilter)
-      const response = await fetch(`/api/admin/orders?${params}`)
+      const response = await fetch(`/api/admin/orders?${params}`, { cache: 'no-store' })
       const data = await response.json()
       setOrders(data.data || [])
       setOrdersPagination(prev => ({ ...prev, total: data.pagination?.total || 0, totalPages: data.pagination?.totalPages || 0 }))
@@ -87,18 +87,33 @@ export default function OrdersPage() {
     try {
       const response = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
         method: 'PATCH',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       })
       if (response.ok) {
-        const data = await response.json()
-        toast({
-          title: "Lưu thành công!",
-          description: "Đã cập nhật trạng thái đơn hàng.",
-        })
+        notifySuccess("Lưu thành công! Đã cập nhật trạng thái đơn hàng.")
         setOrderDialogOpen(false)
-        fetchOrders()
-
+        setSelectedOrder(null)
+        setNewOrderStatus("")
+        setNewPaymentStatus("")
+        
+        // Wait then refresh data directly
+        setTimeout(async () => {
+          try {
+            const params = new URLSearchParams({ page: "1", limit: "50" })
+            const freshResponse = await fetch(`/api/admin/orders?${params}`, { cache: 'no-store' })
+            const freshData = await freshResponse.json()
+            
+            setOrders(freshData.data || [])
+            setOrdersPagination(prev => ({ 
+              ...prev, 
+              total: freshData.pagination?.total || 0, 
+              totalPages: freshData.pagination?.totalPages || 0 
+            }))
+          } catch (error) {
+          }
+        }, 500)
       }
 
     } catch (error) { console.error(error) }
@@ -118,28 +133,28 @@ export default function OrdersPage() {
           <p className="text-muted-foreground text-sm">Quản lý vòng đời đơn hàng và vận chuyển.</p>
         </div>
         <div className="flex items-center gap-3">
-            <div className="relative w-full md:w-80 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input
-                placeholder="Tìm mã đơn, tên khách..."
-                className="pl-10 bg-muted/50 border-none focus-visible:ring-1"
-                value={ordersSearch}
-                onChange={(e) => setOrdersSearch(e.target.value)}
-              />
-            </div>
-            <Select value={ordersStatusFilter} onValueChange={setOrdersStatusFilter}>
-              <SelectTrigger className="w-45 bg-muted/50 border-none">
-                <SelectValue placeholder="Lọc trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="pending">Chờ xử lý</SelectItem>
-                <SelectItem value="processing">Đang xử lý</SelectItem>
-                <SelectItem value="shipped">Đang giao</SelectItem>
-                <SelectItem value="delivered">Hoàn thành</SelectItem>
-                <SelectItem value="cancelled">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="relative w-full md:w-80 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder="Tìm mã đơn, tên khách..."
+              className="pl-10 bg-muted/50 border-none focus-visible:ring-1"
+              value={ordersSearch}
+              onChange={(e) => setOrdersSearch(e.target.value)}
+            />
+          </div>
+          <Select value={ordersStatusFilter} onValueChange={setOrdersStatusFilter}>
+            <SelectTrigger className="w-45 bg-muted/50 border-none">
+              <SelectValue placeholder="Lọc trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="pending">Chờ xử lý</SelectItem>
+              <SelectItem value="processing">Đang xử lý</SelectItem>
+              <SelectItem value="shipped">Đang giao</SelectItem>
+              <SelectItem value="delivered">Hoàn thành</SelectItem>
+              <SelectItem value="cancelled">Đã hủy</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -185,9 +200,9 @@ export default function OrdersPage() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="rounded-full hover:bg-primary hover:text-white transition-all shadow-none"
+                      className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all shadow-none"
                       onClick={async () => {
-                        const res = await fetch(`/api/admin/orders/${order.id}`)
+                        const res = await fetch(`/api/admin/orders/${order.id}`, { cache: 'no-store' })
                         if (res.ok) {
                           const details = await res.json()
                           setSelectedOrder(details)
@@ -214,7 +229,7 @@ export default function OrdersPage() {
               <div className="space-y-1">
                 <DialogTitle className="text-2xl font-black">CHI TIẾT ĐƠN #{selectedOrder?.order_number}</DialogTitle>
                 <div className="text-xs text-muted-foreground flex items-center gap-2">
-                   <Clock className="h-3 w-3" /> Khởi tạo lúc: {selectedOrder && new Date(selectedOrder.created_at).toLocaleString('vi-VN')}
+                  <Clock className="h-3 w-3" /> Khởi tạo lúc: {selectedOrder && new Date(selectedOrder.created_at).toLocaleString('vi-VN')}
                 </div>
               </div>
               <Button variant="secondary" className="mr-10 rounded-full shadow-sm" onClick={() => window.print()}>
@@ -223,7 +238,14 @@ export default function OrdersPage() {
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          <div
+            className="flex-1 min-h-0 overflow-y-auto p-6 space-y-8 overscroll-contain"
+            data-lenis-prevent
+            onWheel={(e) => {
+              e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
+            }}
+          >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Cột 1: Khách hàng */}
               <Card className="border-none bg-muted/30 shadow-none rounded-3xl">
@@ -233,17 +255,25 @@ export default function OrdersPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tên:</span>
-                    <span className="font-semibold">{selectedOrder?.shipping_name}</span>
+                  <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground whitespace-nowrap">Tên:</span>
+                    <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_name}>
+                      {selectedOrder?.shipping_name}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">SĐT:</span>
-                    <span className="font-semibold">{selectedOrder?.shipping_phone}</span>
+
+                  <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground whitespace-nowrap">SĐT:</span>
+                    <span className="font-semibold truncate ml-2 text-right">
+                      {selectedOrder?.shipping_phone}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Email:</span>
-                    <span className="font-semibold truncate max-w-30">{selectedOrder?.shipping_email || '-'}</span>
+
+                  <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground whitespace-nowrap">Email:</span>
+                    <span className="font-semibold truncate ml-2 text-right" title={selectedOrder?.shipping_email}>
+                      {selectedOrder?.shipping_email || '-'}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -256,8 +286,9 @@ export default function OrdersPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
-                  <p className="font-semibold leading-relaxed">{selectedOrder?.shipping_address}</p>
-                  <p className="text-muted-foreground">{selectedOrder?.shipping_city}, {selectedOrder?.shipping_postal_code}</p>
+                  <p className="font-semibold leading-relaxed">Địa chỉ: {selectedOrder?.shipping_address}</p>
+                  <p className="text-muted-foreground">Thành ph��: {selectedOrder?.shipping_city}</p>
+                  <p className="text-muted-foreground">Mã bưu điện: {selectedOrder?.shipping_postal_code}</p>
                 </CardContent>
               </Card>
 
@@ -326,7 +357,7 @@ export default function OrdersPage() {
                             {item.product_image ? (
                               <img src={item.product_image} alt="" className="w-14 h-14 object-cover rounded-2xl shadow-sm border border-border/50" />
                             ) : (
-                               <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center"><Package className="h-6 w-6 opacity-20" /></div>
+                              <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center"><Package className="h-6 w-6 opacity-20" /></div>
                             )}
                             <div className="space-y-0.5">
                               <div className="font-bold text-sm leading-tight line-clamp-2">{item.product_name || item.products?.name}</div>
@@ -345,32 +376,32 @@ export default function OrdersPage() {
             </div>
 
             <div className="flex justify-end">
-                <div className="w-full max-w-sm space-y-4 bg-muted/20 p-6 rounded-4xl border border-border/40">
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-muted-foreground font-medium">
-                            <span>Tạm tính</span>
-                            <span>{formatCurrency(selectedOrder?.subtotal || selectedOrder?.total)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-muted-foreground font-medium">
-                            <span>Phí vận chuyển</span>
-                            <span>{formatCurrency(selectedOrder?.shipping_fee || 0)}</span>
-                        </div>
-                    </div>
-                    <Separator className="bg-border/60" />
-                    <div className="flex justify-between items-end">
-                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tổng thanh toán</span>
-                        <span className="text-3xl font-black text-primary leading-none">{selectedOrder && formatCurrency(selectedOrder.total)}</span>
-                    </div>
+              <div className="w-full max-w-sm space-y-4 bg-muted/20 p-6 rounded-3xl border border-border/40">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-muted-foreground font-medium">
+                    <span>Tạm tính</span>
+                    <span>{formatCurrency(selectedOrder?.subtotal || selectedOrder?.total)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground font-medium">
+                    <span>Phí vận chuyển</span>
+                    <span>{formatCurrency(selectedOrder?.shipping_fee || 0)}</span>
+                  </div>
                 </div>
+                <Separator className="bg-border/60" />
+                <div className="flex justify-between items-end">
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tổng thanh toán</span>
+                  <span className="text-3xl font-black text-primary leading-none">{selectedOrder && formatCurrency(selectedOrder.total)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="p-4 bg-muted/30 border-t flex justify-end gap-3 px-6">
             <Button variant="ghost" className="rounded-full px-6" onClick={() => setOrderDialogOpen(false)}>Đóng</Button>
-            <Button 
-                className="rounded-full px-8 shadow-lg shadow-primary/20" 
-                onClick={saveAllChanges}
-                disabled={(!newOrderStatus || newOrderStatus === selectedOrder?.status) && (!newPaymentStatus || newPaymentStatus === selectedOrder?.payment_status)}
+            <Button
+              className="rounded-full px-8 shadow-lg shadow-primary/20"
+              onClick={saveAllChanges}
+              disabled={(!newOrderStatus || newOrderStatus === selectedOrder?.status) && (!newPaymentStatus || newPaymentStatus === selectedOrder?.payment_status)}
             >
               Cập nhật đơn hàng
             </Button>

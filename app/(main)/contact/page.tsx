@@ -9,7 +9,7 @@ import Link from "next/link"
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-[#020617] pb-20">
+    <div className="min-h-screen bg-muted/30/50 dark:bg-background pb-20">
       <div className="container mx-auto px-4 py-12">
         {/* Breadcrumb Gọn gàng */}
         <nav className="mb-10 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
@@ -35,8 +35,8 @@ export default function ContactPage() {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Cột trái: Thông tin liên hệ (Gọn & Đẹp hơn) */}
           <div className="lg:col-span-4 space-y-4 order-2 lg:order-1">
-            <div className="group flex items-center gap-5 p-6 rounded-4xl bg-white dark:bg-slate-900 border border-border/50 shadow-sm transition-all hover:border-blue-500/30 hover:shadow-md">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+            <div className="group flex items-center gap-5 p-6 rounded-3xl bg-background dark:bg-slate-900 border border-border/50 shadow-sm transition-all hover:border-blue-500/30 hover:shadow-md">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-primary-foreground">
                 <Phone size={20} />
               </div>
               <div>
@@ -45,8 +45,8 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="group flex items-center gap-5 p-6 rounded-4xl bg-white dark:bg-slate-900 border border-border/50 shadow-sm transition-all hover:border-blue-500/30 hover:shadow-md">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-yellow-600 group-hover:text-white">
+            <div className="group flex items-center gap-5 p-6 rounded-3xl bg-background dark:bg-slate-900 border border-border/50 shadow-sm transition-all hover:border-blue-500/30 hover:shadow-md">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-yellow-600 group-hover:text-primary-foreground">
                 <Mail size={20} />
               </div>
               <div>
@@ -55,8 +55,8 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="group flex items-center gap-5 p-6 rounded-4xl bg-white dark:bg-slate-900 border border-border/50 shadow-sm transition-all hover:border-blue-500/30 hover:shadow-md">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+            <div className="group flex items-center gap-5 p-6 rounded-3xl bg-background dark:bg-slate-900 border border-border/50 shadow-sm transition-all hover:border-blue-500/30 hover:shadow-md">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-primary-foreground">
                 <MapPin size={20} />
               </div>
               <div>
@@ -66,7 +66,7 @@ export default function ContactPage() {
             </div>
 
             {/* Giờ làm việc thiết kế lại kiểu List */}
-            <div className="p-8 rounded-4xl bg-slate-900 text-white relative overflow-hidden">
+            <div className="p-8 rounded-3xl bg-slate-900 text-primary-foreground relative overflow-hidden">
                <Clock className="absolute -right-4 -bottom-4 h-24 w-24 opacity-10" />
                <h3 className="text-lg font-black mb-6">Giờ làm việc</h3>
                <div className="space-y-4">
@@ -129,8 +129,8 @@ export default function ContactPage() {
         </div>
 
         {/* Map - Bo góc cực lớn đồng bộ với toàn hệ thống */}
-        <div className="mt-16 overflow-hidden rounded-[3rem] border border-border/50 bg-white shadow-xl">
-           <div className="p-6 border-b border-border/50 flex items-center justify-between bg-slate-50/50">
+        <div className="mt-16 overflow-hidden rounded-[3rem] border border-border/50 bg-background shadow-xl">
+           <div className="p-6 border-b border-border/50 flex items-center justify-between bg-muted/30/50">
               <p className="text-sm font-black uppercase tracking-tighter italic">Vị trí cửa hàng</p>
               <div className="flex gap-2 text-[10px] font-bold text-muted-foreground uppercase">
                 <span>Google Maps</span>

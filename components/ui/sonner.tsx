@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useTheme } from 'next-themes'
-import { Toaster as Sonner, ToasterProps } from 'sonner'
+import { useTheme } from "next-themes";
+import { Toaster as Sonner, ToasterProps } from "sonner";
 
 /**
  * UNUSED - Project uses shadcn/ui toast system.
@@ -27,4 +27,3 @@ import { Toaster as Sonner, ToasterProps } from 'sonner'
 // }
 
 // export { Toaster }
-
