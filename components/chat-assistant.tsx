@@ -133,7 +133,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
         <motion.div 
             initial={{ scale: 0, rotate: -45 }}
             animate={{ scale: 1, rotate: 0 }}
-            className="fixed bottom-6 right-6 z-100"
+            className="fixed bottom-6 right-6 z-50"
         >
           <Button
             onClick={() => setIsOpen(true)}
@@ -154,7 +154,7 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
             initial={{ opacity: 0, y: 100, scale: 0.8, filter: "blur(10px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
-            className="fixed bottom-0 right-0 z-100 w-full sm:bottom-6 sm:right-6 sm:w-105 h-dvh sm:h-162.5"
+            className="fixed bottom-0 right-0 z-[99] w-full sm:bottom-6 sm:right-6 sm:w-105 h-dvh sm:h-162.5"
           >
             <Card className="w-full h-full shadow-2xl flex flex-col border-border/50 bg-background/95 backdrop-blur-xl sm:rounded-3xl overflow-hidden">
               {/* Header */}
