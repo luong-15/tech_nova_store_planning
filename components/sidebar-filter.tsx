@@ -217,6 +217,60 @@ function FilterSectionUI({
 }
 
 /* ================= MAIN ================= */
+function FilterContent({
+  sections,
+  filters,
+  expanded,
+  toggle,
+  onCheckbox,
+  onReset,
+  onSectionClear,
+}: {
+  sections: FilterSection[];
+  filters: FilterState;
+  expanded: Set<string>;
+  toggle: (id: string) => void;
+  onCheckbox: (key: string, value: string, checked: boolean) => void;
+  onReset: () => void;
+  onSectionClear: (sectionId: string) => void;
+}) {
+  return (
+    <>
+      <div className="flex justify-between items-center border-b px-5 py-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <Filter size={18} />
+          <b>Bộ lọc</b>
+        </div>
+        <Button
+          className="opacity-70 hover:opacity-100 hover:bg-blue-600"
+          variant="ghost"
+          onClick={onReset}
+          title="Xóa tất cả bộ lọc"
+        >
+          <span className="text-white">Reset</span>
+          <RotateCw className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto overscroll-contain space-y-6 p-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/70">
+        {sections.map((s) => (
+          <FilterSectionUI
+            key={s.id}
+            section={s}
+            expanded={expanded.has(s.id)}
+            toggle={toggle}
+            selectedValues={filters[s.id] || []}
+            onChange={(value: string, checked: boolean) =>
+              onCheckbox(s.id, value, checked)
+            }
+            onClear={() => onSectionClear(s.id)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
 export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -310,40 +364,16 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
   );
 
   return (
-    <aside className="w-full">
-      <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full">
-        <div className="flex justify-between items-center border-b px-5 py-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <Filter size={18} />
-            <b>Bộ lọc</b>
-          </div>
-          <Button
-            className="opacity-70 hover:opacity-100 hover:bg-blue-600"
-            variant="ghost"
-            onClick={handleReset}
-            title="Xóa tất cả bộ lọc"
-          >
-            <span className="text-white">Reset</span>
-            <RotateCw className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto space-y-6 p-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/70">
-          {sections.map((s) => (
-            <FilterSectionUI
-              key={s.id}
-              section={s}
-              expanded={expanded.has(s.id)}
-              toggle={toggle}
-              selectedValues={filters[s.id] || []}
-              onChange={(value: string, checked: boolean) =>
-                handleCheckbox(s.id, value, checked)
-              }
-              onClear={() => handleSectionClear(s.id)}
-            />
-          ))}
-        </div>
-      </div>
-    </aside>
+    <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full w-full">
+      <FilterContent
+        sections={sections}
+        filters={filters}
+        expanded={expanded}
+        toggle={toggle}
+        onCheckbox={handleCheckbox}
+        onReset={handleReset}
+        onSectionClear={handleSectionClear}
+      />
+    </div>
   );
 }

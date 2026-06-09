@@ -78,6 +78,8 @@ function ProductsPageContent() {
     if (showMobileFilter) {
       document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
+      document.documentElement.style.position = "fixed";
+      document.documentElement.style.width = "100%";
 
       const handleEscape = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
@@ -99,15 +101,21 @@ function ProductsPageContent() {
         document.removeEventListener("touchmove", handleWindowScroll);
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
+        document.documentElement.style.position = "";
+        document.documentElement.style.width = "";
       };
     } else {
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.documentElement.style.position = "";
+      document.documentElement.style.width = "";
     }
 
     return () => {
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.documentElement.style.position = "";
+      document.documentElement.style.width = "";
     };
   }, [showMobileFilter]);
 
@@ -241,22 +249,20 @@ function ProductsPageContent() {
               onKeyDown={handleBackdropDismiss}
               aria-label="Đóng bộ lọc"
             />
-            <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50 flex flex-col">
-              <div className="flex h-full flex-col">
-                <div className="flex items-center justify-between border-b px-6 py-5">
-                  <h2 className="text-lg font-bold">Bộ lọc sản phẩm</h2>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="rounded-full h-9 w-9"
-                    onClick={() => setShowMobileFilter(false)}
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/70">
-                  <SidebarFilter onFilterChange={handleFilterChange} />
-                </div>
+            <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between border-b px-6 py-5 shrink-0">
+                <h2 className="text-lg font-bold">Bộ lọc sản phẩm</h2>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full h-9 w-9"
+                  onClick={() => setShowMobileFilter(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="flex-1 overflow-y-auto overscroll-contain">
+                <SidebarFilter onFilterChange={handleFilterChange} />
               </div>
             </div>
           </div>
