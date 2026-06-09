@@ -192,7 +192,10 @@ function FilterSectionUI({
           expanded ? "opacity-100" : "opacity-0",
         )}
       >
-        <div ref={contentRef}>
+        <div 
+          ref={contentRef}
+          className="space-y-2 overflow-y-auto overscroll-contain max-h-[300px] sm:max-h-[400px] pr-2"
+        >
           {visibleOptions.map((o) => (
             <OptionItem
               key={o.value}
@@ -252,7 +255,7 @@ function FilterContent({
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain space-y-6 p-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/70">
+      <div className="flex-1 overflow-y-auto overscroll-contain space-y-4 p-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/70">
         {sections.map((s) => (
           <FilterSectionUI
             key={s.id}
@@ -364,7 +367,7 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
   );
 
   return (
-    <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full w-full">
+    <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full w-full max-h-[calc(100vh-140px)] sm:max-h-none">
       <FilterContent
         sections={sections}
         filters={filters}
