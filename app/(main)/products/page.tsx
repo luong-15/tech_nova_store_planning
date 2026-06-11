@@ -249,7 +249,7 @@ function ProductsPageContent() {
               onKeyDown={handleBackdropDismiss}
               aria-label="Đóng bộ lọc"
             />
-            <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50 flex flex-col overflow-hidden">
+            <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] max-h-screen bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between border-b px-6 py-5 shrink-0">
                 <h2 className="text-lg font-bold">Bộ lọc sản phẩm</h2>
                 <Button

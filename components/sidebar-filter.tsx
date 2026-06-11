@@ -194,7 +194,7 @@ function FilterSectionUI({
       >
         <div 
           ref={contentRef}
-          className="space-y-2 overflow-y-auto overscroll-contain max-h-[300px] sm:max-h-[400px] pr-2"
+          className="space-y-2 overflow-y-auto overscroll-contain max-h-[250px] md:max-h-[350px] lg:max-h-none pr-2"
         >
           {visibleOptions.map((o) => (
             <OptionItem
@@ -367,7 +367,7 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
   );
 
   return (
-    <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full w-full max-h-[calc(100vh-140px)] sm:max-h-none">
+    <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full w-full max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] lg:max-h-none">
       <FilterContent
         sections={sections}
         filters={filters}
