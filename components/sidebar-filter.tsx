@@ -367,7 +367,7 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
   );
 
   return (
-    <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full w-full max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] lg:max-h-none">
+    <div className="bg-background border rounded-2xl shadow-sm flex flex-col h-full w-full max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] lg:h-auto lg:max-h-none">
       <FilterContent
         sections={sections}
         filters={filters}

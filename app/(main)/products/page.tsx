@@ -88,7 +88,11 @@ function ProductsPageContent() {
       };
 
       const handleWindowScroll = (e: Event) => {
-        e.preventDefault();
+        const target = e.target as Document | Element;
+        // Only prevent scroll if it's on the document/body, not inside the drawer
+        if (target === document || target === document.body || target === document.documentElement) {
+          e.preventDefault();
+        }
       };
 
       document.addEventListener("keydown", handleEscape);
