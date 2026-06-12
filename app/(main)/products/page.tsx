@@ -7,6 +7,7 @@ import {
   useMemo,
   useCallback,
   useTransition,
+  useRef,
 } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -71,6 +72,45 @@ function ProductsPageContent() {
     }
     setShowMobileFilter(false);
   };
+
+  useEffect(() => {
+    if (!showMobileFilter) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [showMobileFilter]);
+
+  const scrollYRef = useRef(0);
+
+  useEffect(() => {
+    if (!showMobileFilter) return;
+
+    scrollYRef.current = window.scrollY;
+
+    const body = document.body;
+    const originalPosition = body.style.position;
+    const originalTop = body.style.top;
+    const originalWidth = body.style.width;
+    const originalOverflow = body.style.overflow;
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollYRef.current}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    return () => {
+      body.style.position = originalPosition;
+      body.style.top = originalTop;
+      body.style.width = originalWidth;
+      body.style.overflow = originalOverflow;
+
+      window.scrollTo(0, scrollYRef.current);
+    };
+  }, [showMobileFilter]);
 
   const fetchProducts = useCallback(async (params = new URLSearchParams()) => {
     setLoading(true);
@@ -185,41 +225,52 @@ function ProductsPageContent() {
     <div className="container mx-auto px-4 py-10 lg:py-16">
       <div className="flex flex-col lg:flex-row gap-10 items-start">
         {/* Desktop Sidebar Filter */}
-        <aside className="hidden w-72 shrink-0 lg:block">
-          <div className="sticky top-28 h-[calc(100vh-120px)] overflow-hidden rounded-2xl border border-border/40 bg-card/30 backdrop-blur-sm">
-            <div className="h-full overflow-y-auto p-1">
-              <SidebarFilter onFilterChange={handleFilterChange} />
-            </div>
+        <aside className="hidden w-[clamp(17rem,22vw,20rem)] shrink-0 self-start lg:block">
+          <div
+            className={cn(
+              "sticky top-24 max-h-[calc(100dvh-7rem)] overflow-auto",
+              "rounded-2xl border border-border/40 bg-card/95 shadow-sm backdrop-blur-sm",
+            )}
+          >
+            <SidebarFilter onFilterChange={handleFilterChange} />
           </div>
         </aside>
 
         {/* Mobile Filter Drawer */}
         {showMobileFilter && (
-          <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 z-50 overflow-hidden overscroll-none lg:hidden">
             <div
-              className="absolute inset-0 bg-background/80 backdrop-blur-md transition-opacity duration-300"
+              className="absolute inset-0 touch-none bg-background/80 backdrop-blur-md transition-opacity duration-300"
               role="button"
               tabIndex={0}
               onClick={handleBackdropDismiss}
               onKeyDown={handleBackdropDismiss}
               aria-label="Đóng bộ lọc"
             />
-            <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-background shadow-2xl animate-in slide-in-from-left duration-500 ease-out border-r border-border/50">
-              <div className="flex h-full flex-col">
-                <div className="flex items-center justify-between border-b px-6 py-5">
-                  <h2 className="text-lg font-bold">Bộ lọc sản phẩm</h2>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="rounded-full h-9 w-9"
-                    onClick={() => setShowMobileFilter(false)}
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  <SidebarFilter onFilterChange={handleFilterChange} />
-                </div>
+
+            <div
+              className={cn(
+                "absolute inset-y-0 left-0 flex h-dvh max-h-dvh w-[min(22rem,90vw)] flex-col overflow-hidden",
+                "border-r border-border/50 bg-background shadow-2xl",
+                "animate-in slide-in-from-left duration-500 ease-out",
+                "overscroll-contain touch-auto",
+              )}
+            >
+              <div className="flex shrink-0 items-center justify-between border-b px-5 py-4">
+                <h2 className="text-lg font-bold">Bộ lọc sản phẩm</h2>
+
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setShowMobileFilter(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-auto touch-pan-y">
+                <SidebarFilter onFilterChange={handleFilterChange} />
               </div>
             </div>
           </div>
