@@ -39,9 +39,15 @@ interface ApiFilters {
 }
 
 interface SidebarFilterProps {
-  onFilterChange?: (filters: FilterState) => void;
-  syncUrl?: boolean;
+  /** Controlled: state of selected values */
+  filters: FilterState;
+  /** called immediately (debounced inside) when user changes */
+  onFiltersChange: (filters: FilterState) => void;
+  /** optional: allow parent to reset */
+  onReset?: () => void;
 }
+
+
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 100000000;
@@ -103,6 +109,8 @@ interface FilterSectionUIProps {
   toggle: (id: string) => void;
   onChange: (value: string, checked: boolean) => void;
   onClear: () => void;
+  globalKeyword: string;
+  forceOpen: boolean;
 }
 
 function FilterSectionUI({
@@ -112,24 +120,30 @@ function FilterSectionUI({
   toggle,
   onChange,
   onClear,
+  globalKeyword,
+  forceOpen,
 }: FilterSectionUIProps) {
-  const [search, setSearch] = useState("");
+
+  const isOpen = forceOpen || expanded;
+
   const [showAll, setShowAll] = useState(false);
 
   const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues]);
 
   const filteredOptions = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
+    const keyword = globalKeyword.trim().toLowerCase();
 
-    const list = section.options.filter((option) =>
-      option.label.toLowerCase().includes(keyword),
-    );
+    const list = keyword
+      ? section.options.filter((option) =>
+          option.label.toLowerCase().includes(keyword),
+        )
+      : section.options;
 
     return list.sort(
       (a, b) =>
         Number(selectedSet.has(b.value)) - Number(selectedSet.has(a.value)),
     );
-  }, [section.options, search, selectedSet]);
+  }, [section.options, globalKeyword, selectedSet]);
 
   const visibleOptions = useMemo(
     () => (showAll ? filteredOptions : filteredOptions.slice(0, SHOW_LIMIT)),
@@ -139,27 +153,42 @@ function FilterSectionUI({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState(0);
 
+  const updateHeight = useCallback(() => {
+    if (!isOpen || !contentRef.current) return;
+    setHeight(contentRef.current.scrollHeight);
+  }, [isOpen]);
+
   useEffect(() => {
-    if (!expanded || !contentRef.current) {
+    if (!isOpen || !contentRef.current) {
       setHeight(0);
       return;
     }
 
-    const node = contentRef.current;
-    setHeight(node.scrollHeight);
+    let raf = 0;
 
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => updateHeight());
+    };
+
+    schedule();
+
+    const node = contentRef.current;
     const resizeObserver = new ResizeObserver(() => {
-      setHeight(node.scrollHeight);
+      schedule();
     });
 
     resizeObserver.observe(node);
 
-    return () => resizeObserver.disconnect();
-  }, [expanded, filteredOptions.length, showAll, search]);
+    return () => {
+      cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
+    };
+  }, [isOpen, filteredOptions.length, showAll, globalKeyword, updateHeight]);
 
   useEffect(() => {
     setShowAll(false);
-  }, [search, section.id]);
+  }, [globalKeyword, section.id]);
 
   const handleOptionChange = useCallback(
     (value: string) => (checked: boolean) => onChange(value, checked),
@@ -211,7 +240,7 @@ function FilterSectionUI({
           <ChevronDown
             className={cn(
               "h-4 w-4 text-muted-foreground transition-transform duration-300",
-              expanded && "rotate-180",
+              isOpen && "rotate-180",
             )}
           />
         </div>
@@ -221,28 +250,17 @@ function FilterSectionUI({
         className="overflow-hidden transition-[height] duration-300 ease-out"
         style={{ height }}
       >
-        <div ref={contentRef} className="pb-4">
-          {section.options.length > SHOW_LIMIT && (
-            <div className="mb-3">
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={`Tìm ${section.label.toLowerCase()}...`}
-                className={cn(
-                  "h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm outline-none",
-                  "transition-colors placeholder:text-muted-foreground/70",
-                  "focus:border-primary/50 focus:ring-2 focus:ring-primary/15",
-                )}
-              />
-            </div>
-          )}
-
+        <div
+          ref={contentRef}
+          className="pb-4 will-change-transform"
+        >
           <div
             className={cn(
               "space-y-1 pr-1",
+              "lg:overflow-visible lg:max-h-none",
               showAll
                 ? "overflow-visible [-webkit-overflow-scrolling:touch] touch-pan-y [scrollbar-gutter:stable]"
-                : "max-h-[min(42dvh,360px)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] touch-pan-y [scrollbar-gutter:stable]",
+                : "max-h-[min(42dvh,360px)] overscroll-contain [-webkit-overflow-scrolling:touch] touch-pan-y [scrollbar-gutter:stable]",
               "[&::-webkit-scrollbar]:w-1.5",
               "[&::-webkit-scrollbar-thumb]:rounded-full",
               "[&::-webkit-scrollbar-thumb]:bg-border",
@@ -284,10 +302,40 @@ function FilterSectionUI({
   );
 }
 
+/* ================= GLOBAL SEARCH ================= */
+
+type GlobalFilterSearchProps = {
+  keyword: string;
+  setKeyword: (v: string) => void;
+};
+
+function GlobalFilterSearch({ keyword, setKeyword }: GlobalFilterSearchProps) {
+  return (
+    <input
+
+      value={keyword}
+      onChange={(e) => setKeyword(e.target.value)}
+      placeholder="Tìm trong tất cả bộ lọc..."
+      className={cn(
+        "h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm outline-none",
+        "transition-colors placeholder:text-muted-foreground/70",
+        "focus:border-primary/50 focus:ring-2 focus:ring-primary/15",
+      )}
+    />
+  );
+}
+
 /* ================= MAIN ================= */
 
-export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
+export function SidebarFilter({
+  filters,
+  onFiltersChange,
+  onReset,
+}: SidebarFilterProps) {
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [keyword, setKeyword] = useState("");
 
   useEffect(() => {
     return () => {
@@ -295,22 +343,18 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
     };
   }, []);
 
+
   const trigger = useCallback(
     (newFilters: FilterState) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
 
       debounceRef.current = setTimeout(() => {
-        onFilterChange?.(newFilters);
+        onFiltersChange(newFilters);
       }, 300);
     },
-    [onFilterChange],
+    [onFiltersChange],
   );
 
-  const [filters, setFilters] = useState<FilterState>({
-    priceRange: { min: PRICE_MIN, max: PRICE_MAX },
-    brands: [],
-    categories: [],
-  });
 
   const [sections, setSections] = useState<FilterSection[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["brands"]));
@@ -341,20 +385,17 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
 
   const handleCheckbox = useCallback(
     (key: string, value: string, checked: boolean) => {
-      setFilters((prev) => {
-        const list = prev[key] as string[];
-        const nextList = checked
-          ? [...list, value]
-          : list.filter((item) => item !== value);
+      const list = (filters[key] as string[]) ?? [];
+      const nextList = checked
+        ? [...list, value]
+        : list.filter((item) => item !== value);
 
-        const next = { ...prev, [key]: nextList };
-        trigger(next);
-
-        return next;
-      });
+      const next: FilterState = { ...filters, [key]: nextList };
+      trigger(next);
     },
-    [trigger],
+    [filters, trigger],
   );
+
 
   const handleReset = useCallback(() => {
     const resetFilters: FilterState = {
@@ -363,23 +404,22 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
       categories: [],
     };
 
-    setFilters(resetFilters);
+    onReset?.();
     trigger(resetFilters);
-  }, [trigger]);
+  }, [onReset, trigger]);
 
   const handleSectionClear = useCallback(
     (sectionId: string) => {
-      setFilters((prev) => {
-        const next = { ...prev, [sectionId]: [] };
-        trigger(next);
-        return next;
-      });
+      const next = { ...filters, [sectionId]: [] } as FilterState;
+      trigger(next);
     },
-    [trigger],
+    [filters, trigger],
   );
 
+
+
   return (
-    <div className="flex h-full min-h-0 max-h-full flex-col overflow-hidden bg-card">
+    <div className="flex h-full min-h-0 max-h-full flex-col rounded-2xl overflow-hidden bg-card">
       <div className="shrink-0 border-b border-border/50 px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -389,9 +429,6 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
 
             <div className="min-w-0">
               <h2 className="truncate text-base font-bold">Bộ lọc</h2>
-              <p className="text-xs text-muted-foreground">
-                Lọc sản phẩm theo nhu cầu
-              </p>
             </div>
           </div>
 
@@ -406,7 +443,13 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
             Reset
           </Button>
         </div>
+
+        {/* Search across all filter sections */}
+        <div className="mt-3">
+          <GlobalFilterSearch keyword={keyword} setKeyword={setKeyword} />
+        </div>
       </div>
+
 
       <div
         className={cn(
@@ -427,9 +470,17 @@ export function SidebarFilter({ onFilterChange }: SidebarFilterProps) {
             toggle={toggle}
             onChange={(value, checked) => handleCheckbox(s.id, value, checked)}
             onClear={() => handleSectionClear(s.id)}
+            globalKeyword={keyword}
+            forceOpen={
+              keyword.trim().length > 0 &&
+              s.options.some((o) =>
+                o.label.toLowerCase().includes(keyword.trim().toLowerCase()),
+              )
+            }
           />
         ))}
       </div>
     </div>
   );
 }
+
