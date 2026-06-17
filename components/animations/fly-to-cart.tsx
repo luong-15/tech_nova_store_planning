@@ -10,6 +10,17 @@ interface FlyingItem {
   endRect: DOMRect;
 }
 
+let animationIdSeq = 0;
+function createClientAnimationId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  animationIdSeq = (animationIdSeq + 1) % Number.MAX_SAFE_INTEGER;
+  return `flyto-cart-${Date.now()}-${animationIdSeq}`;
+}
+
+
 export function useFlyToCart() {
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([]);
 
@@ -30,7 +41,7 @@ export function useFlyToCart() {
       const startRect = startElement.getBoundingClientRect();
       const endRect = cartBtn.getBoundingClientRect();
 
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const id = createClientAnimationId();
 
       setFlyingItems((prev) => [
         ...prev,
@@ -87,10 +98,6 @@ export function useFlyToCart() {
   return { flyToCart, FlyingItemsLayer };
 }
 
-/* ------------------------------------------------------------------ */
-/*  Wrapper component — use this when you don't want to manage state  */
-/* ------------------------------------------------------------------ */
-
 interface FlyToCartProps {
   children: ReactNode;
   imageUrl: string;
@@ -129,25 +136,18 @@ export function FlyToCart({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Global overlay component — place once at app root                 */
-/* ------------------------------------------------------------------ */
-
 export function FlyToCartOverlay() {
   const { FlyingItemsLayer } = useFlyToCart();
   return <FlyingItemsLayer />;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Standalone trigger function — usable outside React hooks          */
-/* ------------------------------------------------------------------ */
 
 function createFlyingItem(
   imageSrc: string,
   startRect: DOMRect,
   endRect: DOMRect,
 ) {
-  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const id = createClientAnimationId();
+
   const el = document.createElement("img");
   el.src = imageSrc;
   el.id = id;
