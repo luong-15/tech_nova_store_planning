@@ -3,7 +3,8 @@ import {
   createReadOnlyServerClient,
 } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product-card";
-import { SidebarFilter } from "@/components/sidebar-filter";
+import { CategorySidebarFilterClient } from "@/components/category-sidebar-filter-client";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, Filter, Grid3X3, List } from "lucide-react";
@@ -154,7 +155,7 @@ export default async function CategoryPage({
       <div className="grid gap-8 lg:grid-cols-4">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <SidebarFilter syncUrl />
+          <CategorySidebarFilterClient categorySlug={slug} />
         </div>
 
         {/* Products Grid */}
