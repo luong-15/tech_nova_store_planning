@@ -156,9 +156,9 @@ export function ChatAssistant({ products }: ChatAssistantProps) {
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
             className="fixed bottom-0 right-0 z-100 w-full sm:bottom-6 sm:right-6 sm:w-105 h-dvh sm:h-162.5"
           >
-            <Card className="w-full h-full shadow-2xl flex flex-col border-border/50 bg-background/95 backdrop-blur-xl sm:rounded-3xl overflow-hidden">
+            <Card className="w-full h-full shadow-2xl flex flex-col gap-0 border-border/50 bg-background/95 backdrop-blur-xl sm:rounded-3xl overflow-hidden">
               {/* Header */}
-              <CardHeader className="bg-primary/5 border-b p-5 shrink-0">
+              <CardHeader className="bg-primary/5 border-b p-5 shrink-0 gap-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20">

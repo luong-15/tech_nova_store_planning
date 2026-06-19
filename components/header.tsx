@@ -100,6 +100,9 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const cartMerge = useCartStore((s) => s.mergeLocalCartToServer);
+  const syncCart = useCartStore((s) => s.syncCart);
+  const lastSyncedRef = React.useRef<string | null>(null);
 
   useEffect(() => {
     const supabase = createBrowserClient();
@@ -127,6 +130,31 @@ export function Header() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // When user just logged in: merge local cart to DB, then sync from DB.
+  useEffect(() => {
+    const userId = user?.id ?? null;
+    if (!userId) {
+      lastSyncedRef.current = null;
+      return;
+    }
+    // prevent repeat on re-render
+    if (lastSyncedRef.current === userId) return;
+
+    // merge & then sync
+    (async () => {
+      try {
+        // ensure merge runs before reading DB cart
+        await cartMerge();
+        await syncCart();
+      } catch (e) {
+        console.warn("Cart merge/sync after login failed", e);
+      } finally {
+        lastSyncedRef.current = userId;
+      }
+    })();
+  }, [user, cartMerge, syncCart]);
+
 
   const handleLogout = async () => {
     const supabase = createBrowserClient();

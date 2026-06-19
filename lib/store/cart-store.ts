@@ -7,6 +7,8 @@ interface CartState {
   isOpen: boolean;
   isSyncing: boolean;
   lastSynced: number;
+  // internal only: prevent merge loop
+  _lastMergedUserId?: string | null;
 
   // Actions
   addToCart: (product: Product) => Promise<void>;
@@ -20,6 +22,7 @@ interface CartState {
   // Server sync
   syncCart: () => Promise<void>;
   hydrateFromServer: () => Promise<void>;
+  mergeLocalCartToServer: () => Promise<void>;
 
   // Computed
   getTotalItems: () => number;
@@ -34,6 +37,10 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       isSyncing: false,
       lastSynced: 0,
+      // user merge guard to avoid merging local cart multiple times per login
+      _lastMergedUserId: null,
+
+
 
       addToCart: async (product: Product) => {
         set({ isSyncing: true });
@@ -125,6 +132,8 @@ export const useCartStore = create<CartState>()(
           const res = await fetch("/api/cart");
           if (res.ok) {
             const { data } = await res.json();
+            // reset merge guard to allow re-merge only after a different user login; for now we keep it as-is.
+
             const cartItems = data.map(
               (row: any) =>
                 ({
@@ -150,9 +159,41 @@ export const useCartStore = create<CartState>()(
         }
       },
 
+      mergeLocalCartToServer: async () => {
+        const userMergedGuard = get()._lastMergedUserId;
+        if (userMergedGuard) return;
+
+
+        // Merge by upserting each local item (API will create/update cart_items for this user)
+        const items = get().cartItems;
+        if (items.length === 0) {
+          // Still update guard to prevent repeated calls
+          set({ _lastMergedUserId: "empty" });
+          return;
+        }
+
+        try {
+          // Sequential to keep behavior predictable
+          for (const item of items) {
+            await fetch("/api/cart", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ product_id: item.product.id, quantity: item.quantity }),
+            });
+          }
+        } catch (e) {
+          console.warn("mergeLocalCartToServer failed", e);
+        }
+
+        // After merge attempt, we will set guard to avoid infinite merge attempts.
+        set({ _lastMergedUserId: "merged" });
+      },
+
+
       hydrateFromServer: async () => {
         await get().syncCart();
       },
+
 
       getTotalItems: () =>
         get().cartItems.reduce((sum, item) => sum + item.quantity, 0),
