@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
-import crypto from "crypto";
+import { PayOS } from "@payos/node";
 
 /**
  * PayOS Webhook Handler
@@ -8,21 +8,42 @@ import crypto from "crypto";
  * Webhook URL to register in PayOS dashboard: https://your-domain.com/api/payos/webhook
  */
 
+// Initialize PayOS SDK
+function getPayOS(): PayOS {
+  const clientId = process.env.PAYOS_CLIENT_ID;
+  const apiKey = process.env.PAYOS_API_KEY;
+  const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
+
+  if (!clientId || !apiKey || !checksumKey) {
+    throw new Error(
+      "Missing PayOS environment variables: PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY"
+    );
+  }
+
+  return new PayOS(clientId, apiKey, checksumKey);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
     console.log("[v0] PayOS Webhook received - Full payload:", JSON.stringify(body, null, 2));
 
-    // Verify PayOS webhook signature
-    const isValid = verifyPayOSSignature(body);
-
-    if (!isValid) {
-      console.error("[v0] Invalid PayOS webhook signature - rejecting request");
+    // Verify PayOS webhook signature using PayOS SDK
+    try {
+      const payos = getPayOS();
+      const verifyData = await payos.verifyIPN(body);
+      
+      if (!verifyData) {
+        console.error("[v0] Invalid PayOS webhook signature - rejecting request");
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+      
+      console.log("[v0] PayOS Webhook signature verified successfully");
+    } catch (verifyError) {
+      console.error("[v0] PayOS signature verification error:", verifyError);
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
-
-    console.log("[v0] PayOS Webhook signature verified successfully");
 
     // Destructure webhook data
     const {
@@ -91,73 +112,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Verify PayOS webhook signature using HMAC-SHA256
- * @param data - The webhook payload
- * @returns boolean - Whether signature is valid
- */
-function verifyPayOSSignature(data: any): boolean {
-  const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
 
-  if (!checksumKey) {
-    console.error("[v0] PAYOS_CHECKSUM_KEY not configured");
-    return false;
-  }
-
-  // Extract signature and data
-  const { signature, code, desc, data: webhookData } = data;
-
-  if (!signature) {
-    console.error("[v0] No signature provided in webhook");
-    return false;
-  }
-
-  if (!webhookData) {
-    console.error("[v0] No data object in webhook payload");
-    return false;
-  }
-
-  const {
-    orderCode,
-    amount,
-    amountPaid,
-    amountRemaining,
-    status,
-    transactionDateTime,
-  } = webhookData;
-
-  // PayOS signature verification:
-  // Signature = HMAC-SHA256(data string, checksum key)
-  // Data string must have fields in ALPHABETICAL order (important!)
-  // Format: "amount=VALUE&amountPaid=VALUE&amountRemaining=VALUE&code=VALUE&desc=VALUE&orderCode=VALUE&status=VALUE&transactionDateTime=VALUE"
-
-  // Build data string with fields in alphabetical order
-  const dataString = `amount=${amount}&amountPaid=${amountPaid}&amountRemaining=${amountRemaining}&code=${code ?? ""}&desc=${desc ?? ""}&orderCode=${orderCode}&status=${status}&transactionDateTime=${transactionDateTime}`;
-
-  console.log("[v0] PayOS Webhook - Payload structure:");
-  console.log("[v0]   signature (from payload):", signature.substring(0, 16) + "...");
-  console.log("[v0]   code:", code);
-  console.log("[v0]   desc:", desc);
-  console.log("[v0]   webhookData keys:", Object.keys(webhookData));
-  console.log("[v0]   data string:", dataString);
-
-  const computedSignature = crypto
-    .createHmac("sha256", checksumKey)
-    .update(dataString)
-    .digest("hex");
-
-  console.log("[v0] PayOS Webhook - Computed signature:", computedSignature.substring(0, 16) + "...");
-  console.log("[v0] PayOS Webhook - Signature match:", signature === computedSignature);
-
-  if (signature !== computedSignature) {
-    console.error("[v0] Signature mismatch!");
-    console.error("[v0]   Expected: " + signature);
-    console.error("[v0]   Got:      " + computedSignature);
-  }
-
-  return signature === computedSignature;
-
-}
 
 /**
  * GET endpoint to verify webhook is active

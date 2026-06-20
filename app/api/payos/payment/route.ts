@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { PayOS } from "@payos/node";
 
 /**
  * PayOS Payment Initiation Endpoint
@@ -129,7 +130,6 @@ interface PayOSPaymentData {
 
 /**
  * Generate PayOS QR Code
- * TODO: Implement actual PayOS SDK integration
  */
 async function generatePayOSQRCode(params: {
   clientId: string;
@@ -144,19 +144,35 @@ async function generatePayOSQRCode(params: {
   buyerName: string;
   buyerPhone: string;
 }): Promise<PayOSPaymentData> {
-  // TODO: Replace with actual PayOS SDK:
-  // import PayOS from "@payos/checkout-sdk";
-  // const payos = new PayOS(params.clientId, params.apiKey, params.checksumKey);
-  // const paymentLink = await payos.createPaymentLink({...});
-  // return {
-  //   qr_code: paymentLink.qrCode,
-  //   instructions: "Quét QR bằng ứng dụng ngân hàng của bạn"
-  // };
+  try {
+    const payos = new PayOS(params.clientId, params.apiKey, params.checksumKey);
 
-  // Placeholder for testing
-  throw new Error(
-    "PayOS SDK not configured. Install @payos/checkout-sdk and implement integration.",
-  );
+    // Create payment link
+    const paymentLink = await payos.createPaymentLink({
+      orderCode: params.orderCode,
+      amount: Math.round(parseFloat(String(params.amount))), // Ensure amount is integer in VND
+      description: params.description,
+      returnUrl: params.returnUrl,
+      cancelUrl: params.cancelUrl,
+      buyerEmail: params.buyerEmail,
+      buyerName: params.buyerName,
+      buyerPhone: params.buyerPhone,
+    });
+
+    console.log("[v0] PayOS payment link created:", {
+      orderCode: params.orderCode,
+      amount: params.amount,
+      checkoutUrl: paymentLink.checkoutUrl?.substring(0, 50) + "...",
+    });
+
+    return {
+      qr_code: paymentLink.qrCode || paymentLink.checkoutUrl || "",
+      instructions: "Quét mã QR hoặc nhấp vào liên kết thanh toán để hoàn tất giao dịch",
+    };
+  } catch (error) {
+    console.error("[v0] PayOS SDK error:", error);
+    throw error;
+  }
 }
 
 /**
@@ -178,8 +194,9 @@ export async function GET(request: NextRequest) {
   );
 
   return NextResponse.json({
-    message: "PayOS payment endpoint is active",
+    message: "Điểm cuối thanh toán PayOS đang hoạt động",
     configured: hasEnvVars,
-    note: "Implement PayOS SDK integration for full functionality",
+    status: hasEnvVars ? "ready" : "incomplete",
+    timestamp: new Date().toISOString(),
   });
 }
