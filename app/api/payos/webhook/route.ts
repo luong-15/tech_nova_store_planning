@@ -12,6 +12,18 @@ const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY;
 // 2. Set Webhook URL to: https://your-domain.com/api/payos/webhook
 // 3. Make sure your domain is publicly accessible
 // 4. Test webhook from PayOS dashboard
+//
+// TROUBLESHOOTING 401 ERROR:
+// If you get "Request failed with status code 401", the signature verification failed.
+// This usually means:
+// - PAYOS_CHECKSUM_KEY in .env.local doesn't match your PayOS Dashboard key
+// - Check PayOS Dashboard > Settings > API Key/Checksum Key
+// - Make sure you copied the EXACT checksum key (case-sensitive)
+//
+// Debug tips:
+// - Check server logs for "[PayOS Webhook]" messages
+// - Look for signature mismatch details in logs
+// - Verify .env.local has correct PAYOS_CHECKSUM_KEY value
 
 function stableStringify(obj: any): string {
   if (obj === null || typeof obj !== "object") return JSON.stringify(obj);
@@ -31,7 +43,7 @@ async function isSignatureValid(
     return false;
   }
   if (!signature) {
-    console.error("[PayOS Webhook] No signature provided");
+    console.error("[PayOS Webhook] No signature provided in request body");
     return false;
   }
 
@@ -43,6 +55,12 @@ async function isSignatureValid(
   const message = stableStringify(payload);
 
   try {
+    console.log("[PayOS Webhook] Signature calculation details:", {
+      checksumKeyLength: PAYOS_CHECKSUM_KEY.length,
+      messageToHash: message.substring(0, 100) + "...",
+      receivedSignature: signature.substring(0, 20) + "...",
+    });
+
     // Use Node.js crypto for server-side signing
     const hmac = crypto.createHmac("sha256", PAYOS_CHECKSUM_KEY);
     hmac.update(message);
@@ -54,9 +72,10 @@ async function isSignatureValid(
     );
 
     if (!isValid) {
-      console.log(
-        `[PayOS Webhook] Expected: ${sigHex}, Received: ${signature}`,
-      );
+      console.log("[PayOS Webhook] Signature mismatch:");
+      console.log(`  Calculated: ${sigHex}`);
+      console.log(`  Received:   ${signature}`);
+      console.log(`  Message (first 200 chars): ${message.substring(0, 200)}`);
     }
 
     return isValid;
@@ -70,20 +89,40 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    console.log(`[PayOS Webhook] Received webhook event:`, {
+    console.log(`[PayOS Webhook] ============ WEBHOOK RECEIVED ============`);
+    console.log(`[PayOS Webhook] Payload overview:`, {
       code: body?.code,
       success: body?.success,
       orderCode: body?.data?.orderCode,
       amount: body?.data?.amount,
+      hasSignature: !!body?.signature,
     });
+    console.log(
+      `[PayOS Webhook] Full request body:`,
+      JSON.stringify(body, null, 2),
+    );
 
     const signature = body?.signature;
 
     // Verify signature
     if (!(await isSignatureValid(body, signature))) {
-      console.warn("[PayOS Webhook] ✗ Invalid signature - rejecting webhook");
+      console.error("[PayOS Webhook] ✗ WEBHOOK REJECTED - Invalid signature");
+      console.error("[PayOS Webhook] Possible causes:");
+      console.error(
+        "  1. PAYOS_CHECKSUM_KEY in .env.local doesn't match PayOS Dashboard",
+      );
+      console.error(
+        "  2. Request body was modified before reaching this endpoint",
+      );
+      console.error(
+        "  3. PayOS signature calculation method differs from expected",
+      );
       return NextResponse.json(
-        { success: false, message: "Invalid signature" },
+        {
+          success: false,
+          message: "Invalid signature",
+          hint: "Check PAYOS_CHECKSUM_KEY in .env.local matches PayOS Dashboard settings",
+        },
         { status: 401 },
       );
     }
