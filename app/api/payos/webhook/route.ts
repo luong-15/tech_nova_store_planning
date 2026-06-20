@@ -12,13 +12,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    console.log("[v0] PayOS Webhook received - Full payload:", JSON.stringify(body, null, 2));
+
     // Verify PayOS webhook signature
     const isValid = verifyPayOSSignature(body);
 
     if (!isValid) {
-      console.error("Invalid PayOS webhook signature");
+      console.error("[v0] Invalid PayOS webhook signature - rejecting request");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
+
+    console.log("[v0] PayOS Webhook signature verified successfully");
 
     // Destructure webhook data
     const {
@@ -96,32 +100,60 @@ function verifyPayOSSignature(data: any): boolean {
   const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
 
   if (!checksumKey) {
-    console.error("PAYOS_CHECKSUM_KEY not configured");
+    console.error("[v0] PAYOS_CHECKSUM_KEY not configured");
     return false;
   }
 
-  // PayOS signature verification:
-  // Signature = HMAC-SHA256(data string, checksum key)
-  // Data string format: "orderCode=VALUE&amount=VALUE&amountPaid=VALUE&amountRemaining=VALUE&status=VALUE&transactionDateTime=VALUE"
+  // Extract signature and data
+  const { signature, code, desc, data: webhookData } = data;
+
+  if (!signature) {
+    console.error("[v0] No signature provided in webhook");
+    return false;
+  }
+
+  if (!webhookData) {
+    console.error("[v0] No data object in webhook payload");
+    return false;
+  }
 
   const {
-    data: {
-      orderCode,
-      amount,
-      amountPaid,
-      amountRemaining,
-      status,
-      transactionDateTime,
-    },
-    signature,
-  } = data;
+    orderCode,
+    amount,
+    amountPaid,
+    amountRemaining,
+    status,
+    transactionDateTime,
+  } = webhookData;
 
-  const dataString = `amount=${amount}&amountPaid=${amountPaid}&amountRemaining=${amountRemaining}&code=${data.code ?? ""}&desc=${data.desc ?? ""}&orderCode=${orderCode}&status=${status}&transactionDateTime=${transactionDateTime}`;
+  // PayOS signature verification:
+  // Signature = HMAC-SHA256(data string, checksum key)
+  // Data string must have fields in ALPHABETICAL order (important!)
+  // Format: "amount=VALUE&amountPaid=VALUE&amountRemaining=VALUE&code=VALUE&desc=VALUE&orderCode=VALUE&status=VALUE&transactionDateTime=VALUE"
+
+  // Build data string with fields in alphabetical order
+  const dataString = `amount=${amount}&amountPaid=${amountPaid}&amountRemaining=${amountRemaining}&code=${code ?? ""}&desc=${desc ?? ""}&orderCode=${orderCode}&status=${status}&transactionDateTime=${transactionDateTime}`;
+
+  console.log("[v0] PayOS Webhook - Payload structure:");
+  console.log("[v0]   signature (from payload):", signature.substring(0, 16) + "...");
+  console.log("[v0]   code:", code);
+  console.log("[v0]   desc:", desc);
+  console.log("[v0]   webhookData keys:", Object.keys(webhookData));
+  console.log("[v0]   data string:", dataString);
 
   const computedSignature = crypto
     .createHmac("sha256", checksumKey)
     .update(dataString)
     .digest("hex");
+
+  console.log("[v0] PayOS Webhook - Computed signature:", computedSignature.substring(0, 16) + "...");
+  console.log("[v0] PayOS Webhook - Signature match:", signature === computedSignature);
+
+  if (signature !== computedSignature) {
+    console.error("[v0] Signature mismatch!");
+    console.error("[v0]   Expected: " + signature);
+    console.error("[v0]   Got:      " + computedSignature);
+  }
 
   return signature === computedSignature;
 
@@ -133,6 +165,18 @@ function verifyPayOSSignature(data: any): boolean {
  */
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    
+    // Check if this is a test/debug request
+    if (searchParams.has("test")) {
+      return NextResponse.json({
+        status: "webhook active",
+        endpoint: "/api/payos/webhook",
+        checksum_configured: !!process.env.PAYOS_CHECKSUM_KEY,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     // Return 200 OK for webhook verification
     // PayOS sends GET request to validate webhook URL
     return new NextResponse("OK", {
@@ -142,7 +186,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("PayOS webhook GET error:", error);
+    console.error("[v0] PayOS webhook GET error:", error);
     return new NextResponse("Error", { status: 500 });
   }
 }
