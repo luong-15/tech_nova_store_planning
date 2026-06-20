@@ -14,7 +14,11 @@ import { createServerClient } from "@/lib/supabase/server";
  * Response:
  * {
  *   success: boolean,
- *   payment_url: string (redirect to this URL)
+ *   qr_code: string (base64 or URL),
+ *   order_id: string,
+ *   order_number: string,
+ *   amount: number,
+ *   instructions: string
  * }
  */
 
@@ -62,20 +66,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize PayOS payment
-    const paymentUrl = generatePayOSPaymentUrl({
-      clientId: process.env.PAYOS_CLIENT_ID!,
-      apiKey: process.env.PAYOS_API_KEY!,
-      checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
-      orderCode: order_id,
-      amount: order.total,
-      description: `Order #${order.order_number}`,
-      returnUrl: return_url || `${getBaseUrl(request)}/orders/${order_id}`,
-      cancelUrl: `${getBaseUrl(request)}/orders/${order_id}`,
-      buyerEmail: user.email || "",
-      buyerName: order.shipping_name || "Customer",
-      buyerPhone: order.shipping_phone || "",
-    });
+    // Initialize PayOS payment and get QR code
+    let paymentData: PayOSPaymentData;
+    try {
+      paymentData = await generatePayOSQRCode({
+        clientId: process.env.PAYOS_CLIENT_ID!,
+        apiKey: process.env.PAYOS_API_KEY!,
+        checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
+        orderCode: order_id,
+        amount: order.total,
+        description: `Order #${order.order_number}`,
+        returnUrl: return_url || `${getBaseUrl(request)}/orders/${order_id}`,
+        cancelUrl: `${getBaseUrl(request)}/orders/${order_id}`,
+        buyerEmail: user.email || "",
+        buyerName: order.shipping_name || "Customer",
+        buyerPhone: order.shipping_phone || "",
+      });
+    } catch (sdkError) {
+      console.error("PayOS SDK error:", sdkError);
+      return NextResponse.json(
+        { 
+          error: "PayOS SDK not configured",
+          details: (sdkError as Error).message 
+        },
+        { status: 500 },
+      );
+    }
 
     // Update order status to pending payment
     await supabase
@@ -88,8 +104,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      payment_url: paymentUrl,
+      qr_code: paymentData.qr_code,
       order_id,
+      order_number: order.order_number,
+      amount: order.total,
+      instructions: paymentData.instructions,
     });
   } catch (error) {
     console.error("PayOS payment error:", error);
@@ -101,11 +120,18 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Generate PayOS payment URL
- * For actual implementation, you need PayOS SDK or API call
- * This is a template - adjust based on PayOS API documentation
+ * PayOS Payment Data interface
  */
-function generatePayOSPaymentUrl(params: {
+interface PayOSPaymentData {
+  qr_code: string;
+  instructions: string;
+}
+
+/**
+ * Generate PayOS QR Code
+ * TODO: Implement actual PayOS SDK integration
+ */
+async function generatePayOSQRCode(params: {
   clientId: string;
   apiKey: string;
   checksumKey: string;
@@ -117,21 +143,19 @@ function generatePayOSPaymentUrl(params: {
   buyerEmail: string;
   buyerName: string;
   buyerPhone: string;
-}): string {
-  // TODO: Implement actual PayOS SDK integration
-  // This is placeholder - refer to PayOS documentation
-
-  // Option 1: Use PayOS SDK (recommended)
+}): Promise<PayOSPaymentData> {
+  // TODO: Replace with actual PayOS SDK:
+  // import PayOS from "@payos/checkout-sdk";
   // const payos = new PayOS(params.clientId, params.apiKey, params.checksumKey);
-  // const payment = await payos.createPaymentLink({...});
-  // return payment.checkoutUrl;
+  // const paymentLink = await payos.createPaymentLink({...});
+  // return {
+  //   qr_code: paymentLink.qrCode,
+  //   instructions: "Quét QR bằng ứng dụng ngân hàng của bạn"
+  // };
 
-  // Option 2: Direct API call
-  // POST to PayOS API endpoint with signature verification
-
-  // For now, return error
+  // Placeholder for testing
   throw new Error(
-    "PayOS SDK not configured. Implement based on PayOS API documentation",
+    "PayOS SDK not configured. Install @payos/checkout-sdk and implement integration.",
   );
 }
 

@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -52,7 +51,7 @@ const checkoutSchema = z.object({
   shipping_postal_code: z
     .string()
     .min(5, "Mã bưu điện phải có ít nhất 5 ký tự"),
-  payment_method: z.enum(["cod", "online"], {
+  payment_method: z.enum(["cod", "payos"], {
     required_error: "Vui lòng chọn phương thức thanh toán",
   }),
   notes: z.string().optional(),
@@ -248,9 +247,9 @@ export default function CheckoutPage() {
       }
 
       // Online payment via PayOS
-      console.log("Creating PayOS transaction for order:", result.order_id);
+      console.log("Creating PayOS QR code for order:", result.order_id);
 
-      const payosRes = await fetch("/api/payos/create-transaction", {
+      const payosRes = await fetch("/api/payos/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order_id: result.order_id }),
@@ -264,18 +263,17 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Reuse qrData state (to avoid refactor UI):
-      // - qr_url -> if PayOS returns a QR image url you can map it here
-      // - paymentLink -> otherwise we open link manually
+      // Store order data and show QR code
       setQrData({
         order_id: result.order_id,
-        amount: total,
-        order_number: result.order_number,
-        payment_link: payosResult?.paymentLink,
-        instructions: "Mở link thanh toán PayOS để hoàn tất.",
+        amount: payosResult.amount,
+        order_number: payosResult.order_number,
+        qr_url: payosResult.qr_code,
+        instructions: payosResult.instructions || "Quét mã QR bằng ứng dụng ngân hàng của bạn",
+        is_payos: true,
       });
 
-      notifySuccess("Đã sẵn sàng thanh toán trực tuyến (PayOS). ");
+      notifySuccess("Đã tạo mã QR thanh toán PayOS. Vui lòng quét mã QR bên dưới.");
       startPolling();
     } catch (error) {
       console.error("Checkout error:", error);
@@ -465,17 +463,17 @@ export default function CheckoutPage() {
                               </div>
                             </div>
                             <div className="flex items-center space-x-3 rounded-lg border p-4">
-                              <RadioGroupItem value="online" id="online" />
+                              <RadioGroupItem value="payos" id="payos" />
                               <div className="flex-1">
                                 <label
-                                  htmlFor="online"
+                                  htmlFor="payos"
                                   className="flex items-center gap-2 font-medium cursor-pointer"
                                 >
                                   <Smartphone className="h-4 w-4" />
-                                  Thanh toán trực tuyến
+                                  Thanh toán trực tuyến (PayOS)
                                 </label>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                  Quét QR bằng app ngân hàng hoặc ví điện tử để thanh toán
+                                  Chuyển khoản ngân hàng qua PayOS
                                 </p>
                               </div>
                             </div>
@@ -513,8 +511,117 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              {/* VietQR Payment */}
-              {qrData && (
+              {/* PayOS Payment with QR Code */}
+              {qrData && qrData.is_payos && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Smartphone className="h-5 w-5" />
+                      Thanh toán PayOS
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-4">
+                    <div id="qr-section" className="text-center">
+                      <div className="mx-auto mb-4 w-fit rounded-xl border-2 border-dashed border-muted p-2">
+                        {qrData.qr_url ? (
+                          <img
+                            src={qrData.qr_url}
+                            alt="QR Code PayOS"
+                            style={{
+                              width: "100%",
+                              height: "auto",
+                              maxWidth: "280px",
+                            }}
+                            className="mx-auto rounded-xl border-4 border-primary shadow-xl"
+                            loading="lazy"
+                            onLoad={() => console.log("QR loaded successfully")}
+                            onError={(e) => {
+                              console.error("QR image load failed:", qrData.qr_url);
+                              (e.target as any).style.display = "none";
+                              notifyError("Không tải được QR. Kiểm tra mạng!");
+                            }}
+                          />
+                        ) : (
+                          <div className="p-12 bg-muted rounded-lg">
+                            <p className="text-muted-foreground">Đang tạo mã QR...</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm space-y-2">
+                        <p>
+                          <strong>Đơn hàng:</strong> {qrData.order_number}
+                        </p>
+                        <p>
+                          <strong>Số tiền:</strong>{" "}
+                          {formatCurrency(qrData.amount)}
+                        </p>
+                      </div>
+                      <p className="mt-4 text-sm text-muted-foreground text-center">
+                        {qrData.instructions}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        className="flex-1"
+                        onClick={async () => {
+                          if (!qrData?.order_id) {
+                            notifyError("Không có ID đơn hàng để kiểm tra");
+                            return;
+                          }
+                          if (isPolling) return;
+                          setIsPolling(true);
+                          try {
+                            console.log(
+                              "Manual checking order:",
+                              qrData.order_id,
+                            );
+                            const statusRes = await fetch(
+                              `/api/orders/${qrData.order_id}/status`,
+                            );
+                            const statusData = await statusRes.json();
+                            console.log("Manual check:", statusData);
+                            if (statusData.isPaid) {
+                              clearCart();
+                              notifySuccess("Thanh toán thành công!");
+                              router.push(
+                                `/order-success?order_id=${qrData.order_id}`,
+                              );
+                            } else {
+                              notifyInfo(
+                                `Chưa thanh toán (status: ${statusData.payment_status})`,
+                              );
+                            }
+                          } catch (error) {
+                            console.error("Manual check error:", error);
+                            notifyError("Lỗi kiểm tra");
+                          } finally {
+                            setIsPolling(false);
+                          }
+                        }}
+                        disabled={isPolling}
+                      >
+                        {isPolling ? "Đang kiểm tra..." : "Kiểm tra thanh toán"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          stopPolling();
+                          setQrData(null);
+                          notifySuccess("Đã hủy thanh toán");
+                        }}
+                      >
+                        Hủy thanh toán
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* VietQR/Legacy Payment */}
+              {qrData && !qrData.is_payos && (
                 <Card>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-2">
