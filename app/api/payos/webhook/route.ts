@@ -116,17 +116,15 @@ function verifyPayOSSignature(data: any): boolean {
     signature,
   } = data;
 
-  // Build the data string in the correct order
-  const dataString = `amount=${amount}&amountPaid=${amountPaid}&amountRemaining=${amountRemaining}&code=${data.code}&desc=${data.desc}&orderCode=${orderCode}&status=${status}&transactionDateTime=${transactionDateTime}`;
+  const dataString = `amount=${amount}&amountPaid=${amountPaid}&amountRemaining=${amountRemaining}&code=${data.code ?? ""}&desc=${data.desc ?? ""}&orderCode=${orderCode}&status=${status}&transactionDateTime=${transactionDateTime}`;
 
-  // Create HMAC-SHA256 hash
   const computedSignature = crypto
     .createHmac("sha256", checksumKey)
     .update(dataString)
     .digest("hex");
 
-  // Compare signatures
   return signature === computedSignature;
+
 }
 
 /**
