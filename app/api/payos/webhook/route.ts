@@ -20,7 +20,11 @@ function getPayOS(): PayOS {
     );
   }
 
-  return new PayOS(clientId, apiKey, checksumKey);
+  return new PayOS({
+    clientId,
+    apiKey,
+    checksumKey,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -30,11 +34,12 @@ export async function POST(request: NextRequest) {
     console.log("[v0] PayOS Webhook received - Full payload:", JSON.stringify(body, null, 2));
 
     // Verify PayOS webhook signature using PayOS SDK
+    let webhookData;
     try {
       const payos = getPayOS();
-      const verifyData = await payos.verifyIPN(body);
+      webhookData = await payos.webhooks.verify(body);
       
-      if (!verifyData) {
+      if (!webhookData) {
         console.error("[v0] Invalid PayOS webhook signature - rejecting request");
         return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
       }
@@ -45,21 +50,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    // Destructure webhook data
+    // Extract verified webhook data
     const {
-      code,
-      desc,
-      data: {
-        orderCode,
-        amount,
-        amountPaid,
-        amountRemaining,
-        status,
-        transactionDateTime,
-      },
-    } = body;
+      orderCode,
+      amount,
+      amountPaid,
+      amountRemaining,
+      status,
+      transactionDateTime,
+    } = webhookData;
 
-    console.log("PayOS Webhook received:", {
+    console.log("[v0] PayOS Webhook received:", {
       orderCode,
       status,
       amount,

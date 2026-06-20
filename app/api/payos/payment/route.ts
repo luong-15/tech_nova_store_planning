@@ -145,10 +145,14 @@ async function generatePayOSQRCode(params: {
   buyerPhone: string;
 }): Promise<PayOSPaymentData> {
   try {
-    const payos = new PayOS(params.clientId, params.apiKey, params.checksumKey);
+    const payos = new PayOS({
+      clientId: params.clientId,
+      apiKey: params.apiKey,
+      checksumKey: params.checksumKey,
+    });
 
     // Create payment link
-    const paymentLink = await payos.createPaymentLink({
+    const paymentLink = await payos.paymentRequests.create({
       orderCode: params.orderCode,
       amount: Math.round(parseFloat(String(params.amount))), // Ensure amount is integer in VND
       description: params.description,
