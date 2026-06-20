@@ -129,10 +129,20 @@ function verifyPayOSSignature(data: any): boolean {
 
 /**
  * GET endpoint to verify webhook is active
+ * PayOS validator expects a 200 OK response
  */
 export async function GET(request: NextRequest) {
-  return NextResponse.json({
-    message: "PayOS Webhook endpoint is active",
-    endpoint: "/api/payos/webhook",
-  });
+  try {
+    // Return 200 OK for webhook verification
+    // PayOS sends GET request to validate webhook URL
+    return new NextResponse("OK", {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  } catch (error) {
+    console.error("PayOS webhook GET error:", error);
+    return new NextResponse("Error", { status: 500 });
+  }
 }
