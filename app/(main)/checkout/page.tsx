@@ -247,27 +247,35 @@ export default function CheckoutPage() {
         return;
       }
 
-      // VietQR for online payment
-      console.log("Creating QR for order:", result.order_id);
-      const qrRes = await fetch("/api/vietqr/create", {
+      // Online payment via PayOS
+      console.log("Creating PayOS transaction for order:", result.order_id);
+
+      const payosRes = await fetch("/api/payos/create-transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_id: result.order_id,
-          total,
-        }),
+        body: JSON.stringify({ order_id: result.order_id }),
       });
 
-      const qrResult = await qrRes.json();
-      console.log("QR response:", qrResult);
+      const payosResult = await payosRes.json();
+      console.log("PayOS response:", payosResult);
 
-      if (!qrRes.ok || !qrResult.success) {
-        notifyError(qrResult.error || "Lỗi tạo QR code");
+      if (!payosRes.ok || !payosResult.success) {
+        notifyError(payosResult.error || "Lỗi tạo thanh toán PayOS");
         return;
       }
 
-      setQrData(qrResult);
-      notifySuccess("QR code sẵn sàng! Quét để thanh toán.");
+      // Reuse qrData state (to avoid refactor UI):
+      // - qr_url -> if PayOS returns a QR image url you can map it here
+      // - paymentLink -> otherwise we open link manually
+      setQrData({
+        order_id: result.order_id,
+        amount: total,
+        order_number: result.order_number,
+        payment_link: payosResult?.paymentLink,
+        instructions: "Mở link thanh toán PayOS để hoàn tất.",
+      });
+
+      notifySuccess("Đã sẵn sàng thanh toán trực tuyến (PayOS). ");
       startPolling();
     } catch (error) {
       console.error("Checkout error:", error);
@@ -464,10 +472,10 @@ export default function CheckoutPage() {
                                   className="flex items-center gap-2 font-medium cursor-pointer"
                                 >
                                   <Smartphone className="h-4 w-4" />
-                                  Thanh toán VietQR
+                                  Thanh toán trực tuyến
                                 </label>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                  Quét QR bằng app ngân hàng Vietcombank
+                                  Quét QR bằng app ngân hàng hoặc ví điện tử để thanh toán
                                 </p>
                               </div>
                             </div>
@@ -509,17 +517,18 @@ export default function CheckoutPage() {
               {qrData && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2">
                       <Smartphone className="h-5 w-5" />
-                      Thanh toán VietQR
+                      Thanh toán PayOS
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-4">
                     <div id="qr-section" className="text-center">
                       <div className="mx-auto mb-4 w-fit rounded-xl border-2 border-dashed border-muted p-2">
                         <img
-                          src={qrData.qr_url}
-                          alt="Mã QR VietQR - Quét để thanh toán"
+                          src={qrData.qr_url || qrData.payment_link}
+                          alt="QR/Link PayOS"
+
                           style={{
                             width: "100%",
                             height: "auto",

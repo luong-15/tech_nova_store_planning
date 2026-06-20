@@ -210,7 +210,7 @@ export default function WarrantyPage() {
             ].map((step, idx) => (
               <div key={idx} className="relative z-10 text-center group">
                 <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-4xl bg-white dark:bg-slate-900 border border-border/50 shadow-lg transition-transform duration-500 group-hover:-translate-y-2 group-hover:border-primary/50 group-hover:shadow-primary/20">
-                  <span className="absolute -top-3 -right-3 -translate-y-3 translate-x-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-black text-white shadow-sm border-[3px] border-slate-50 dark:border-[#020617]">
+                  <span className="absolute -top-3 -right-3 -translate-y-2 translate-x-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-black text-white shadow-sm border-[3px] border-slate-50 dark:border-[#020617]">
                     0{idx + 1}
                   </span>
                   <step.icon
