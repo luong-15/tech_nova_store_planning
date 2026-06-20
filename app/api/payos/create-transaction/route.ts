@@ -1,204 +1,104 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminServerClient } from "@/lib/supabase/server";
 
-// NOTE: Placeholder implementation.
-// If you have a PayOS SDK installed, replace the HTTP requests below with SDK calls.
-
 const PAYOS_CLIENT_ID = process.env.PAYOS_CLIENT_ID;
 const PAYOS_API_KEY = process.env.PAYOS_API_KEY;
 const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY;
-const PAYOS_BASE_URL = process.env.PAYOS_BASE_URL || "https://api.payos.vn";
-
-function ensureEnv() {
-  if (!PAYOS_CLIENT_ID || !PAYOS_API_KEY || !PAYOS_CHECKSUM_KEY) {
-    throw new Error(
-      "PayOS not configured. Missing PAYOS_CLIENT_ID/PAYOS_API_KEY/PAYOS_CHECKSUM_KEY in env.",
-    );
-  }
-  console.log(`[PayOS] Using API endpoint: ${PAYOS_BASE_URL}`);
-}
 
 export async function POST(request: NextRequest) {
   try {
-    ensureEnv();
+    if (!PAYOS_CLIENT_ID || !PAYOS_API_KEY || !PAYOS_CHECKSUM_KEY) {
+      throw new Error("Missing PayOS environment variables.");
+    }
 
-    const body = await request.json();
-    const { order_id } = body;
-
+    const { order_id } = await request.json();
     if (!order_id) {
       return NextResponse.json({ error: "Missing order_id" }, { status: 400 });
     }
 
     const supabaseAdmin = await createAdminServerClient();
 
-    // Fetch order
-    const { data: order } = await supabaseAdmin
+    // 1. Fetch Order from Supabase
+    const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .select("id, order_number, total, status, payment_status")
       .eq("id", order_id)
       .single();
 
-    if (!order || order.status !== "pending") {
-      return NextResponse.json({ error: "Invalid order" }, { status: 400 });
+    if (orderError || !order || order.status !== "pending") {
+      return NextResponse.json({ error: "Invalid or non-pending order" }, { status: 400 });
     }
 
-    const amount = Math.round(Number(order.total));
-    const orderCode = order.order_number; // per your requirement
-
-    // --- Create PayOS transaction ---
-    // PayOS API details depend on your PayOS dashboard configuration.
-    // Commonly:
-    // POST /payment-requests
-    // with body: { orderCode, amount, description, cancelUrl, returnUrl, buyer, items }
-    //
-    // WEBHOOK SETUP:
-    // - PayOS will call /api/payos/webhook with payment status updates
-    // - Make sure webhook URL is configured in PayOS Dashboard
-    // - See webhook/route.ts for implementation
-
-    // If you have front-end provided URLs, plug them here.
     const origin = request.headers.get("origin") || "";
+    // LƯU Ý: PayOS yêu cầu orderCode phải là số nguyên (number)
+    const orderCode = Number(order.order_number); 
+    const amount = Math.round(Number(order.total));
 
-    // Return URL after successful payment
-    const returnUrl = origin
-      ? `${origin}/orders/${order_id}/status`
-      : undefined;
-    // Cancel URL if user cancels payment
-    const cancelUrl = origin ? `${origin}/cart` : undefined;
-
-    const payload: Record<string, any> = {
+    // 2. Prepare PayOS Payload
+    const payload = {
       orderCode,
       amount,
       description: `VQRIO${orderCode}`,
-      ...(returnUrl ? { returnUrl } : {}),
-      ...(cancelUrl ? { cancelUrl } : {}),
+      ...(origin && {
+        returnUrl: `${origin}/orders/${order_id}/status`,
+        cancelUrl: `${origin}/cart`,
+      }),
     };
 
-    console.log("[PayOS] Creating transaction for order:", {
-      orderCode,
-      amount,
-      orderId: order_id,
-      timestamp: new Date().toISOString(),
-    });
+    console.log("[PayOS] Creating transaction:", { orderCode, amount, orderId: order_id });
 
+    // 3. Call PayOS API
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    let res;
-    try {
-      res = await fetch(`${PAYOS_BASE_URL}/payment-requests`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(PAYOS_API_KEY ? { "x-api-key": PAYOS_API_KEY } : {}),
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-    } catch (fetchError: any) {
-      clearTimeout(timeoutId);
-      console.error("[PayOS] Network error:", fetchError.message);
+    const payosResponse = await fetch("https://api.payos.vn/payment-requests", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": PAYOS_API_KEY,
+        "x-client-id": PAYOS_CLIENT_ID,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId));
 
-      // Check for specific network errors
-      if (fetchError.name === "AbortError") {
-        return NextResponse.json(
-          {
-            error: "PayOS request timeout (10s)",
-            details:
-              "The PayOS API server is not responding. Please try again later.",
-          },
-          { status: 503 },
-        );
-      }
+    const data = await payosResponse.json().catch(() => ({}));
 
-      if (
-        fetchError.code === "ENOTFOUND" ||
-        fetchError.message.includes("ENOTFOUND")
-      ) {
-        return NextResponse.json(
-          {
-            error: "PayOS API unreachable",
-            details: `Cannot connect to ${PAYOS_BASE_URL}. Make sure PAYOS_BASE_URL is correctly configured in .env.local`,
-          },
-          { status: 503 },
-        );
-      }
-
-      throw fetchError;
-    } finally {
-      clearTimeout(timeoutId);
+    if (!payosResponse.ok) {
+      console.error("[PayOS] Creation failed:", { status: payosResponse.status, data });
+      return NextResponse.json({ error: "PayOS transaction failed", details: data }, { status: 400 });
     }
 
-    const data = await res.json().catch(() => ({}));
+    const reference = data?.data?.reference || data?.data?.paymentLinkId || null;
+    const paymentLink = data?.data?.checkoutUrl || data?.data?.paymentLink;
 
-    if (!res.ok) {
-      console.error("[PayOS] Transaction creation failed:", {
-        status: res.status,
-        data,
-      });
-      return NextResponse.json(
-        { error: "PayOS create transaction failed", details: data },
-        { status: 400 },
-      );
-    }
-
-    console.log("[PayOS] Transaction created successfully:", {
-      orderCode,
-      reference: data?.data?.reference,
-    });
-
-    // Update order with transaction/payment ref if available
-    const reference =
-      data?.data?.reference ||
-      data?.data?.paymentLinkId ||
-      data?.data?.transactionId ||
-      null;
-
+    // 4. Update order with transaction reference (nếu có)
     if (reference) {
-      const { error: updateErr } = await supabaseAdmin
+      await supabaseAdmin
         .from("orders")
         .update({
           transaction_id: reference,
           updated_at: new Date().toISOString(),
         })
         .eq("id", order_id);
-
-      if (updateErr) {
-        console.error("[PayOS] Order update error:", updateErr);
-      }
     }
-
-    const paymentLink =
-      data?.data?.checkoutUrl ||
-      data?.data?.paymentLink ||
-      data?.data?.paymentLinkId;
-
-    console.log("[PayOS] Transaction response:", {
-      orderCode,
-      paymentLink,
-      hasCancelUrl: !!cancelUrl,
-      hasReturnUrl: !!returnUrl,
-    });
 
     return NextResponse.json({
       success: true,
       order_id,
       order_number: orderCode,
       payos_reference: reference,
-      // Some PayOS responses return a paymentLinkId / paymentLink.
-      // Frontend should redirect user to this link
       paymentLink,
-      // Info for webhook processing
-      webhook: {
-        status: "configured",
-        description: "Payment status will be updated via webhook callback",
-      },
+      webhook: { status: "configured" },
     });
-  } catch (error) {
-    console.error("PayOS create-transaction error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Server error" },
-      { status: 500 },
-    );
+
+  } catch (error: any) {
+    console.error("[PayOS] create-transaction error:", error.message);
+    
+    if (error.name === "AbortError" || error.message.includes("ENOTFOUND")) {
+      return NextResponse.json({ error: "PayOS API unreachable or timed out." }, { status: 503 });
+    }
+
+    return NextResponse.json({ error: error.message || "Server error" }, { status: 500 });
   }
 }

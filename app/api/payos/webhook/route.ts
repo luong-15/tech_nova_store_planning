@@ -4,27 +4,7 @@ import crypto from "crypto";
 
 const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY;
 
-// PayOS requires verifying `signature` (checksum) using PAYOS_CHECKSUM_KEY.
-// Docs: https://payos.vn/docs (checksum = HMAC-SHA256 over sorted payload)
-//
-// SETUP INSTRUCTIONS:
-// 1. In PayOS Dashboard: Settings > Webhook Configuration
-// 2. Set Webhook URL to: https://your-domain.com/api/payos/webhook
-// 3. Make sure your domain is publicly accessible
-// 4. Test webhook from PayOS dashboard
-//
-// TROUBLESHOOTING 401 ERROR:
-// If you get "Request failed with status code 401", the signature verification failed.
-// This usually means:
-// - PAYOS_CHECKSUM_KEY in .env.local doesn't match your PayOS Dashboard key
-// - Check PayOS Dashboard > Settings > API Key/Checksum Key
-// - Make sure you copied the EXACT checksum key (case-sensitive)
-//
-// Debug tips:
-// - Check server logs for "[PayOS Webhook]" messages
-// - Look for signature mismatch details in logs
-// - Verify .env.local has correct PAYOS_CHECKSUM_KEY value
-
+// Hàm sắp xếp object để chuẩn bị cho việc băm (hash) chữ ký
 function stableStringify(obj: any): string {
   if (obj === null || typeof obj !== "object") return JSON.stringify(obj);
   if (Array.isArray(obj)) return JSON.stringify(obj.map(stableStringify));
@@ -34,51 +14,20 @@ function stableStringify(obj: any): string {
   return JSON.stringify(out);
 }
 
-async function isSignatureValid(
-  body: any,
-  signature: string | undefined,
-): Promise<boolean> {
-  if (!PAYOS_CHECKSUM_KEY) {
-    console.error("[PayOS Webhook] PAYOS_CHECKSUM_KEY not configured");
-    return false;
-  }
-  if (!signature) {
-    console.error("[PayOS Webhook] No signature provided in request body");
-    return false;
-  }
+// Hàm xác thực tính hợp lệ của Webhook từ PayOS gửi đến
+function isSignatureValid(body: any, signature: string | undefined): boolean {
+  if (!PAYOS_CHECKSUM_KEY || !signature) return false;
 
-  // PayOS signature is calculated over request body excluding signature
-  // by HMAC-SHA256 using Node.js crypto module
   const payload = { ...body };
   delete payload.signature;
 
-  const message = stableStringify(payload);
-
   try {
-    console.log("[PayOS Webhook] Signature calculation details:", {
-      checksumKeyLength: PAYOS_CHECKSUM_KEY.length,
-      messageToHash: message.substring(0, 100) + "...",
-      receivedSignature: signature.substring(0, 20) + "...",
-    });
-
-    // Use Node.js crypto for server-side signing
+    const message = stableStringify(payload);
     const hmac = crypto.createHmac("sha256", PAYOS_CHECKSUM_KEY);
     hmac.update(message);
     const sigHex = hmac.digest("hex");
 
-    const isValid = sigHex === signature;
-    console.log(
-      `[PayOS Webhook] Signature validation: ${isValid ? "✓ VALID" : "✗ INVALID"}`,
-    );
-
-    if (!isValid) {
-      console.log("[PayOS Webhook] Signature mismatch:");
-      console.log(`  Calculated: ${sigHex}`);
-      console.log(`  Received:   ${signature}`);
-      console.log(`  Message (first 200 chars): ${message.substring(0, 200)}`);
-    }
-
-    return isValid;
+    return sigHex === signature;
   } catch (err) {
     console.error("[PayOS Webhook] Signature verification error:", err);
     return false;
@@ -86,134 +35,73 @@ async function isSignatureValid(
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const body = await request.json();
 
-    console.log(`[PayOS Webhook] ============ WEBHOOK RECEIVED ============`);
-    console.log(`[PayOS Webhook] Payload overview:`, {
-      code: body?.code,
-      success: body?.success,
-      orderCode: body?.data?.orderCode,
-      amount: body?.data?.amount,
-      hasSignature: !!body?.signature,
-    });
-    console.log(
-      `[PayOS Webhook] Full request body:`,
-      JSON.stringify(body, null, 2),
-    );
-
-    const signature = body?.signature;
-
-    // Verify signature
-    if (!(await isSignatureValid(body, signature))) {
-      console.error("[PayOS Webhook] ✗ WEBHOOK REJECTED - Invalid signature");
-      console.error("[PayOS Webhook] Possible causes:");
-      console.error(
-        "  1. PAYOS_CHECKSUM_KEY in .env.local doesn't match PayOS Dashboard",
-      );
-      console.error(
-        "  2. Request body was modified before reaching this endpoint",
-      );
-      console.error(
-        "  3. PayOS signature calculation method differs from expected",
-      );
+    // Xử lý an toàn nếu payload bị trống (Tránh ném lỗi 400 để PayOS không đánh giá URL bị chết)
+    if (!body || !body.data) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid signature",
-          hint: "Check PAYOS_CHECKSUM_KEY in .env.local matches PayOS Dashboard settings",
-        },
-        { status: 401 },
+        { success: true, message: "No data payload, but webhook is alive" }, 
+        { status: 200 }
       );
     }
 
-    const data = body?.data;
-    const code = body?.code;
-    const success = body?.success;
-
-    console.log(
-      `[PayOS Webhook] Verified webhook. Code: ${code}, Success: ${success}`,
-    );
-
-    // Handle different PayOS response codes
-    // code: "00" = success, other codes = various error states
-    if (code !== "00") {
-      console.warn(`[PayOS Webhook] PayOS returned error code: ${code}`);
+    // 1. Xác thực chữ ký
+    // Nếu bị lỗi 401 ở bước test Dashboard, hãy kiểm tra lại PAYOS_CHECKSUM_KEY trong file .env
+    if (!isSignatureValid(body, body.signature)) {
+      console.error("[PayOS Webhook] Invalid signature");
       return NextResponse.json(
-        { success: false, message: `PayOS error code: ${code}` },
-        { status: 400 },
+        { success: false, message: "Invalid signature" }, 
+        { status: 401 } // Riêng lỗi bảo mật sai key thì vẫn nên trả 401
       );
     }
 
-    if (success !== true) {
-      console.warn(`[PayOS Webhook] success flag is false`);
+    const { code, success, data } = body;
+
+    // 2. Kiểm tra trạng thái giao dịch
+    // Nếu giao dịch thất bại, vẫn trả về 200 để xác nhận đã nhận thông tin, nhưng không xử lý tiếp.
+    if (code !== "00" || success !== true) {
+      console.warn(`[PayOS Webhook] Payment failed or incomplete. Code: ${code}`);
       return NextResponse.json(
-        { success: false, message: "Payment not successful" },
-        { status: 400 },
+        { success: true, message: "Payment not successful but webhook received" }, 
+        { status: 200 }
       );
     }
 
-    if (!data) {
-      console.error("[PayOS Webhook] Missing data in payload");
-      return NextResponse.json(
-        { success: false, message: "Missing data in payload" },
-        { status: 400 },
-      );
-    }
-
-    const orderCode = data.orderCode;
-    const amount = data.amount;
-    const reference = data.reference; // Payment reference from PayOS
-    const transactionDateTime = data.transactionDateTime;
-
-    if (!orderCode) {
-      console.error("[PayOS Webhook] Missing orderCode");
-      return NextResponse.json(
-        { success: false, message: "Missing orderCode" },
-        { status: 400 },
-      );
-    }
-
-    console.log(
-      `[PayOS Webhook] Processing payment for order: ${orderCode}, Amount: ${amount}VND`,
-    );
-
+    const { orderCode, amount, reference } = data;
     const supabaseAdmin = await createAdminServerClient();
 
-    // Find order by order_number
+    // 3. Tìm đơn hàng
     const { data: order, error: findErr } = await supabaseAdmin
       .from("orders")
-      .select("id, order_number, total, status, payment_status")
+      .select("id, order_number, total, status")
       .eq("order_number", orderCode)
       .eq("status", "pending")
       .single();
 
+    // ĐÃ SỬA: Luôn trả về 200 để vượt qua bước gửi Test Webhook của PayOS
     if (findErr || !order) {
-      console.error(
-        `[PayOS Webhook] Order not found for code: ${orderCode}`,
-        findErr,
-      );
+      console.warn(`[PayOS Webhook] Order not found/processed: ${orderCode}. Ignored.`);
       return NextResponse.json(
-        { success: false, message: "Order not found or already processed" },
-        { status: 404 },
+        { success: true, message: "Webhook received but order not found or already processed" }, 
+        { status: 200 }
       );
     }
 
-    // Verify amount matches
+    // 4. Xác minh số tiền
     const expectedAmount = Math.round(Number(order.total));
     if (amount !== expectedAmount) {
-      console.error(
-        `[PayOS Webhook] Amount mismatch for order ${orderCode}: expected ${expectedAmount}, got ${amount}`,
-      );
+      console.error(`[PayOS Webhook] Amount mismatch. Expected ${expectedAmount}, got ${amount}`);
+      // ĐÃ SỬA: Vẫn trả về 200 để báo với PayOS là "Tôi đã nghe bạn nói"
       return NextResponse.json(
-        { success: false, message: "Amount mismatch" },
-        { status: 400 },
+        { success: true, message: "Webhook received but amount mismatched" }, 
+        { status: 200 }
       );
     }
 
-    console.log(`[PayOS Webhook] Updating order ${order.id} to paid status`);
-
-    // Update order status to processing and mark as paid
+    // 5. Cập nhật trạng thái thanh toán
     const { error: updateErr } = await supabaseAdmin
       .from("orders")
       .update({
@@ -224,28 +112,19 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", order.id);
 
-    if (updateErr) {
-      console.error("[PayOS Webhook] Failed to update order:", updateErr);
-      return NextResponse.json(
-        { success: false, error: updateErr.message },
-        { status: 500 },
-      );
-    }
+    if (updateErr) throw updateErr;
 
-    console.log(
-      `[PayOS Webhook] ✓ Order ${order.id} (${orderCode}) successfully marked as paid`,
+    console.log(`[PayOS Webhook] ✓ Order ${orderCode} paid in ${Date.now() - startTime}ms`);
+    return NextResponse.json(
+      { success: true, order_id: order.id, message: "Success" }, 
+      { status: 200 }
     );
 
-    return NextResponse.json({
-      success: true,
-      order_id: order.id,
-      message: "Payment processed successfully",
-    });
-  } catch (error) {
-    console.error("[PayOS Webhook] Unexpected error:", error);
+  } catch (error: any) {
+    console.error(`[PayOS Webhook] ✗ CRITICAL ERROR:`, error.message);
     return NextResponse.json(
-      { success: false, error: "Server error" },
-      { status: 500 },
+      { success: false, message: "Webhook processing error", error: error.message }, 
+      { status: 500 }
     );
   }
 }

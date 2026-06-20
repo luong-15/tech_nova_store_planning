@@ -2,46 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
 const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY;
+const IS_DEVELOPMENT = process.env.NODE_ENV !== "production";
 
 /**
  * Debug endpoint for testing PayOS webhook signature verification
  *
- * This endpoint helps you verify that your PAYOS_CHECKSUM_KEY is correct
- * and that the signature calculation method matches PayOS expectations.
+ * ⚠️  SECURITY WARNING:
+ * This endpoint is ONLY available in development mode.
+ * It exposes sensitive checksum key information in responses.
  *
- * SECURITY WARNING:
- * This endpoint should only be used in development. Disable it in production.
- * It exposes your checksum key details in the response.
+ * NEVER expose this endpoint in production!
  *
  * Usage:
  * POST /api/payos/debug
- *
- * Request body:
  * {
- *   "payload": { ... your test payload ... },
- *   "signature": "the-signature-to-verify"
+ *   "payload": { code: "00", success: true, data: {...} },
+ *   "signature": "optional-signature-to-verify"
  * }
  *
- * Or test without signature:
- * {
- *   "payload": { ... your test payload ... }
- * }
- *
- * Returns:
- * {
- *   "checksumKeySet": boolean,
- *   "checksumKeyLength": number,
- *   "payload": object,
- *   "calculations": {
- *     "method1": "signature using JSON stringify",
- *     "method2": "signature using stable stringify"
- *   },
- *   "receivedSignature": "if provided",
- *   "matches": {
- *     "method1": boolean,
- *     "method2": boolean
- *   }
- * }
+ * GET /api/payos/debug
+ * Returns: { ready: true, configured: boolean }
  */
 
 function stableStringify(obj: any): string {
@@ -65,9 +45,30 @@ function calculateSignature(
   return hmac.digest("hex");
 }
 
+/**
+ * GET handler - Health check
+ */
+export async function GET() {
+  if (!IS_DEVELOPMENT) {
+    return NextResponse.json(
+      { error: "Debug endpoint disabled in production" },
+      { status: 403 },
+    );
+  }
+
+  return NextResponse.json({
+    ready: true,
+    environment: "development",
+    configured: !!PAYOS_CHECKSUM_KEY,
+    message: "PayOS debug endpoint ready. POST payload with signature to test.",
+  });
+}
+
+/**
+ * POST handler - Signature verification test
+ */
 export async function POST(request: NextRequest) {
-  // SECURITY: Only allow in development
-  if (process.env.NODE_ENV === "production") {
+  if (!IS_DEVELOPMENT) {
     return NextResponse.json(
       { error: "Debug endpoint disabled in production" },
       { status: 403 },
@@ -75,11 +76,31 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { payload, signature } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseErr) {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
+    }
 
+    const { payload, signature } = body;
+
+    // Validate input
     if (!payload) {
       return NextResponse.json(
-        { error: "Missing 'payload' in request body" },
+        {
+          error: "Missing 'payload' field",
+          example: {
+            payload: {
+              code: "00",
+              success: true,
+              data: { orderCode: "ORD-001", amount: 100000 },
+            },
+          },
+        },
         { status: 400 },
       );
     }
@@ -87,60 +108,72 @@ export async function POST(request: NextRequest) {
     if (!PAYOS_CHECKSUM_KEY) {
       return NextResponse.json(
         {
-          error: "PAYOS_CHECKSUM_KEY not configured in .env.local",
-          hint: "Add PAYOS_CHECKSUM_KEY=your-key to .env.local",
+          error: "PAYOS_CHECKSUM_KEY not configured",
+          hint: "Add PAYOS_CHECKSUM_KEY to .env.local",
         },
         { status: 400 },
       );
     }
 
-    // Remove signature from payload if present
+    // Prepare payload for signing (remove existing signature)
     const payloadToSign = { ...payload };
     delete payloadToSign.signature;
 
-    // Try different signature calculation methods
-    const sig1 = calculateSignature(payloadToSign, PAYOS_CHECKSUM_KEY, "json");
-    const sig2 = calculateSignature(
+    // Calculate signatures
+    const stableSignature = calculateSignature(
       payloadToSign,
       PAYOS_CHECKSUM_KEY,
       "stable",
     );
+    const jsonSignature = calculateSignature(
+      payloadToSign,
+      PAYOS_CHECKSUM_KEY,
+      "json",
+    );
 
-    const response: any = {
-      checksumKeySet: true,
+    // Build response
+    const result: any = {
+      success: true,
+      configured: true,
       checksumKeyLength: PAYOS_CHECKSUM_KEY.length,
       payload: payloadToSign,
-      calculations: {
-        method1_json: sig1,
-        method2_stable: sig2,
+      signatures: {
+        stable: stableSignature,
+        json: jsonSignature,
       },
-      receivedSignature: signature || null,
     };
 
+    // If signature provided, verify it
     if (signature) {
-      response.matches = {
-        method1_json: sig1 === signature,
-        method2_stable: sig2 === signature,
+      const matches = {
+        stable: stableSignature === signature,
+        json: jsonSignature === signature,
       };
 
-      if (sig1 === signature) {
-        response.hint = "✓ Signature matches using JSON stringify method";
-      } else if (sig2 === signature) {
-        response.hint = "✓ Signature matches using stable stringify method";
+      result.receivedSignature = signature;
+      result.matches = matches;
+
+      if (matches.stable) {
+        result.status = "✓ VALID - Matches stable signature method";
+      } else if (matches.json) {
+        result.status = "✓ VALID - Matches JSON signature method";
       } else {
-        response.hint =
-          "✗ Signature doesn't match either method. Check your PAYOS_CHECKSUM_KEY.";
+        result.status = "✗ INVALID - Signature doesn't match either method";
+        result.hint =
+          "Check PAYOS_CHECKSUM_KEY in .env.local matches PayOS Dashboard";
       }
     } else {
-      response.hint =
-        "No signature provided. If you provide a 'signature' field, we'll verify it against both calculation methods.";
+      result.hint = "Provide 'signature' field to verify it";
     }
 
-    return NextResponse.json(response);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[PayOS Debug] Error:", error);
     return NextResponse.json(
-      { error: (error as Error).message || "Server error" },
+      {
+        error: "Server error",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 },
     );
   }
