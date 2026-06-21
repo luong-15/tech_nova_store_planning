@@ -1,187 +1,110 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { PayOS } from "@payos/node";
+import { NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase/server";
 
-export async function POST(request: NextRequest) {
+// Khởi tạo payOS instance
+const payOS = new PayOS({
+  clientId: process.env.PAYOS_CLIENT_ID,
+  apiKey: process.env.PAYOS_API_KEY,
+  checksumKey: process.env.PAYOS_CHECKSUM_KEY,
+});
+
+export async function POST(request: Request) {
   try {
-    const supabase = await createServerClient();
-
-    // Get current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
-    const { order_id, return_url } = body;
+    const { order_id } = body as { order_id?: string };
 
-    // Validate inputs
     if (!order_id) {
       return NextResponse.json(
-        { error: "order_id is required" },
+        { success: false, error: "Missing order_id" },
         { status: 400 },
       );
     }
 
-    // Get order from database
-    const { data: order, error: orderError } = await supabase
+    const supabase = await createServerClient();
+
+    // Lấy dữ liệu đơn để tạo thanh toán đúng amount và mapping orderCode <-> DB
+    const { data: order, error } = await supabase
       .from("orders")
-      .select("*")
+      .select("id, order_number, total, payment_status, status")
       .eq("id", order_id)
-      .eq("user_id", user.id)
       .single();
 
-    if (orderError || !order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    if (error || !order) {
+      return NextResponse.json(
+        { success: false, error: "Order not found" },
+        { status: 404 },
+      );
     }
 
-    // Check if order is already paid
-    if (order.payment_status === "paid") {
+    const amount = Math.round(Number(order.total || 0));
+    if (!amount || amount <= 0) {
       return NextResponse.json(
-        { error: "Order already paid" },
+        { success: false, error: "Invalid order total" },
         { status: 400 },
       );
     }
 
-    // Initialize PayOS payment and get QR code
-    let paymentData: PayOSPaymentData;
-    try {
-      paymentData = await generatePayOSQRCode({
-        clientId: process.env.PAYOS_CLIENT_ID!,
-        apiKey: process.env.PAYOS_API_KEY!,
-        checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
-        orderCode: Number(order_id),
-        amount: order.total,
-        description: `Order #${order.order_number}`,
-        returnUrl: return_url || `${getBaseUrl(request)}/orders/${order_id}`,
-        cancelUrl: `${getBaseUrl(request)}/orders/${order_id}`,
-        buyerEmail: user.email || "",
-        buyerName: order.shipping_name || "Customer",
-        buyerPhone: order.shipping_phone || "",
-      });
-    } catch (sdkError) {
-      console.error("PayOS SDK error:", sdkError);
-      return NextResponse.json(
-        {
-          error: "PayOS SDK not configured",
-          details: (sdkError as Error).message,
-        },
-        { status: 500 },
-      );
+    // payOS yêu cầu orderCode là số và không vượt quá 9007199254740991.
+    // Ưu tiên dùng order_number nếu là số; fallback dùng hash đơn theo dạng số.
+    const MAX_ORDERCODE = 9007199254740991;
+    let orderCode: number;
+
+    if (order.order_number !== null && order.order_number !== undefined) {
+      const n = Number(order.order_number);
+      orderCode =
+        Number.isFinite(n) && n > 0 ? n : parseInt(String(order_id).replace(/\D/g, ""), 10);
+    } else {
+      orderCode = parseInt(String(order_id).replace(/\D/g, ""), 10);
     }
 
-    // Update order status to pending payment
-    await supabase
-      .from("orders")
-      .update({
-        payment_method: "payos",
-        payment_status: "pending",
-      })
-      .eq("id", order_id);
+    if (!orderCode || !Number.isFinite(orderCode) || orderCode <= 0) {
+      orderCode = Math.floor(Date.now() / 1000) % 1000000000;
+    }
+
+    // Clamp vào đúng giới hạn PayOS.
+    orderCode = Math.max(1, Math.min(Math.floor(orderCode), MAX_ORDERCODE));
+
+    // description bị giới hạn tối đa 25 ký tự.
+    const rawDescription = `Thanh toán đơn #${order.order_number ?? order_id}`;
+    const description = String(rawDescription).slice(0, 25);
+
+    const paymentData = {
+      orderCode,
+      amount,
+      description,
+      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+    };
+
+    console.log("PayOS paymentRequests.create payload:", {
+      order_id: order.id,
+      order_number: order.order_number,
+      orderCode,
+      amount,
+      description,
+    });
+
+    const paymentLink = await payOS.paymentRequests.create(paymentData);
 
     return NextResponse.json({
       success: true,
-      qr_code: paymentData.qr_code,
-      order_id,
+      order_id: order.id,
       order_number: order.order_number,
-      amount: order.total,
-      instructions: paymentData.instructions,
+      orderCode,
+      amount,
+      checkoutUrl: paymentLink.checkoutUrl,
+      qr_code: (paymentLink as any).qrCode || paymentLink.checkoutUrl,
+      instructions:
+        (paymentLink as any).instructions ||
+        "Mở link thanh toán và hoàn tất giao dịch.",
+      is_payos: true,
     });
   } catch (error) {
-    console.error("PayOS payment error:", error);
+    console.error("PayOS Error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { success: false, error: "Internal Server Error" },
       { status: 500 },
     );
   }
-}
-
-/**
- * PayOS Payment Data interface
- */
-interface PayOSPaymentData {
-  qr_code: string;
-  instructions: string;
-}
-
-/**
- * Generate PayOS QR Code
- */
-async function generatePayOSQRCode(params: {
-  clientId: string;
-  apiKey: string;
-  checksumKey: string;
-  orderCode: number;
-  amount: number;
-  description: string;
-  returnUrl: string;
-  cancelUrl: string;
-  buyerEmail: string;
-  buyerName: string;
-  buyerPhone: string;
-}): Promise<PayOSPaymentData> {
-  try {
-    const payos = new PayOS({
-      clientId: params.clientId,
-      apiKey: params.apiKey,
-      checksumKey: params.checksumKey,
-    });
-
-    // Create payment link
-    const paymentLink = await payos.paymentRequests.create({
-      orderCode: params.orderCode,
-      // PayOS expects orderCode as number (per PayOS SDK typings)
-      amount: Math.round(parseFloat(String(params.amount))), // Ensure amount is integer in VND
-      description: params.description,
-      returnUrl: params.returnUrl,
-      cancelUrl: params.cancelUrl,
-      buyerEmail: params.buyerEmail,
-      buyerName: params.buyerName,
-      buyerPhone: params.buyerPhone,
-    });
-
-    console.log("[v0] PayOS payment link created:", {
-      orderCode: params.orderCode,
-      amount: params.amount,
-      checkoutUrl: paymentLink.checkoutUrl?.substring(0, 50) + "...",
-    });
-
-    return {
-      qr_code: paymentLink.qrCode || paymentLink.checkoutUrl || "",
-      instructions:
-        "Quét mã QR hoặc nhấp vào liên kết thanh toán để hoàn tất giao dịch",
-    };
-  } catch (error) {
-    console.error("[v0] PayOS SDK error:", error);
-    throw error;
-  }
-}
-
-/**
- * Helper function to get base URL
- */
-function getBaseUrl(request: NextRequest): string {
-  const { protocol, host } = new URL(request.url);
-  return `${protocol}//${host}`;
-}
-
-/**
- * Test endpoint to verify payment initiation is ready
- */
-export async function GET(request: NextRequest) {
-  const hasEnvVars = !!(
-    process.env.PAYOS_CLIENT_ID &&
-    process.env.PAYOS_API_KEY &&
-    process.env.PAYOS_CHECKSUM_KEY
-  );
-
-  return NextResponse.json({
-    message: "Điểm cuối thanh toán PayOS đang hoạt động",
-    configured: hasEnvVars,
-    status: hasEnvVars ? "ready" : "incomplete",
-    timestamp: new Date().toISOString(),
-  });
 }

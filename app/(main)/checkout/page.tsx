@@ -247,7 +247,7 @@ export default function CheckoutPage() {
       }
 
       // Online payment via PayOS
-      console.log("Creating PayOS QR code for order:", result.order_id);
+      console.log("Creating PayOS payment for order:", result.order_id);
 
       const payosRes = await fetch("/api/payos/payment", {
         method: "POST",
@@ -263,18 +263,28 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Store order data and show QR code
+      // Redirect sang tab thanh toán PayOS theo link
+      const checkoutUrl = payosResult.checkoutUrl;
+      if (!checkoutUrl) {
+        notifyError("Không lấy được link thanh toán PayOS");
+        return;
+      }
+
       setQrData({
         order_id: result.order_id,
         amount: payosResult.amount,
         order_number: payosResult.order_number,
         qr_url: payosResult.qr_code,
-        instructions: payosResult.instructions || "Quét mã QR bằng ứng dụng ngân hàng của bạn",
+        instructions:
+          payosResult.instructions ||
+          "Mở link thanh toán và hoàn tất giao dịch.",
         is_payos: true,
+        checkoutUrl,
       });
 
-      notifySuccess("Đã tạo mã QR thanh toán PayOS. Vui lòng quét mã QR bên dưới.");
+      notifySuccess("Đang chuyển tới trang thanh toán PayOS...");
       startPolling();
+      window.open(checkoutUrl, "_blank");
     } catch (error) {
       console.error("Checkout error:", error);
       notifyError("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.");
@@ -521,32 +531,8 @@ export default function CheckoutPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-4">
+                    {/* ẩn QR theo yêu cầu: chỉ hiển thị thông tin + mở link */}
                     <div id="qr-section" className="text-center">
-                      <div className="mx-auto mb-4 w-fit rounded-xl border-2 border-dashed border-muted p-2">
-                        {qrData.qr_url ? (
-                          <img
-                            src={qrData.qr_url}
-                            alt="QR Code PayOS"
-                            style={{
-                              width: "100%",
-                              height: "auto",
-                              maxWidth: "280px",
-                            }}
-                            className="mx-auto rounded-xl border-4 border-primary shadow-xl"
-                            loading="lazy"
-                            onLoad={() => console.log("QR loaded successfully")}
-                            onError={(e) => {
-                              console.error("QR image load failed:", qrData.qr_url);
-                              (e.target as any).style.display = "none";
-                              notifyError("Không tải được QR. Kiểm tra mạng!");
-                            }}
-                          />
-                        ) : (
-                          <div className="p-12 bg-muted rounded-lg">
-                            <p className="text-muted-foreground">Đang tạo mã QR...</p>
-                          </div>
-                        )}
-                      </div>
                       <div className="text-sm space-y-2">
                         <p>
                           <strong>Đơn hàng:</strong> {qrData.order_number}
@@ -556,7 +542,7 @@ export default function CheckoutPage() {
                           {formatCurrency(qrData.amount)}
                         </p>
                       </div>
-                      <p className="mt-4 text-sm text-muted-foreground text-center">
+                      <p className="mt-2 text-sm text-muted-foreground text-center">
                         {qrData.instructions}
                       </p>
                     </div>
@@ -624,7 +610,7 @@ export default function CheckoutPage() {
               {qrData && !qrData.is_payos && (
                 <Card>
                   <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2">
                       <Smartphone className="h-5 w-5" />
                       Thanh toán PayOS
                     </CardTitle>
@@ -635,7 +621,6 @@ export default function CheckoutPage() {
                         <img
                           src={qrData.qr_url || qrData.payment_link}
                           alt="QR/Link PayOS"
-
                           style={{
                             width: "100%",
                             height: "auto",

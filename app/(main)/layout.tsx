@@ -12,7 +12,7 @@ import type { Product } from "@/lib/types";
 
 async function getMaintenanceMode() {
   try {
-    const supabase = await createAdminServerClient();
+    const supabase = createReadOnlyServerClient();
     const { data, error } = await supabase
       .from("settings")
       .select("maintenance_mode")
