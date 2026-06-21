@@ -66,6 +66,30 @@ export function truncate(str: string, maxLength: number): string {
  * Generate a unique ID
  */
 export function uid(prefix = "id"): string {
+  // Security-sensitive: avoid Math.random() for ID generation.
+  // Prefer cryptographically secure UUID when available.
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+
+  // Fallback: use Web Crypto if present.
+  // Note: this is still more secure than Math.random().
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.getRandomValues === "function"
+  ) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(
+      "",
+    );
+    return `${prefix}-${hex}`;
+  }
+
+  // Last-resort fallback (should be avoided): non-cryptographic randomness.
   return `${prefix}-${Math.random().toString(36).slice(2, 11)}`;
 }
 

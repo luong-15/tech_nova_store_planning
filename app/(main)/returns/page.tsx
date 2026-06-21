@@ -48,9 +48,9 @@ export default function ReturnsPage() {
             Mua sắm không rủi ro
           </div>
           <h1 className="mb-4 text-4xl font-black tracking-tighter md:text-5xl lg:text-6xl text-slate-900 dark:text-white">
-            Đổi trả dễ dàng, <br className="hidden md:block" />
-            <span className="bg-linear-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent italic">
-              hoàn toàn an tâm.
+            Đổi trả dễ dàng <br className="hidden md:block" />
+            <span className="bg-linear-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent italic inline-block pr-2">
+              hoàn toàn an tâm
             </span>
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed md:max-w-2xl">

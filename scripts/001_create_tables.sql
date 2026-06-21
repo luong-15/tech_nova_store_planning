@@ -181,3 +181,28 @@ CREATE TABLE IF NOT EXISTS settings (
 -- Enable RLS
 -- Fixed: Disable RLS for global settings table (single row, no security risk)
 ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
+
+-- 9. Bảng Cart Items
+CREATE TABLE IF NOT EXISTS public.cart_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  product_id uuid NOT NULL,
+  quantity integer NOT NULL DEFAULT 1,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+
+  CONSTRAINT cart_items_pkey PRIMARY KEY (id),
+  CONSTRAINT cart_items_user_id_product_id_key UNIQUE (user_id, product_id),
+
+  CONSTRAINT cart_items_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES auth.users (id) ON DELETE CASCADE,
+
+  CONSTRAINT cart_items_product_id_fkey
+    FOREIGN KEY (product_id) REFERENCES public.products (id) ON DELETE CASCADE,
+
+  CONSTRAINT cart_items_quantity_check CHECK (quantity >= 1)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON public.cart_items (user_id);
+CREATE INDEX IF NOT EXISTS idx_cart_items_product_id ON public.cart_items (product_id);
+

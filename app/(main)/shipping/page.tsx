@@ -49,7 +49,7 @@ export default function ShippingPage() {
           </div>
           <h1 className="mb-4 text-4xl font-black tracking-tighter md:text-5xl lg:text-6xl text-slate-900 dark:text-white">
             Hành trình an toàn đến <br className="hidden md:block" />
-            <span className="bg-linear-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent italic">
+            <span className="bg-linear-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent italic inline-block pr-2">
               tận tay bạn
             </span>
           </h1>

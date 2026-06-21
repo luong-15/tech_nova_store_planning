@@ -60,7 +60,7 @@ export default async function HomePage() {
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-foreground text-primary-foreground hover:text-primary "
                 asChild
               >
                 <Link href="/products">

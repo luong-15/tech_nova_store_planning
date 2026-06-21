@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminServerClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/supabase/server";
 
 export async function GET(
   request: NextRequest,
@@ -14,10 +14,10 @@ export async function GET(
 
     console.log("Checking status for order ID:", id);
 
-    const supabase = await createAdminServerClient();
+    const supabase = await createServerClient();
     const { data: order, error } = await supabase
       .from("orders")
-      .select("status, order_number")
+      .select("status, payment_status, order_number")
       .eq("id", id)
       .single();
 
@@ -25,13 +25,16 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const isPaid = order.status === "paid" || order.status === "processing";
+    // isPaid when payment_status is "paid" or order status is "processing" (for COD)
+    const isPaid = order.payment_status === "paid" || order.status === "processing";
 
     return NextResponse.json({
       success: true,
       status: order.status,
+      payment_status: order.payment_status,
       isPaid,
       order_id: id,
+      order_number: order.order_number,
     });
   } catch (error) {
     console.error("Order status error:", error);

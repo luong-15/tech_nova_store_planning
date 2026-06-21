@@ -29,6 +29,9 @@ import {
   Clock,
   Users,
   Settings2,
+  Webhook,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -46,6 +49,7 @@ export default function AdminSettingsPage() {
     default_tax_rate: 10,
     logo_url: "",
     favicon_url: "",
+    webhook_url: "",
   });
 
   // Fetch settings on mount
@@ -117,6 +121,7 @@ export default function AdminSettingsPage() {
               { id: "store", label: "Cửa hàng", icon: Package },
               { id: "contact", label: "Liên hệ", icon: Mail },
               { id: "security", label: "Bảo mật", icon: Shield },
+              { id: "payment", label: "Thanh toán", icon: Webhook },
               { id: "advanced", label: "Nâng cao", icon: Clock },
             ].map(({ id, label, icon: Icon }) => (
               <Button
@@ -376,6 +381,60 @@ export default function AdminSettingsPage() {
                     }
                     className="ml-auto"
                   />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {tabs === "payment" && (
+            <Card className="border-border/50 shadow-sm">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-2xl">
+                    <Webhook className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl">
+                      Cấu hình thanh toán
+                    </CardTitle>
+                    <p className="text-muted-foreground">
+                      PayOS Webhook URL
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  <Label>Webhook URL</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Sao chép URL này vào PayOS Dashboard để nhận thông báo thanh toán
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={settings.webhook_url}
+                      onChange={(e) =>
+                        setSettings({ ...settings, webhook_url: e.target.value })
+                      }
+                      placeholder={`${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/payos/webhook`}
+                      className="h-12 font-mono text-sm"
+                      readOnly
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        const url = settings.webhook_url || `${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/payos/webhook`;
+                        navigator.clipboard.writeText(url);
+                        toast({
+                          title: "Đã sao chép",
+                          description: "Webhook URL đã được sao chép vào clipboard",
+                        });
+                      }}
+                      className="h-12 w-12 shrink-0"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

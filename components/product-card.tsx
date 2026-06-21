@@ -7,7 +7,7 @@ import {
   notifyComparisonAdded,
   notifyError,
 } from "@/lib/notifications";
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { formatPrice } from "@/lib/currency";
 import Link from "next/link";
 import type { Product } from "@/lib/types";
@@ -27,23 +27,22 @@ export const ProductCard = React.memo(({ product }: ProductCardProps) => {
     (state) => state.isProductInComparison,
   );
   const canAddProduct = useComparisonStore((state) => state.canAddProduct);
-  const [isInCart, setIsInCart] = useState(false);
   const cartItems = useCartStore((state) => state.cartItems);
+  const isInCart = cartItems.some((item) => item.product.id === product.id);
   const imageRef = useRef<HTMLImageElement>(null);
 
   const handleAddToCart = useCallback(() => {
     const wasEmpty = cartItems.length === 0;
     addToCart(product);
-    setIsInCart(true);
 
     notifyCartAdded(product.name, async () => {
       const freshCartStore = useCartStore.getState();
-      freshCartStore.removeItem(product.id);
-      setIsInCart(false);
+      await freshCartStore.removeItem(product.id);
       if (wasEmpty) {
         notifyError("Giỏ hàng đã được hoàn tác");
       }
     });
+
   }, [product, addToCart, cartItems.length]);
 
   const handleAddToComparison = () => {

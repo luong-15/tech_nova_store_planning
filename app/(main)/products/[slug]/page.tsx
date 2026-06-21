@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/currency";
-import { cn } from "@/lib/utils"; // Đảm bảo import cn
+import { cn } from "@/lib/utils";
 import {
   ShoppingCart,
   Heart,
@@ -129,12 +129,12 @@ export default function ProductPage() {
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (product && cartButtonRef.current) {
-      triggerFlyToCart(product.image_url || '', product.id, e as any);
+      triggerFlyToCart(product.image_url || "", product.id, e as any);
       setTimeout(() => {
         addToCart(product);
         notifyCartAdded(product.name, () =>
-        useCartStore.getState().removeItem(product.id),
-      );
+          useCartStore.getState().removeItem(product.id),
+        );
       }, 200);
     }
   };

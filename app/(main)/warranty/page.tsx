@@ -48,7 +48,7 @@ export default function WarrantyPage() {
           </div>
           <h1 className="mb-4 text-4xl font-black tracking-tighter md:text-5xl lg:text-6xl text-slate-900 dark:text-white">
             Yên tâm trải nghiệm cùng <br className="hidden md:block" />
-            <span className="bg-linear-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent italic">
+            <span className="bg-linear-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent italic inline-block pr-2">
               TechNova Store
             </span>
           </h1>
@@ -209,8 +209,8 @@ export default function WarrantyPage() {
               },
             ].map((step, idx) => (
               <div key={idx} className="relative z-10 text-center group">
-                <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-4xl bg-white dark:bg-slate-900 border border-border/50 shadow-lg transition-transform duration-500 group-hover:-translate-y-2 group-hover:border-primary/50 group-hover:shadow-primary/20">
-                  <span className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-black text-white shadow-sm border-[3px] border-slate-50 dark:border-[#020617]">
+                <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-4xl bg-white dark:bg-slate-900 border border-border/50 shadow-lg transition-transform duration-500 group-hover:-translate-y-2 group-hover:border-primary/50 group-hover:shadow-primary/20">
+                  <span className="absolute -top-3 -right-3 -translate-y-2 translate-x-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-black text-white shadow-sm border-[3px] border-slate-50 dark:border-[#020617]">
                     0{idx + 1}
                   </span>
                   <step.icon
