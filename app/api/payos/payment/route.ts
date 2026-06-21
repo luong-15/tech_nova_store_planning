@@ -1,26 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
-
-/**
- * PayOS Payment Initiation Endpoint
- * POST /api/payos/payment
- *
- * Request body:
- * {
- *   order_id: string,
- *   return_url: string (optional)
- * }
- *
- * Response:
- * {
- *   success: boolean,
- *   qr_code: string (base64 or URL),
- *   order_id: string,
- *   order_number: string,
- *   amount: number,
- *   instructions: string
- * }
- */
+import { PayOS } from "@payos/node";
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,7 +53,7 @@ export async function POST(request: NextRequest) {
         clientId: process.env.PAYOS_CLIENT_ID!,
         apiKey: process.env.PAYOS_API_KEY!,
         checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
-        orderCode: order_id,
+        orderCode: Number(order_id),
         amount: order.total,
         description: `Order #${order.order_number}`,
         returnUrl: return_url || `${getBaseUrl(request)}/orders/${order_id}`,
@@ -85,9 +65,9 @@ export async function POST(request: NextRequest) {
     } catch (sdkError) {
       console.error("PayOS SDK error:", sdkError);
       return NextResponse.json(
-        { 
+        {
           error: "PayOS SDK not configured",
-          details: (sdkError as Error).message 
+          details: (sdkError as Error).message,
         },
         { status: 500 },
       );
@@ -129,13 +109,12 @@ interface PayOSPaymentData {
 
 /**
  * Generate PayOS QR Code
- * TODO: Implement actual PayOS SDK integration
  */
 async function generatePayOSQRCode(params: {
   clientId: string;
   apiKey: string;
   checksumKey: string;
-  orderCode: string;
+  orderCode: number;
   amount: number;
   description: string;
   returnUrl: string;
@@ -144,19 +123,41 @@ async function generatePayOSQRCode(params: {
   buyerName: string;
   buyerPhone: string;
 }): Promise<PayOSPaymentData> {
-  // TODO: Replace with actual PayOS SDK:
-  // import PayOS from "@payos/checkout-sdk";
-  // const payos = new PayOS(params.clientId, params.apiKey, params.checksumKey);
-  // const paymentLink = await payos.createPaymentLink({...});
-  // return {
-  //   qr_code: paymentLink.qrCode,
-  //   instructions: "Quét QR bằng ứng dụng ngân hàng của bạn"
-  // };
+  try {
+    const payos = new PayOS({
+      clientId: params.clientId,
+      apiKey: params.apiKey,
+      checksumKey: params.checksumKey,
+    });
 
-  // Placeholder for testing
-  throw new Error(
-    "PayOS SDK not configured. Install @payos/checkout-sdk and implement integration.",
-  );
+    // Create payment link
+    const paymentLink = await payos.paymentRequests.create({
+      orderCode: params.orderCode,
+      // PayOS expects orderCode as number (per PayOS SDK typings)
+      amount: Math.round(parseFloat(String(params.amount))), // Ensure amount is integer in VND
+      description: params.description,
+      returnUrl: params.returnUrl,
+      cancelUrl: params.cancelUrl,
+      buyerEmail: params.buyerEmail,
+      buyerName: params.buyerName,
+      buyerPhone: params.buyerPhone,
+    });
+
+    console.log("[v0] PayOS payment link created:", {
+      orderCode: params.orderCode,
+      amount: params.amount,
+      checkoutUrl: paymentLink.checkoutUrl?.substring(0, 50) + "...",
+    });
+
+    return {
+      qr_code: paymentLink.qrCode || paymentLink.checkoutUrl || "",
+      instructions:
+        "Quét mã QR hoặc nhấp vào liên kết thanh toán để hoàn tất giao dịch",
+    };
+  } catch (error) {
+    console.error("[v0] PayOS SDK error:", error);
+    throw error;
+  }
 }
 
 /**
@@ -178,8 +179,9 @@ export async function GET(request: NextRequest) {
   );
 
   return NextResponse.json({
-    message: "PayOS payment endpoint is active",
+    message: "Điểm cuối thanh toán PayOS đang hoạt động",
     configured: hasEnvVars,
-    note: "Implement PayOS SDK integration for full functionality",
+    status: hasEnvVars ? "ready" : "incomplete",
+    timestamp: new Date().toISOString(),
   });
 }
