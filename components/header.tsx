@@ -16,6 +16,7 @@ import {
   Laptop,
   Tablet,
   Headphones,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -235,6 +236,12 @@ export function Header() {
                 <Flame className="h-4 w-4" /> Deal hot
               </Link>
               <Link
+                href="/features"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Tính năng
+              </Link>
+              <Link
                 href="/about"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
@@ -446,6 +453,14 @@ export function Header() {
                           className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-primary bg-primary/5 rounded-xl hover:bg-primary/10 transition-colors"
                         >
                           <Flame className="h-5 w-5" /> Deal hot
+                        </Link>
+                        <Link
+                          href="/features"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl hover:bg-muted transition-colors"
+                        >
+                          <Zap className="h-5 w-5 text-muted-foreground" /> Tính
+                          năng
                         </Link>
                         <Link
                           href="/about"

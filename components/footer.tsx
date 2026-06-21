@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const NAV_LINKS = [
   { name: "Sản phẩm", path: "/products" },
   { name: "Khuyến mãi", path: "/deals" },
+  { name: "Tính năng", path: "/features" },
   { name: "Giới thiệu", path: "/about" },
   { name: "Liên hệ", path: "/contact" },
 ];
