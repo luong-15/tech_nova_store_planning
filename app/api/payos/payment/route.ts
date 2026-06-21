@@ -2,27 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { PayOS } from "@payos/node";
 
-/**
- * PayOS Payment Initiation Endpoint
- * POST /api/payos/payment
- *
- * Request body:
- * {
- *   order_id: string,
- *   return_url: string (optional)
- * }
- *
- * Response:
- * {
- *   success: boolean,
- *   qr_code: string (base64 or URL),
- *   order_id: string,
- *   order_number: string,
- *   amount: number,
- *   instructions: string
- * }
- */
-
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient();

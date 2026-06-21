@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { PayOS } from "@payos/node";
 
-/**
- * PayOS Webhook Handler
- * Endpoint: POST /api/payos/webhook
- * Webhook URL to register in PayOS dashboard: https://your-domain.com/api/payos/webhook
- */
-
 // Initialize PayOS SDK
 function getPayOS(): PayOS {
   const clientId = process.env.PAYOS_CLIENT_ID;
@@ -54,11 +48,7 @@ export async function POST(request: NextRequest) {
     const {
       orderCode,
       amount,
-      // Some PayOS SDK versions may not include these typed fields
-      // amountPaid,
-      // amountRemaining,
       status,
-      // transactionDateTime,
     } = webhookData as any;
 
     console.log("[v0] PayOS Webhook received:", {
@@ -70,9 +60,6 @@ export async function POST(request: NextRequest) {
     // Update order status in database
     const supabase = await createServerClient();
 
-    // Map PayOS status to your system status
-    // PayOS: 0=unpaid, 1=paid, -1=cancelled, -2=refunded
-    // System: "pending", "paid", "failed", "cancelled"
     let paymentStatus: "pending" | "paid" | "failed" | "cancelled" = "pending";
     if (status === 0) {
       paymentStatus = "pending";
@@ -113,12 +100,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-
-
-/**
- * GET endpoint to verify webhook is active
- * PayOS validator expects a 200 OK response
- */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -133,8 +114,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Return 200 OK for webhook verification
-    // PayOS sends GET request to validate webhook URL
     return new NextResponse("OK", {
       status: 200,
       headers: {
