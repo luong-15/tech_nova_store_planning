@@ -54,17 +54,17 @@ export async function POST(request: NextRequest) {
     const {
       orderCode,
       amount,
-      amountPaid,
-      amountRemaining,
+      // Some PayOS SDK versions may not include these typed fields
+      // amountPaid,
+      // amountRemaining,
       status,
-      transactionDateTime,
-    } = webhookData;
+      // transactionDateTime,
+    } = webhookData as any;
 
     console.log("[v0] PayOS Webhook received:", {
       orderCode,
       status,
       amount,
-      amountPaid,
     });
 
     // Update order status in database

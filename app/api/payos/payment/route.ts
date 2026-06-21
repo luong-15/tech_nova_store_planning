@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         clientId: process.env.PAYOS_CLIENT_ID!,
         apiKey: process.env.PAYOS_API_KEY!,
         checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
-        orderCode: order_id,
+        orderCode: Number(order_id),
         amount: order.total,
         description: `Order #${order.order_number}`,
         returnUrl: return_url || `${getBaseUrl(request)}/orders/${order_id}`,
@@ -86,9 +86,9 @@ export async function POST(request: NextRequest) {
     } catch (sdkError) {
       console.error("PayOS SDK error:", sdkError);
       return NextResponse.json(
-        { 
+        {
           error: "PayOS SDK not configured",
-          details: (sdkError as Error).message 
+          details: (sdkError as Error).message,
         },
         { status: 500 },
       );
@@ -135,7 +135,7 @@ async function generatePayOSQRCode(params: {
   clientId: string;
   apiKey: string;
   checksumKey: string;
-  orderCode: string;
+  orderCode: number;
   amount: number;
   description: string;
   returnUrl: string;
@@ -154,6 +154,7 @@ async function generatePayOSQRCode(params: {
     // Create payment link
     const paymentLink = await payos.paymentRequests.create({
       orderCode: params.orderCode,
+      // PayOS expects orderCode as number (per PayOS SDK typings)
       amount: Math.round(parseFloat(String(params.amount))), // Ensure amount is integer in VND
       description: params.description,
       returnUrl: params.returnUrl,
@@ -171,7 +172,8 @@ async function generatePayOSQRCode(params: {
 
     return {
       qr_code: paymentLink.qrCode || paymentLink.checkoutUrl || "",
-      instructions: "Quét mã QR hoặc nhấp vào liên kết thanh toán để hoàn tất giao dịch",
+      instructions:
+        "Quét mã QR hoặc nhấp vào liên kết thanh toán để hoàn tất giao dịch",
     };
   } catch (error) {
     console.error("[v0] PayOS SDK error:", error);
