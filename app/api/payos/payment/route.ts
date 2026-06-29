@@ -2,28 +2,25 @@ import { PayOS } from "@payos/node";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
-// Khởi tạo payOS instance
+const { PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY, NEXT_PUBLIC_BASE_URL } = process.env;
+
 const payOS = new PayOS({
-  clientId: process.env.PAYOS_CLIENT_ID,
-  apiKey: process.env.PAYOS_API_KEY,
-  checksumKey: process.env.PAYOS_CHECKSUM_KEY,
+  clientId: PAYOS_CLIENT_ID || "",
+  apiKey: PAYOS_API_KEY || "",
+  checksumKey: PAYOS_CHECKSUM_KEY || "",
 });
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const { order_id } = body as { order_id?: string };
 
     if (!order_id) {
-      return NextResponse.json(
-        { success: false, error: "Missing order_id" },
-        { status: 400 },
-      );
+      return NextResponse.json({ success: false, error: "Missing order_id" }, { status: 400 });
     }
 
     const supabase = await createServerClient();
 
-    // Lấy dữ liệu đơn để tạo thanh toán đúng amount và mapping orderCode <-> DB
     const { data: order, error } = await supabase
       .from("orders")
       .select("id, order_number, total, payment_status, status")
@@ -31,59 +28,42 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !order) {
-      return NextResponse.json(
-        { success: false, error: "Order not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
     }
 
-    const amount = Math.round(Number(order.total || 0));
-    if (!amount || amount <= 0) {
-      return NextResponse.json(
-        { success: false, error: "Invalid order total" },
-        { status: 400 },
-      );
+    const amount = Math.round(Number(order.total));
+    if (Number.isNaN(amount) || amount <= 0) {
+      return NextResponse.json({ success: false, error: "Invalid order total" }, { status: 400 });
     }
 
-    // payOS yêu cầu orderCode là số và không vượt quá 9007199254740991.
-    // Ưu tiên dùng order_number nếu là số; fallback dùng hash đơn theo dạng số.
-    const MAX_ORDERCODE = 9007199254740991;
-    let orderCode: number;
+    // 1. Tạo orderCode duy nhất bằng số cho PayOS
+    // Dùng timestamp miliseconds (13 số) + random (2 số) = 15 số (an toàn, luôn dưới 16 số của Max Safe Integer)
+    const uniqueString = Date.now().toString() + Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    const orderCode = Number(uniqueString);
 
-    if (order.order_number !== null && order.order_number !== undefined) {
-      const n = Number(order.order_number);
-      orderCode =
-        Number.isFinite(n) && n > 0 ? n : parseInt(String(order_id).replace(/\D/g, ""), 10);
-    } else {
-      orderCode = parseInt(String(order_id).replace(/\D/g, ""), 10);
+    // 2. BẮT BUỘC: Lưu orderCode vào database trước khi gọi PayOS
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({ payos_order_code: orderCode })
+      .eq("id", order_id);
+
+    if (updateError) {
+      console.error("Supabase Update Error:", updateError);
+      return NextResponse.json({ success: false, error: "Failed to update order code" }, { status: 500 });
     }
 
-    if (!orderCode || !Number.isFinite(orderCode) || orderCode <= 0) {
-      orderCode = Math.floor(Date.now() / 1000) % 1000000000;
-    }
-
-    // Clamp vào đúng giới hạn PayOS.
-    orderCode = Math.max(1, Math.min(Math.floor(orderCode), MAX_ORDERCODE));
-
-    // description bị giới hạn tối đa 25 ký tự.
-    const rawDescription = `Thanh toán đơn #${order.order_number ?? order_id}`;
-    const description = String(rawDescription).slice(0, 25);
+    // 3. Rút gọn tên đơn cho vừa mô tả (PayOS giới hạn 25 ký tự)
+    const description = `Thanh toan don ${order.order_number}`.substring(0, 25);
 
     const paymentData = {
       orderCode,
       amount,
       description,
-      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
-      returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+      cancelUrl: `${NEXT_PUBLIC_BASE_URL}/cancel`,
+      returnUrl: `${NEXT_PUBLIC_BASE_URL}/success`,
     };
 
-    console.log("PayOS paymentRequests.create payload:", {
-      order_id: order.id,
-      order_number: order.order_number,
-      orderCode,
-      amount,
-      description,
-    });
+    console.log("PayOS payment payload:", { order_id: order.id, orderCode, amount });
 
     const paymentLink = await payOS.paymentRequests.create(paymentData);
 
@@ -95,13 +75,11 @@ export async function POST(request: Request) {
       amount,
       checkoutUrl: paymentLink.checkoutUrl,
       qr_code: (paymentLink as any).qrCode || paymentLink.checkoutUrl,
-      instructions:
-        (paymentLink as any).instructions ||
-        "Mở link thanh toán và hoàn tất giao dịch.",
+      instructions: (paymentLink as any).instructions || "Mở link thanh toán và hoàn tất giao dịch.",
       is_payos: true,
     });
   } catch (error) {
-    console.error("PayOS Error:", error);
+    console.error("PayOS Error:", error instanceof Error ? error.message : error);
     return NextResponse.json(
       { success: false, error: "Internal Server Error" },
       { status: 500 },

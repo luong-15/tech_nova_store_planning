@@ -79,34 +79,35 @@ CREATE TABLE public.user_profiles (
 ) TABLESPACE pg_default;
 
 -- 4. Bảng Orders (Lưu trữ lịch sử mua hàng)
-CREATE TABLE public.orders (
-    id uuid NOT NULL DEFAULT gen_random_uuid (),
-    user_id uuid NULL,
-    order_number text NOT NULL,
-    status text DEFAULT 'pending'::text,
-    subtotal numeric(12, 2) NOT NULL,
-    shipping_fee numeric(12, 2) DEFAULT 0,
-    tax numeric(12, 2) DEFAULT 0,
-    total numeric(12, 2) NOT NULL,
-    shipping_name text NOT NULL,
-    shipping_email text NOT NULL,
-    shipping_phone text NOT NULL,
-    shipping_address text NOT NULL,
-    shipping_city text NOT NULL,
-    shipping_postal_code text NULL,
-    payment_method text NULL,
-    payment_status text DEFAULT 'unpaid'::text,
-    notes text NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    CONSTRAINT orders_pkey PRIMARY KEY (id),
-    CONSTRAINT orders_order_number_key UNIQUE (order_number),
-    CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users (id) ON DELETE SET NULL
+create table public.orders (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  order_number text not null,
+  status text null default 'pending'::text,
+  subtotal numeric(12, 2) not null,
+  shipping_fee numeric(12, 2) null default 0,
+  tax numeric(12, 2) null default 0,
+  total numeric(12, 2) not null,
+  shipping_name text not null,
+  shipping_email text not null,
+  shipping_phone text not null,
+  shipping_address text not null,
+  shipping_city text not null,
+  shipping_postal_code text null,
+  payment_method text null,
+  payment_status text null default 'unpaid'::text,
+  notes text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  payos_order_code numeric null,
+  constraint orders_pkey primary key (id),
+  constraint orders_order_number_key unique (order_number),
+  constraint orders_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete set null
 ) TABLESPACE pg_default;
 
-CREATE INDEX idx_orders_user ON public.orders(user_id);
-CREATE INDEX idx_orders_status ON public.orders(status);
+create index IF not exists idx_orders_user on public.orders using btree (user_id) TABLESPACE pg_default;
+
+create index IF not exists idx_orders_status on public.orders using btree (status) TABLESPACE pg_default;
 
 -- 5. Bảng Order Items
 CREATE TABLE public.order_items (
