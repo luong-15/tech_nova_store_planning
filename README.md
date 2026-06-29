@@ -2,7 +2,31 @@
 
 ## Overview
 
-**Tech Nova Store** is a modern, full-featured e-commerce platform built with the latest Next.js stack. This project demonstrates advanced web development practices including AI integration, real-time database operations, comprehensive admin dashboard, product comparison features, VietQR payment integration, and a polished user experience.
+**Tech Nova Store** is a modern, full-featured e-commerce platform built with the latest Next.js stack. This project demonstrates advanced web development practices including AI integration, real-time database operations, a comprehensive admin dashboard, product comparison, and a polished user experience.
+
+## 📚 Mục lục
+
+- [Overview](#overview)
+- [Key Features](#-key-features)
+- [Project Structure](#-project-structure)
+- [Technology Stack](#-technology-stack)
+- [Database Schema](#-database-schema)
+- [API Endpoints](#-api-endpoints)
+- [Getting Started](#-getting-started)
+- [Responsive Design](#-responsive-design)
+- [Design System](#-design-system)
+- [Security & Performance](#-security--performance)
+- [Admin Dashboard Features](#-admin-dashboard-features)
+- [AI Integration](#-ai-integration)
+- [Payment Integration](#-payment-integration)
+- [Localization](#-localization)
+- [Troubleshooting](#-troubleshooting)
+- [Deployment](#-deployment)
+- [Performance & Monitoring](#-performance--monitoring)
+- [Development Workflow](#-development-workflow)
+- [Future Enhancements](#-future-enhancements)
+
+**Tech Nova Store** is a modern, full-featured e-commerce platform built with the latest Next.js stack. This project demonstrates advanced web development practices including AI integration, real-time database operations, comprehensive admin dashboard, product comparison features, and a polished user experience.
 
 **Project Name**: `tech-nova-store-planning`  
 **Tech Stack**: Next.js 16 (App Router), React 19, TypeScript, Supabase, Tailwind CSS v4, shadcn/ui, Zustand  
@@ -22,7 +46,7 @@
 - **Checkout Flow**: Multi-step checkout with shipping info, payment method selection, order summary
 - **Payment Methods**:
   - **COD** (Cash on Delivery)
-  - **VietQR**: Online bank transfer via QR code scanning
+  - **Online payment**: thanh toán qua **PayOS** (VN)
 - **Order Success**: Post-checkout confirmation page
 - **User Dashboard**: Order history, wishlist management, account settings
 - **AI Chat Assistant**: Google Generative AI-powered customer support (Vercel AI SDK)
@@ -98,7 +122,7 @@ tech-nova-store-planning/
 │   │   ├── chat/               # AI Chat Assistant
 │   │   ├── orders/             # Order creation & management
 │   │   ├── products/           # Public product API with filters
-│   │   └── vietqr/             # VietQR payment generation
+│   │   └── payos/             # PayOS payment generation
 │   ├── globals.css              # Tailwind styles
 │   └── layout.tsx               # Root layout
 ├── components/                   # Reusable UI components
@@ -182,7 +206,7 @@ Google Generative AI API
 ### Payment
 
 ```
-VietQR (bank transfer QR generation)
+Stripe (card payment)
 COD (Cash on Delivery)
 ```
 
@@ -238,13 +262,19 @@ GET      /api/admin/stats          # Dashboard analytics
 
 ```
 GET      /api/products             # Product listing with filters
+GET      /api/categories           # Category list
+POST     /api/orders               # Create order
+GET      /api/orders/[id]/status   # Check order payment status
+POST     /api/orders/[id]/cancel   # Cancel order
+POST     /api/chat                 # AI Chat Assistant
+POST     /api/checkout             # Stripe Checkout (card payment)
 GET      /api/products/filters     # Available filter options
 GET      /api/categories           # Category list
 POST     /api/orders               # Create order
 GET      /api/orders/[id]/status   # Check order payment status
 POST     /api/orders/[id]/cancel   # Cancel order
 POST     /api/chat                 # AI Chat Assistant
-POST     /api/vietqr/create        # Generate VietQR payment code
+POST     /api/checkout             # Stripe Checkout (card payment)
 ```
 
 ## 🚀 Getting Started
@@ -256,7 +286,7 @@ Node.js 18+
 pnpm (recommended)
 Supabase account
 Google Generative AI API key
-VietQR-compatible bank account (optional, for online payments)
+Stripe (card payment) credentials (optional)
 ```
 
 ### Installation
@@ -283,10 +313,8 @@ GOOGLE_GENERATIVE_AI_API_KEY=your-google-ai-key
 POSTGRES_URL=postgres://...
 POSTGRES_PRISMA_URL=postgres://...
 
-# VietQR (Optional - for online payments)
-VIETQR_BANK_CODE=VCB
-VIETQR_ACCOUNT_NO=your-account-number
-VIETQR_ACCOUNT_NAME=YOUR_NAME
+# Stripe (Optional - card payment)
+STRIPE_SECRET_KEY=your-stripe-secret-key
 
 # Optional Dev Redirect
 NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000/dashboard
@@ -306,13 +334,13 @@ scripts/004_add_is_active.sql
 ### Development
 
 ```bash
-pnpm dev    # localhost:3000
+pnpm run dev    # localhost:3000
 ```
 
 ### Production Build
 
 ```bash
-pnpm build
+pnpm run build
 pnpm start
 ```
 
@@ -361,17 +389,16 @@ pnpm start
 
 ## 💳 Payment Integration
 
-### VietQR (Online Transfer)
+### PayOS (Online payment)
 
-- Generates dynamic QR codes for bank transfer
-- Auto-polling for payment confirmation (5s intervals)
-- Supports manual payment verification
-- Copy-to-clipboard for amount + transfer content
+- Tạo link thanh toán PayOS theo order đã tạo trong hệ thống
+- Trả về URL/QR để người dùng hoàn tất giao dịch
+- Update trạng thái thanh toán đơn hàng dựa trên callback/webhook của PayOS
 
 ### COD (Cash on Delivery)
 
-- Order status set to `processing` immediately
-- Cart cleared after successful order creation
+- Order status set to `processing` ngay khi tạo đơn
+- Cart cleared sau khi tạo đơn thành công
 
 ## 🌍 Localization
 
@@ -419,7 +446,7 @@ pnpm dev
 
 - **AI Chat 429:** Rate limit - upgrade Google AI quota or check API key
 - **Admin 401:** Ensure `SUPABASE_SERVICE_ROLE_KEY` is set in `.env.local`
-- **VietQR not loading:** Check `VIETQR_BANK_CODE`, `VIETQR_ACCOUNT_NO`, and `VIETQR_ACCOUNT_NAME` env vars
+- Stripe payment issues: kiểm tra `STRIPE_SECRET_KEY`
 - **Build errors:** `pnpm install --frozen-lockfile`
 
 ## 🚀 Deployment
@@ -440,9 +467,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1Ni...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1Ni...
 GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...
-VIETQR_BANK_CODE=VCB
-VIETQR_ACCOUNT_NO=...
-VIETQR_ACCOUNT_NAME=...
+STRIPE_SECRET_KEY=...
+PAYOS_CLIENT_ID=...
+PAYOS_API_KEY=...
+PAYOS_CHECKSUM_KEY=...
 ```
 
 ### Docker (Self-Host)
@@ -468,16 +496,14 @@ CMD ["pnpm", "start"]
 ## 📚 Development Workflow
 
 ```bash
-pnpm install
-# Run DB scripts in Supabase SQL Editor
-pnpm dev      # localhost:3000
+pnpm install  # Run DB scripts in Supabase SQL Editor
+pnpm run dev      # localhost:3000
 pnpm build    # Production build test
-pnpm lint     # ESLint check
+pnpm run lint     # ESLint check
 ```
 
 ## 🎯 Future Enhancements
 
-- [ ] Stripe payment integration (international cards)
 - [ ] Multi-vendor marketplace
 - [ ] Advanced search (Elasticsearch / Algolia)
 - [ ] Email notifications (Resend / SendGrid)
@@ -492,4 +518,4 @@ pnpm lint     # ESLint check
 
 **Tech Nova Store** - Production-ready Vietnamese e-commerce starter 🚀
 
-_Updated: Full feature set documented, VietQR integration, complete admin dashboard, AI assistant (2025)_
+_Updated: Full feature set documented, Stripe + PayOS integration, complete admin dashboard, AI assistant (2025)_
