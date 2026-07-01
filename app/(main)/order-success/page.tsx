@@ -85,8 +85,19 @@ function ClientOrderSuccessContent() {
       return;
     }
 
-    fetchOrder();
+    fetchOrderAndClearCart();
   }, [orderId, router]);
+
+  const fetchOrderAndClearCart = async () => {
+    const orderFetchPromise = fetchOrder();
+    try {
+      const mod = await import("@/lib/store/cart-store");
+      const { useCartStore } = mod as any;
+      localStorage.removeItem("cart");
+    } catch { }
+
+    await orderFetchPromise;
+  };
 
   const fetchOrder = async () => {
     try {
@@ -106,6 +117,7 @@ function ClientOrderSuccessContent() {
         )
         .eq("id", orderId)
         .single();
+
 
       if (error || !data) {
         toast.error("Không tìm thấy đơn hàng");

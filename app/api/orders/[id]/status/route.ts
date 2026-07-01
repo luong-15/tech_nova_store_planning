@@ -19,18 +19,28 @@ export async function GET(
     console.log("Checking status for order ID:", id);
 
     // 2. CHUYỂN DELAY LÊN TRƯỚC KHI QUERY DATABASE
-    // Nếu bạn muốn chờ Webhook cập nhật DB, bạn phải đợi xong rồi mới query.
-    const delayMs = Number(process.env.ORDER_STATUS_DELAY_MS || 0); // Mặc định nên là 0 nếu gọi từ frontend polling
+    const delayMs = Number(process.env.ORDER_STATUS_DELAY_MS || 0);
     if (delayMs > 0) {
       await new Promise((r) => setTimeout(r, delayMs));
     }
 
     // 3. Khởi tạo client và lấy dữ liệu MỚI NHẤT sau khi đã delay
     const supabase = await createServerClient();
+
+    // 3.1 Lấy user hiện tại để đảm bảo phân quyền khi đọc status đơn
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
       .select("status, payment_status, order_number")
       .eq("id", id)
+      .eq("user_id", user.id)
       .single();
 
     if (error || !order) {
